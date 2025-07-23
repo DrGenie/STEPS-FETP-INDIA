@@ -4,34 +4,36 @@
  * - Costs trimmed & dynamic
  * - Endorsement drives benefits & many costs
  * - Multi-cohort, multi-year, discounting
- * - PSA with Monte Carlo
+ * - PSA (Monte Carlo)
+ * - Fixed-height charts to stop infinite scroll
+ * - Detailed dynamic recommendations
  **************************************************************************/
 
 document.addEventListener("DOMContentLoaded", ()=>{
   document.querySelectorAll(".tablink").forEach(btn=>{
-    btn.addEventListener("click",function(){openTab(this.getAttribute("data-tab"),this);});
+    btn.addEventListener("click", function(){ openTab(this.getAttribute("data-tab"), this); });
   });
   openTab("introTab", document.querySelector(".tablink"));
 
-  Chart.defaults.font.size=14;
-  Chart.defaults.color="#243447";
+  Chart.defaults.font.size = 14;
+  Chart.defaults.color = "#243447";
 });
 
-/* ---------------- Tabs ---------------- */
-function openTab(tabId,btn){
+/* -------- Tabs -------- */
+function openTab(tabId, btn){
   document.querySelectorAll(".tabcontent").forEach(t=>t.style.display="none");
   document.querySelectorAll(".tablink").forEach(b=>{
-    b.classList.remove("active");b.setAttribute("aria-selected","false");
+    b.classList.remove("active"); b.setAttribute("aria-selected","false");
   });
   document.getElementById(tabId).style.display="block";
-  btn.classList.add("active");btn.setAttribute("aria-selected","true");
+  btn.classList.add("active"); btn.setAttribute("aria-selected","true");
 
   if(tabId==='wtpTab') renderWTPChart();
   if(tabId==='endorseTab') renderEndorseChart();
   if(tabId==='costsTab') renderCostsBenefits();
 }
 
-/* ---------------- UI helpers ---------------- */
+/* -------- UI helpers -------- */
 function updateCostDisplay(v){document.getElementById("costLabel").textContent=parseInt(v,10).toLocaleString();}
 function updateCapDisplay(v){document.getElementById("capLabel").textContent=v;}
 function updateStakeDisplay(v){document.getElementById("stakeLabel").textContent=v;}
@@ -42,72 +44,69 @@ function displayWarnings(arr){
   else{box.style.display="none";box.innerHTML="";}
 }
 
-/* ---------------- Model params (edit with real data) ---------------- */
+/* -------- Coefficients (placeholder) -------- */
 const COEFS={
-  ASC:0.25,
-  type_intermediate:0.30,
-  type_advanced:0.50,
-  dur_12:0.12,
-  dur_24:0.20,
-  focus_animal:0.15,
-  focus_onehealth:0.38,
-  mode_hybrid:0.10,
-  mode_online:-0.35,
-  resp_7:0.18,
-  resp_3:0.32,
-  resp_1:0.55,
-  cost_perT_perM:-0.000009
+  ASC:0.30,
+  type_intermediate:0.28,
+  type_advanced:0.48,
+  dur_12:0.10,
+  dur_24:0.18,
+  focus_animal:0.14,
+  focus_onehealth:0.36,
+  mode_hybrid:0.12,
+  mode_online:-0.32,
+  resp_7:0.16,
+  resp_3:0.30,
+  resp_1:0.52,
+  cost_perT_perM:-0.0000085
 };
 
 const WTP={
-  type_intermediate:11000,
-  type_advanced:21000,
-  dur_12:5500,
-  dur_24:8500,
-  focus_animal:6500,
-  focus_onehealth:14000,
-  mode_hybrid:3500,
-  mode_online:-7000,
-  resp_7:4500,
-  resp_3:10000,
-  resp_1:17000
+  type_intermediate:10000,
+  type_advanced:20000,
+  dur_12:5000,
+  dur_24:8000,
+  focus_animal:6000,
+  focus_onehealth:13000,
+  mode_hybrid:3000,
+  mode_online:-6500,
+  resp_7:4000,
+  resp_3:9500,
+  resp_1:16000
 };
 
-/* Trimmed realistic annual blocks (₹) */
+/* Trimmed cost blocks (₹/year) */
 const BASE_COSTS={
-  staff_local:   2000000,
-  staff_consult:  600000,
-  equip_office:   300000,
-  sw_office:      150000,
-  rent_utils:     500000,
-  workshops:      600000,
-  travel_in:      500000,
-  other_direct:   200000,
-  mgmt:           600000,
-  maint:          150000,
-  inkind_salary:  300000,
-  shared_utils:   150000,
-  legal_fin:      100000,
-  staff_dev:      200000
+  staff_local: 1200000,
+  staff_consult: 400000,
+  rent_utils: 350000,
+  workshops: 450000,
+  travel_in: 350000,
+  other_direct: 150000,
+  mgmt: 450000,
+  maint: 120000,
+  shared_utils: 120000,
+  legal_fin: 80000,
+  staff_dev: 150000
 };
-
+/* per trainee endorsed */
 const PER_TRAINEE={
-  allowance:40000,
-  equip:   15000,
-  sw:       3000,
-  materials:2500,
-  opp_cost:60000
+  allowance:30000,
+  equip:12000,
+  sw:2500,
+  materials:2000,
+  opp_cost:50000
 };
 
 const MULTIPLIERS={
-  ptype:{frontline:1.0,intermediate:1.10,advanced:1.25},
-  duration:{"6":1.0,"12":1.30,"24":1.80},
-  mode_cost_adj:{inperson:1.0,hybrid:1.04,online:0.85},
-  focus_cost_adj:{human:1.0,animal:1.05,onehealth:1.10},
-  resp_cost_adj:{"14":1.0,"7":1.08,"3":1.15,"1":1.25}
+  ptype:{frontline:1.0,intermediate:1.08,advanced:1.18},
+  duration:{"6":1.0,"12":1.25,"24":1.7},
+  mode_cost_adj:{inperson:1.0,hybrid:1.03,online:0.85},
+  focus_cost_adj:{human:1.0,animal:1.04,onehealth:1.08},
+  resp_cost_adj:{"14":1.0,"7":1.06,"3":1.12,"1":1.20}
 };
 
-/* ---------------- Scenario builder ---------------- */
+/* -------- Build scenario -------- */
 function buildScenario(){
   const ptype=valRadio("ptype");
   const duration=valRadio("duration");
@@ -122,17 +121,17 @@ function buildScenario(){
   const discRate=(+document.getElementById("discRate").value)/100;
 
   if(!ptype||!duration||!focus||!mode||!resp){
-    alert("Select a level for all categorical attributes.");
+    alert("Select all categorical attributes.");
     return null;
   }
   const warn=[];
-  if(mode==="online"&&(ptype==="advanced"||focus==="onehealth")) warn.push("Online + Advanced/OneHealth likely unrealistic; hybrid/in-person advised.");
+  if(mode==="online"&&(ptype==="advanced"||focus==="onehealth")) warn.push("Online + Advanced/OneHealth may reduce field learning—consider Hybrid/In-person.");
   displayWarnings(warn);
 
   return {ptype,duration,focus,mode,resp,capacity,costPerTM,stakeholders,cohortsYear,yearsHorizon,discRate};
 }
 
-/* ---------------- Core computations ---------------- */
+/* -------- Core calcs -------- */
 function endorsementProb(sc){
   let U=COEFS.ASC;
   if(sc.ptype==="intermediate")U+=COEFS.type_intermediate;
@@ -167,14 +166,14 @@ function scenarioWTP(sc,eShare){
 }
 
 function scenarioCost(sc,eShare){
-  const mType=MULTIPLIERS.ptype[sc.ptype];
-  const mDur=MULTIPLIERS.duration[sc.duration];
-  const mMode=MULTIPLIERS.mode_cost_adj[sc.mode];
-  const mFocus=MULTIPLIERS.focus_cost_adj[sc.focus];
-  const mResp=MULTIPLIERS.resp_cost_adj[sc.resp];
-  const mult=mType*mDur*mMode*mFocus*mResp;
+  const mT=MULTIPLIERS.ptype[sc.ptype];
+  const mD=MULTIPLIERS.duration[sc.duration];
+  const mMo=MULTIPLIERS.mode_cost_adj[sc.mode];
+  const mF=MULTIPLIERS.focus_cost_adj[sc.focus];
+  const mR=MULTIPLIERS.resp_cost_adj[sc.resp];
+  const mult=mT*mD*mMo*mF*mR;
 
-  const yrs=sc.yearsHorizon,r=sc.discRate,coh=sc.cohortsYear;
+  const yrs=sc.yearsHorizon, r=sc.discRate, coh=sc.cohortsYear;
   let pv=0;
   for(let t=0;t<yrs;t++){
     let fixed=0;
@@ -184,7 +183,7 @@ function scenarioCost(sc,eShare){
     const endorsed=sc.capacity*eShare*coh;
     let perT=0;
     Object.values(PER_TRAINEE).forEach(v=>perT+=v);
-    perT*=endorsed*mType*mDur*mFocus;
+    perT*=endorsed*mT*mD*mF;
 
     const moh=sc.costPerTM*(sc.duration/12)*sc.capacity*coh;
 
@@ -195,7 +194,7 @@ function scenarioCost(sc,eShare){
 }
 
 function scenarioQALY(sc,eShare,qalyPerT){
-  const yrs=sc.yearsHorizon,r=sc.discRate,coh=sc.cohortsYear;
+  const yrs=sc.yearsHorizon, r=sc.discRate, coh=sc.cohortsYear;
   let pv=0;
   for(let t=0;t<yrs;t++){
     const q=sc.capacity*coh*eShare*qalyPerT;
@@ -204,16 +203,15 @@ function scenarioQALY(sc,eShare,qalyPerT){
   return pv;
 }
 
-/* ---------------- Results & modal ---------------- */
+/* -------- Calculate and modal -------- */
 function calculateAll(){
   const sc=buildScenario(); if(!sc)return;
-  const eShare=endorsementProb(sc);
-  const ePct=eShare*100;
+  const eShare=endorsementProb(sc); const ePct=eShare*100;
   const w=scenarioWTP(sc,eShare);
   const c=scenarioCost(sc,eShare);
   const bcr=w/c;
   const net=w-c;
-  const rec=recommendation(sc,ePct,bcr);
+  const rec=buildRecommendation(sc,ePct,bcr,net);
 
   document.getElementById("modalResults").innerHTML=`
     <h4>Results</h4>
@@ -225,25 +223,31 @@ function calculateAll(){
     <p>${rec}</p>`;
   openModal();
 
-  renderWTPChart(sc);
+  renderWTPChart();
   renderEndorseChart(sc);
   renderCostsBenefits(sc,ePct,w,c,bcr,net,eShare);
 }
 
-/* Detailed recommendation */
-function recommendation(sc,ePct,bcr){
+/* -------- Dynamic detailed recommendation -------- */
+function buildRecommendation(sc,ePct,bcr,net){
   const msgs=[];
-  if(ePct<45) msgs.push("Endorsement is low. Increase practical components (in‑person mentoring), streamline duration to 12 months, or improve response capacity to boost perceived value.");
-  if(bcr<1) msgs.push("Benefits < costs. Lower trainee allowances/equipment or reduce fixed overheads. Alternatively, target faster response times (3 days/24h) to increase WTP.");
-  if(sc.mode==="online"&&(sc.ptype==="advanced"||sc.focus==="onehealth")) msgs.push("Fully online undermines value for advanced/One Health. Switch to hybrid to maintain field exposure.");
-  if(sc.duration==="24") msgs.push("24 months is expensive. Consider modular 12-month core + short refreshers.");
-  if(sc.resp==="14") msgs.push("Improving response capacity (7 or 3 days) often increases WTP more than it raises cost.");
-  if(!msgs.length) return "Configuration is strong: endorsement and BCR are favourable. Proceed with detailed budgeting and stakeholder engagement.";
-  return "Recommendations: "+msgs.join(" ");
+  // Overall status
+  if(ePct>=70 && bcr>=1 && net>0) msgs.push("Overall strong scenario: high endorsement and positive net benefit.");
+  if(ePct<45) msgs.push("Raise endorsement: shorten duration (6–12m), add in‑person mentorship, or improve outbreak response speed.");
+  if(bcr<1 || net<0) msgs.push("Costs exceed benefits. Trim allowances/equipment, reduce fixed overheads, or increase stakeholder base.");
+  // Attribute-specific
+  if(sc.mode==="online" && (sc.ptype==="advanced"||sc.focus==="onehealth"))
+    msgs.push("Switch from fully online to hybrid to maintain field exposure for advanced/One Health content.");
+  if(sc.duration==="24") msgs.push("24 months inflates costs; consider 12 months plus refresher modules.");
+  if(sc.resp==="14") msgs.push("Improving response capacity to 7 or 3 days boosts perceived value at modest extra cost.");
+  if(sc.ptype==="frontline" && ePct>=60 && bcr<1) msgs.push("Frontline type may still need targeted marketing to donors; increase stakeholder coverage (slider) to lift WTP.");
+  if(sc.costPerTM>70000) msgs.push("₹/Trainee/Month is high. Consider blended financing or cost sharing with states to lower MoH burden.");
+
+  return "Recommendations: " + msgs.join(" ");
 }
 
-/* ---------------- Charts ---------------- */
-let wtpChart=null,endorseChart=null,combinedChart=null,qalyChart=null,psaBCRChart=null,psaICERChart=null;
+/* -------- Charts -------- */
+let wtpChart=null, endorseChart=null, combinedChart=null, qalyChart=null, psaBCRChart=null, psaICERChart=null;
 const PUB_COLORS=["#2a76d2","#009688","#f39c12","#e74c3c","#7f8c8d","#8e44ad","#27ae60","#d35400","#16a085","#c0392b"];
 
 function renderWTPChart(){
@@ -254,14 +258,15 @@ function renderWTPChart(){
   wtpChart=new Chart(ctx,{
     type:"bar",
     data:{labels,datasets:[{label:"Marginal WTP (₹)",data:vals,backgroundColor:PUB_COLORS.slice(0,vals.length),borderColor:"#243447",borderWidth:1}]},
-    options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}},
-             plugins:{legend:{display:false},title:{display:true,text:"Marginal WTP (₹)",font:{size:18,weight:'600'}}}}
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{y:{beginAtZero:true}},
+      plugins:{legend:{display:false},title:{display:true,text:"Marginal WTP (₹)",font:{size:18,weight:'600'}}}}
   });
 }
 
 function renderEndorseChart(sc=null){
-  const c=document.getElementById("endorseChart"); if(!c)return;
-  const ctx=c.getContext("2d");
+  const canvas=document.getElementById("endorseChart"); if(!canvas)return;
+  const ctx=canvas.getContext("2d");
   if(endorseChart) endorseChart.destroy();
   const s=sc||buildScenario(); if(!s)return;
   const p=endorsementProb(s)*100;
@@ -282,7 +287,7 @@ function renderCostsBenefits(sc=null,ePct=null,w=null,c=null,bcr=null,net=null,e
   const W=w!==null?w:scenarioWTP(s,es);
   const C=c!==null?c:scenarioCost(s,es);
   const B=bcr!==null?bcr:W/C;
-  const N=net!==null?net:(W-C);
+  const N=net!==null?net:W-C;
 
   container.innerHTML=`
     <div class="calculation-info">
@@ -325,7 +330,7 @@ function renderCostsBenefits(sc=null,ePct=null,w=null,c=null,bcr=null,net=null,e
 function addCostCard(container,title,val,type){
   const div=document.createElement("div");
   div.className="cost-card";
-  div.innerHTML=`<h4>${title}</h4><p>${type} component</p><p><strong>₹ ${formatINR(val)}</strong></p>`;
+  div.innerHTML=`<h4>${title.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase())}</h4><p>${type} component</p><p><strong>₹ ${formatINR(val)}</strong></p>`;
   container.appendChild(div);
 }
 
@@ -334,7 +339,7 @@ function toggleCostBreakdown(){
   el.style.display=(el.style.display==="none"||el.style.display==="")?"flex":"none";
 }
 
-/* ---------------- QALY ---------------- */
+/* -------- QALY -------- */
 function renderQALY(){
   const sc=buildScenario(); if(!sc)return;
   const eShare=endorsementProb(sc);
@@ -366,7 +371,7 @@ function renderQALY(){
   });
 }
 
-/* ---------------- PSA ---------------- */
+/* -------- PSA -------- */
 function runPSA(){
   const sc=buildScenario(); if(!sc) return;
   const seCost=+document.getElementById("seCost").value/100;
@@ -431,7 +436,7 @@ function renderHistogram(canvasId,data,label,color){
 
   const bins=20;
   const min=Math.min(...data),max=Math.max(...data);
-  const width=(max-min)/bins;
+  const width=(max-min)/bins||1;
   const counts=new Array(bins).fill(0);
   data.forEach(v=>{
     let idx=Math.floor((v-min)/width);
@@ -451,7 +456,7 @@ function renderHistogram(canvasId,data,label,color){
   if(canvasId==="psaBCR") psaBCRChart=chart; else psaICERChart=chart;
 }
 
-/* ---------------- Save / Export ---------------- */
+/* -------- Save / Export -------- */
 let savedScenarios=[];
 function saveScenario(){
   const sc=buildScenario(); if(!sc)return;
@@ -488,7 +493,7 @@ function appendScenarioRow(s){
 
 function exportPDF(){
   if(savedScenarios.length===0){alert("No scenarios saved.");return;}
-  const {jsPDF}=window.jspdf;
+  const { jsPDF } = window.jspdf;
   const doc=new jsPDF({unit:"mm",format:"a4"});
   const pw=doc.internal.pageSize.getWidth();
   let y=15;
@@ -512,7 +517,7 @@ function exportPDF(){
   doc.save("FETP_Scenarios.pdf");
 }
 
-/* ---------------- Modal & helpers ---------------- */
+/* -------- Modal & helpers -------- */
 function openModal(){document.getElementById("resultModal").style.display="block";}
 function closeModal(){document.getElementById("resultModal").style.display="none";}
 function formatINR(num){return Math.round(num).toString().replace(/\B(?=(\d{2})+(?!\d))/g,",");}
