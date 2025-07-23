@@ -1,9 +1,8 @@
-<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <title>FETP India Decision Aid Tool</title>
 
   <link rel="stylesheet" href="styles.css" />
@@ -19,7 +18,7 @@
   <div class="container">
     <header>
       <h1>FETP India Decision Aid Tool</h1>
-      <p>Configure Field Epidemiology Training Program (FETP) designs and instantly see stakeholder WTP, endorsement, realistic costs, and benefit–cost metrics (₹ & QALYs).</p>
+      <p>Configure FETP designs and see endorsement, WTP, realistic costs, and cost‑effectiveness (₹ & QALYs).</p>
     </header>
 
     <nav class="tabs" role="tablist">
@@ -30,20 +29,15 @@
       <button class="tablink" data-tab="endorseTab" aria-selected="false"><i class="fa-solid fa-thumbs-up"></i><span> Endorsement</span></button>
       <button class="tablink" data-tab="costsTab" aria-selected="false"><i class="fa-solid fa-calculator"></i><span> ₹ Cost–Benefit</span></button>
       <button class="tablink" data-tab="qalyTab" aria-selected="false"><i class="fa-solid fa-heart-pulse"></i><span> QALY Analysis</span></button>
-      <button class="tablink" data-tab="scenariosTab" aria-selected="false"><i class="fa-solid fa-folder-open"></i><span> Saved Scenarios</span></button>
+      <button class="tablink" data-tab="methodsTab" aria-selected="false"><i class="fa-solid fa-book-open"></i><span> Methods</span></button>
+      <button class="tablink" data-tab="scenariosTab" aria-selected="false"><i class="fa-solid fa-folder-open"></i><span> Saved</span></button>
     </nav>
 
     <!-- INTRO -->
     <section id="introTab" class="tabcontent" style="display:block;" tabindex="0">
       <div class="intro-box">
-        <p><strong>Why FETP?</strong> To meet India’s PM-ABHIM objectives, a skilled epidemiology workforce is crucial. This tool helps quantify value-for-money for scaling FETPs.</p>
-        <p><strong>What you get:</strong></p>
-        <ul>
-          <li>Aggregate WTP (₹) from stakeholder preferences</li>
-          <li>Predicted endorsement probability</li>
-          <li>Dynamic annual programme cost & Benefit–Cost Ratio</li>
-          <li>Optional QALY-based cost-effectiveness outputs</li>
-        </ul>
+        <p><strong>Goal:</strong> Support India’s FETP scale‑up business case with evidence on stakeholder value (WTP), endorsement, and costs.</p>
+        <p><strong>How to use:</strong> Review attributes → set inputs → view WTP, endorsement, costs, QALYs → compare scenarios.</p>
       </div>
     </section>
 
@@ -54,7 +48,7 @@
 
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-graduation-cap"></i>
-            <div class="tooltip">Frontline (ref): basic skills. Intermediate & Advanced imply greater mentoring, fieldwork, analytics.</div>
+            <div class="tooltip">Frontline (ref): basic outbreak skills; Intermediate & Advanced require more mentoring/field work.</div>
           </div>
           <div class="attribute-content">
             <h4>Program Type</h4><p>Frontline (ref), Intermediate, Advanced</p>
@@ -63,7 +57,7 @@
 
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-hourglass-half"></i>
-            <div class="tooltip">6 months (ref), 12 months, 24 months. Longer duration raises costs but may increase value.</div>
+            <div class="tooltip">6 months (ref), 12 months, 24 months. Longer → higher cost, potential higher value.</div>
           </div>
           <div class="attribute-content">
             <h4>Duration</h4><p>6 (ref), 12, 24 months</p>
@@ -72,7 +66,7 @@
 
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-virus-covid"></i>
-            <div class="tooltip">Human health (ref), Animal health, One Health (cross-sector). One Health often needs more coordination.</div>
+            <div class="tooltip">Human health (ref); Animal health; One Health (multi-sector).</div>
           </div>
           <div class="attribute-content">
             <h4>Focus</h4><p>Human (ref), Animal, One Health</p>
@@ -81,7 +75,7 @@
 
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-laptop-medical"></i>
-            <div class="tooltip">In-person (ref), Hybrid, Fully online. Advanced/One Health usually require in-person practicum.</div>
+            <div class="tooltip">In-person (ref), Hybrid, Fully online. Advanced/One Health often need in-person practicum.</div>
           </div>
           <div class="attribute-content">
             <h4>Delivery Mode</h4><p>In-person (ref), Hybrid, Fully online</p>
@@ -90,16 +84,16 @@
 
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-people-group"></i>
-            <div class="tooltip">Annual intake of trainees: 200–1500.</div>
+            <div class="tooltip">Annual intake 200–1500 trainees.</div>
           </div>
           <div class="attribute-content">
-            <h4>Training Capacity</h4><p>200–1500 trainees/year</p>
+            <h4>Training Capacity</h4><p>200–1500 / year</p>
           </div>
         </div>
 
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-stopwatch"></i>
-            <div class="tooltip">Median detection & response time: 14 d (ref), 7 d, 3 d, 24 h. Faster response costs more but increases value.</div>
+            <div class="tooltip">Median detection/response: 14 d (ref), 7 d, 3 d, 24 h. Faster = costlier but higher value.</div>
           </div>
           <div class="attribute-content">
             <h4>Response Capacity</h4><p>14d (ref), 7d, 3d, 24h</p>
@@ -108,10 +102,10 @@
 
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-indian-rupee-sign"></i>
-            <div class="tooltip">Monthly cost to MoH per trainee: ₹30k–₹90k.</div>
+            <div class="tooltip">Monthly MoH cost per trainee: ₹30k–₹90k.</div>
           </div>
           <div class="attribute-content">
-            <h4>₹ / Trainee / Month (MoH)</h4><p>₹30,000–₹90,000</p>
+            <h4>₹ / Trainee / Month</h4><p>₹30,000–₹90,000</p>
           </div>
         </div>
 
@@ -146,8 +140,8 @@
             <div class="input-level-card">
               <h3>Focus <span class="reference">(Human)</span></h3>
               <div class="options">
-                <label><input type="radio" name="focus" value="human" /> Human health</label>
-                <label><input type="radio" name="focus" value="animal" /> Animal health</label>
+                <label><input type="radio" name="focus" value="human" /> Human</label>
+                <label><input type="radio" name="focus" value="animal" /> Animal</label>
                 <label><input type="radio" name="focus" value="onehealth" /> One Health</label>
               </div>
             </div>
@@ -190,10 +184,10 @@
             <div class="input-level-card">
               <h3>Stakeholders Represented
                 <span class="info-container">
-                  <button class="info-button" aria-label="Used to aggregate WTP across all stakeholders you wish to represent" tabindex="0">
+                  <button class="info-button" aria-label="Aggregate WTP across stakeholders you represent" tabindex="0">
                     <i class="fa-solid fa-circle-info"></i>
                   </button>
-                  <span class="tooltip-text">Number of stakeholder organisations/decision units your DCE represents. Used to scale aggregate WTP.</span>
+                  <span class="tooltip-text">Number of stakeholder units you want to aggregate over. Remove/ignore if you only need per‑respondent WTP.</span>
                 </span>
               </h3>
               <div class="options slider-option">
@@ -225,7 +219,7 @@
     <section id="wtpTab" class="tabcontent" tabindex="0">
       <div class="calculation-info">
         <h4>WTP (₹) by Attribute</h4>
-        <p>Marginal WTPs are placeholders—replace with DCE estimates. Total WTP = sum of chosen marginal WTPs × stakeholder count.</p>
+        <p>Total WTP = (sum of selected marginal WTPs) × Endorsement × Stakeholder count.</p>
         <div class="buttons-row"><button onclick="renderWTPChart()">Show WTP Chart</button></div>
         <div class="chart-grid">
           <div class="chart-box">
@@ -240,7 +234,7 @@
     <section id="endorseTab" class="tabcontent" tabindex="0">
       <div class="calculation-info">
         <h4>Predicted Endorsement</h4>
-        <p>Derived from a logistic model. Update coefficients once your final model is ready.</p>
+        <p>Logit model with placeholder coefficients. Replace with final estimates when available.</p>
         <div class="buttons-row"><button onclick="renderEndorseChart()">Show Endorsement Plot</button></div>
         <div class="chart-grid">
           <div class="chart-box" style="position:relative;height:300px;">
@@ -267,7 +261,7 @@
     <section id="qalyTab" class="tabcontent" tabindex="0">
       <div class="calculation-info">
         <h4>QALY-Based Cost-Effectiveness</h4>
-        <p>Assume each trained epidemiologist improves health outcomes. Adjust QALY gain per trainee and threshold to test cost-effectiveness.</p>
+        <p>QALYs = Capacity × Endorsement × QALY gain per trainee. ICER = Cost / QALY. Thresholds from 1–3× GDPpc (approx ₹150k–₹500k).</p>
         <div class="form-grid">
           <div class="form-item">
             <label for="qalyPerTrainee">QALY Gain / Trainee</label>
@@ -276,9 +270,9 @@
           <div class="form-item">
             <label for="threshold">Threshold (₹/QALY)</label>
             <select id="threshold">
-              <option value="150000">₹150,000 (approx 1× GDPpc)</option>
-              <option value="300000" selected>₹300,000 (2× GDPpc)</option>
-              <option value="500000">₹500,000 (3× GDPpc)</option>
+              <option value="150000">₹150,000</option>
+              <option value="300000" selected>₹300,000</option>
+              <option value="500000">₹500,000</option>
             </select>
           </div>
         </div>
@@ -286,10 +280,36 @@
         <div id="qalyResults"></div>
         <div class="chart-grid">
           <div class="chart-box">
-            <h3>Cost vs Threshold</h3>
+            <h3>ICER vs Threshold</h3>
             <canvas id="qalyChart"></canvas>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- METHODS -->
+    <section id="methodsTab" class="tabcontent" tabindex="0">
+      <div class="calculation-info">
+        <h4>How Calculations Are Done</h4>
+        <details open>
+          <summary><strong>Costs</strong></summary>
+          <p>Total Cost = (Fixed blocks × multipliers) + (Per‑trainee blocks × Capacity × multipliers × Endorsement) + (MoH cost slider × Duration × Capacity).</p>
+          <ul>
+            <li><em>Multipliers</em> depend on Program Type, Duration, Focus, Delivery Mode, Response Capacity.</li>
+            <li>Per‑trainee and some service costs scale with endorsement (only endorsed trainees fully participate).</li>
+            <li>Edit <code>BASE_COSTS</code>, <code>PER_TRAINEE</code>, and <code>MULTIPLIERS</code> in <code>script.js</code>.</li>
+          </ul>
+        </details>
+        <details>
+          <summary><strong>Benefits (₹)</strong></summary>
+          <p>Total Benefit (₹) = [Sum of marginal WTPs for chosen levels] × Endorsement × Stakeholders.</p>
+          <p>Replace placeholder WTP coefficients with your DCE estimates (₹).</p>
+        </details>
+        <details>
+          <summary><strong>QALY Analysis</strong></summary>
+          <p>QALYs = Capacity × Endorsement × QALY gain per trainee (user entry). ICER = Total Cost / Total QALY.</p>
+          <p>Compare ICER to selected threshold to judge cost-effectiveness.</p>
+        </details>
       </div>
     </section>
 
@@ -297,7 +317,7 @@
     <section id="scenariosTab" class="tabcontent" tabindex="0">
       <div class="calculation-info">
         <h4>Saved Scenarios</h4>
-        <p>Compare configurations and export to PDF.</p>
+        <p>Compare & export.</p>
         <div class="buttons-row">
           <button onclick="saveScenario()">Save Current Scenario</button>
           <button onclick="exportPDF()">Export to PDF</button>
