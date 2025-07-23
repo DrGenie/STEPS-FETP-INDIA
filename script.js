@@ -1,56 +1,15 @@
-// script.js
-(function(){
-/**************************************************************************
- * FETP India Decision Aid Tool
- **************************************************************************/
+/* ================================
+   FETP India Decision Aid Tool JS
+================================ */
 
 let wtpChart, endorseChart, combinedChart, qalyChart, psaBCRChart, psaICERChart;
-const PUB_COLORS=["#2a76d2","#009688","#f39c12","#e74c3c","#7f8c8d"];
+const COLORS=["#2a76d2","#009688","#f39c12","#e74c3c","#7f8c8d"];
+const INR = new Intl.NumberFormat('en-IN',{maximumFractionDigits:0});
 
-/* ---------- INIT ---------- */
-document.addEventListener("DOMContentLoaded", ()=>{
-  document.querySelectorAll(".tablink").forEach(btn=>{
-    btn.addEventListener("click", ()=>openTab(btn.dataset.tab, btn));
-  });
-  openTab("introTab", document.querySelector(".tablink"));
-  Chart.defaults.font.size=14;
-  Chart.defaults.color="#243447";
-});
-
-/* ---------- TABS ---------- */
-function openTab(tabId, btn){
-  document.querySelectorAll(".tabcontent").forEach(t=>t.style.display="none");
-  document.querySelectorAll(".tablink").forEach(b=>{
-    b.classList.remove("active"); b.setAttribute("aria-selected","false");
-  });
-  const tab=document.getElementById(tabId);
-  if(tab){ tab.style.display="block"; }
-  if(btn){ btn.classList.add("active"); btn.setAttribute("aria-selected","true"); }
-
-  if(tabId==='wtpTab') renderWTPChart();
-  if(tabId==='endorseTab') renderEndorseChart();
-  if(tabId==='costsTab') renderCostsBenefits();
-}
-
-/* ---------- UI HELPERS ---------- */
-function updateCostDisplay(v){ document.getElementById("costLabel").textContent=parseInt(v,10).toLocaleString(); }
-function updateCapDisplay(v){ document.getElementById("capLabel").textContent=v; }
-function updateStakeDisplay(v){ document.getElementById("stakeLabel").textContent=v; }
-function valRadio(name){ const r=document.querySelector(`input[name="${name}"]:checked`); return r?r.value:null; }
-function displayWarnings(arr){
-  const box=document.getElementById("warnings");
-  if(!box) return;
-  if(arr.length){
-    box.innerHTML="<ul>"+arr.map(w=>`<li>${w}</li>`).join("")+"</ul>";
-    box.style.display="block";
-  }else{
-    box.style.display="none"; box.innerHTML="";
-  }
-}
-
-/* ---------- MODELS ---------- */
+/* Coefficients (placeholder) */
 const COEFS={
-  ASC:0.30, type_intermediate:0.28, type_advanced:0.48,
+  ASC:0.30,
+  type_intermediate:0.28, type_advanced:0.48,
   dur_12:0.10, dur_24:0.18,
   focus_animal:0.14, focus_onehealth:0.36,
   mode_hybrid:0.12, mode_online:-0.32,
@@ -58,6 +17,7 @@ const COEFS={
   cost_perT_perM:-0.0000085
 };
 
+/* Marginal WTP values (₹) */
 const WTP={
   type_intermediate:10000, type_advanced:20000,
   dur_12:5000, dur_24:8000,
@@ -66,16 +26,15 @@ const WTP={
   resp_7:4000, resp_3:9500, resp_1:16000
 };
 
-/* Trimmed base costs (fixed / year) */
-const BASE_COSTS={
+/* Trimmed cost structure */
+const BASE_COSTS={ /* fixed/year */
   staff_consult:200000,
   rent_utils:200000,
   workshops:300000,
   maint:80000,
   staff_dev:100000
 };
-/* Per endorsed trainee (one-time each cohort-year) */
-const PER_TRAINEE={
+const PER_TRAINEE={ /* per endorsed trainee */
   allowance:25000,
   equip:8000,
   materials:1500,
@@ -90,7 +49,48 @@ const MULTIPLIERS={
   resp_cost_adj:{"14":1.0,"7":1.06,"3":1.12,"1":1.20}
 };
 
-/* ---------- SCENARIO ---------- */
+let savedScenarios=[];
+
+/* ---------- INIT ---------- */
+document.addEventListener("DOMContentLoaded",()=>{
+  document.querySelectorAll(".tablink").forEach(btn=>{
+    btn.addEventListener("click",()=>openTab(btn.dataset.tab,btn));
+  });
+  openTab("introTab", document.querySelector(".tablink"));
+  Chart.defaults.font.size=14;
+  Chart.defaults.color="#243447";
+});
+
+/* ---------- Tabs ---------- */
+function openTab(tabId, btn){
+  document.querySelectorAll(".tabcontent").forEach(t=>t.style.display="none");
+  document.querySelectorAll(".tablink").forEach(b=>{b.classList.remove("active");b.setAttribute("aria-selected","false");});
+  const tab=document.getElementById(tabId);
+  if(tab){ tab.style.display="block"; }
+  if(btn){ btn.classList.add("active"); btn.setAttribute("aria-selected","true"); }
+
+  if(tabId==='wtpTab') renderWTPChart();
+  if(tabId==='endorseTab') renderEndorseChart();
+  if(tabId==='costsTab') renderCostsBenefits();
+}
+
+/* ---------- UI helpers ---------- */
+function updateCostDisplay(v){ document.getElementById("costLabel").textContent=Number(v).toLocaleString(); }
+function updateCapDisplay(v){ document.getElementById("capLabel").textContent=v; }
+function updateStakeDisplay(v){ document.getElementById("stakeLabel").textContent=v; }
+function valRadio(name){ const r=document.querySelector(`input[name="${name}"]:checked`); return r?r.value:null; }
+function displayWarnings(arr){
+  const box=document.getElementById("warnings");
+  if(!box) return;
+  if(arr.length){
+    box.innerHTML="<ul>"+arr.map(w=>`<li>${w}</li>`).join("")+"</ul>";
+    box.style.display="block";
+  }else{
+    box.style.display="none"; box.innerHTML="";
+  }
+}
+
+/* ---------- Build scenario ---------- */
 function buildScenario(){
   const sc={
     ptype:valRadio("ptype"),
@@ -116,7 +116,7 @@ function buildScenario(){
   return sc;
 }
 
-/* ---------- CALCULATIONS ---------- */
+/* ---------- Models ---------- */
 function endorsementProb(sc){
   let U=COEFS.ASC;
   if(sc.ptype==="intermediate")U+=COEFS.type_intermediate;
@@ -186,7 +186,7 @@ function scenarioQALY(sc,eShare,qalyPerT){
   return pv;
 }
 
-/* ---------- ACTIONS ---------- */
+/* ---------- Main calc ---------- */
 function calculateAll(){
   const sc=buildScenario(); if(!sc)return;
   const eShare=endorsementProb(sc), ePct=eShare*100;
@@ -198,10 +198,10 @@ function calculateAll(){
   document.getElementById("modalResults").innerHTML=`
     <h4>Summary</h4>
     <p><strong>Endorsement rate:</strong> ${ePct.toFixed(1)}%</p>
-    <p><strong>Total WTP:</strong> ₹${formatINR(w)}</p>
-    <p><strong>Total Cost (PV):</strong> ₹${formatINR(c)}</p>
+    <p><strong>Total WTP:</strong> ₹${INR.format(Math.round(w))}</p>
+    <p><strong>Total Cost (PV):</strong> ₹${INR.format(Math.round(c))}</p>
     <p><strong>BCR:</strong> ${bcr.toFixed(2)}</p>
-    <p><strong>Net Benefit:</strong> ₹${formatINR(net)}</p>
+    <p><strong>Net Benefit:</strong> ₹${INR.format(Math.round(net))}</p>
     <p>${rec}</p>`;
   openModal();
 
@@ -222,7 +222,7 @@ function buildRecommendation(sc,ePct,bcr,net){
   return msgs.length? "Recommendations: "+msgs.join(" ") : "Configuration looks balanced—endorsement strong and net benefit positive.";
 }
 
-/* ---------- CHARTS ---------- */
+/* ---------- Charts ---------- */
 function renderWTPChart(){
   const canvas=document.getElementById("wtpChartMain"); if(!canvas)return;
   const ctx=canvas.getContext("2d");
@@ -231,7 +231,7 @@ function renderWTPChart(){
   const vals=Object.values(WTP);
   wtpChart=new Chart(ctx,{
     type:"bar",
-    data:{labels,datasets:[{label:"Marginal WTP (₹)",data:vals,backgroundColor:PUB_COLORS,borderColor:"#243447",borderWidth:1}]},
+    data:{labels,datasets:[{label:"Marginal WTP (₹)",data:vals,backgroundColor:COLORS,borderColor:"#243447",borderWidth:1}]},
     options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}},
       plugins:{legend:{display:false},title:{display:true,text:"Marginal WTP (₹)",font:{size:18}}}}
   });
@@ -245,7 +245,7 @@ function renderEndorseChart(sc){
   const p=endorsementProb(s)*100;
   endorseChart=new Chart(ctx,{
     type:"doughnut",
-    data:{labels:["Endorse","Not Endorse"],datasets:[{data:[p,100-p],backgroundColor:[PUB_COLORS[0],"#cccccc"],borderColor:"#fff",borderWidth:2}]},
+    data:{labels:["Endorse","Not Endorse"],datasets:[{data:[p,100-p],backgroundColor:[COLORS[0],"#cccccc"],borderColor:"#fff",borderWidth:2}]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{title:{display:true,text:`Endorsement: ${p.toFixed(1)}%`,font:{size:18}},
                tooltip:{callbacks:{label:c=>`${c.label}: ${c.parsed.toFixed(1)}%`}}}}
@@ -265,10 +265,10 @@ function renderCostsBenefits(sc=null,ePct=null,w=null,c=null,bcr=null,net=null,e
   cont.innerHTML=`
     <div class="calculation-info">
       <p><strong>Endorsement rate:</strong> ${e.toFixed(1)}%</p>
-      <p><strong>Total WTP:</strong> ₹${formatINR(W)}</p>
-      <p><strong>Total Cost (PV):</strong> ₹${formatINR(C)}</p>
+      <p><strong>Total WTP:</strong> ₹${INR.format(Math.round(W))}</p>
+      <p><strong>Total Cost (PV):</strong> ₹${INR.format(Math.round(C))}</p>
       <p><strong>BCR:</strong> ${B.toFixed(2)} ${B<1?'<span style="color:#e74c3c">(BCR&lt;1)</span>':''}</p>
-      <p><strong>Net Benefit:</strong> ₹${formatINR(N)}</p>
+      <p><strong>Net Benefit:</strong> ₹${INR.format(Math.round(N))}</p>
     </div>
     <div class="chart-box fixed-height"><canvas id="combinedChart"></canvas></div>
   `;
@@ -289,7 +289,7 @@ function renderCostsBenefits(sc=null,ePct=null,w=null,c=null,bcr=null,net=null,e
   if(combinedChart) combinedChart.destroy();
   combinedChart=new Chart(ctx,{
     type:"bar",
-    data:{labels:["Total Cost","Total WTP","Net Benefit"],datasets:[{label:"₹",data:[C,W,N],backgroundColor:[PUB_COLORS[3],PUB_COLORS[1],PUB_COLORS[2]],borderColor:"#243447",borderWidth:1}]},
+    data:{labels:["Total Cost","Total WTP","Net Benefit"],datasets:[{label:"₹",data:[C,W,N],backgroundColor:[COLORS[3],COLORS[1],COLORS[2]],borderColor:"#243447",borderWidth:1}]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},title:{display:true,text:"Cost–Benefit Summary (₹)",font:{size:18}}},
       scales:{y:{beginAtZero:true}}}
@@ -301,13 +301,8 @@ function addCostCard(container,title,val,type){
   div.className="cost-card";
   div.innerHTML=`<h4>${title.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase())}</h4>
                  <p>${type} component</p>
-                 <p><strong>₹ ${formatINR(val)}</strong></p>`;
+                 <p><strong>₹ ${INR.format(Math.round(val))}</strong></p>`;
   container.appendChild(div);
-}
-
-function toggleCostBreakdown(){
-  const el=document.getElementById("detailedCostBreakdown");
-  el.style.display=(el.style.display==="none"||el.style.display==="")?"flex":"none";
 }
 
 /* ---------- QALY ---------- */
@@ -324,9 +319,9 @@ function renderQALY(){
   document.getElementById("qalyResults").innerHTML=`
     <div class="calculation-info">
       <p><strong>Total QALYs (PV):</strong> ${qaly.toFixed(2)}</p>
-      <p><strong>Total Cost (PV):</strong> ₹${formatINR(cost)}</p>
-      <p><strong>ICER:</strong> ₹${formatINR(icer)} / QALY</p>
-      <p><strong>Threshold:</strong> ₹${formatINR(threshold)} → ${icer<=threshold?'<span style="color:#27ae60">Cost‑effective</span>':'<span style="color:#e74c3c">Not cost‑effective</span>'}</p>
+      <p><strong>Total Cost (PV):</strong> ₹${INR.format(Math.round(cost))}</p>
+      <p><strong>ICER:</strong> ₹${INR.format(Math.round(icer))} / QALY</p>
+      <p><strong>Threshold:</strong> ₹${INR.format(threshold)} → ${icer<=threshold?'<span style="color:#27ae60">Cost‑effective</span>':'<span style="color:#e74c3c">Not cost‑effective</span>'}</p>
     </div>
   `;
 
@@ -334,7 +329,7 @@ function renderQALY(){
   if(qalyChart) qalyChart.destroy();
   qalyChart=new Chart(ctx,{
     type:"bar",
-    data:{labels:["ICER","Threshold"],datasets:[{label:"₹/QALY",data:[icer,threshold],backgroundColor:[PUB_COLORS[0],PUB_COLORS[4]],borderColor:"#243447",borderWidth:1}]},
+    data:{labels:["ICER","Threshold"],datasets:[{label:"₹/QALY",data:[icer,threshold],backgroundColor:[COLORS[0],COLORS[4]],borderColor:"#243447",borderWidth:1}]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},title:{display:true,text:"ICER vs Threshold",font:{size:18}}},
       scales:{y:{beginAtZero:true}}}
@@ -354,13 +349,14 @@ function runPSA(){
   const eMean=endorsementProb(sc), wMean=scenarioWTP(sc,eMean),
         cMean=scenarioCost(sc,eMean), qMean=scenarioQALY(sc,eMean,qalyPerT);
 
-  const BCR=[],ICER=[],NB=[];
+  const BCR=[], ICER=[];
   for(let i=0;i<iters;i++){
-    const e = truncNormal(eMean,eMean*seEnd,0.01,0.99);
-    const w = truncNormal(wMean,wMean*seWTP,1,Infinity);
-    const c = truncNormal(cMean,cMean*seCost,1,Infinity);
-    const q = truncNormal(qMean,qMean*seCost,0.0001,Infinity);
-    BCR.push(w/c); NB.push(w-c); ICER.push(c/q);
+    const e=truncNormal(eMean,eMean*seEnd,0.01,0.99);
+    const w=truncNormal(wMean,wMean*seWTP,1,Infinity);
+    const c=truncNormal(cMean,cMean*seCost,1,Infinity);
+    const q=truncNormal(qMean,qMean*seCost,0.0001,Infinity);
+    BCR.push(w/c);
+    ICER.push(c/q);
   }
 
   const mean=a=>a.reduce((s,x)=>s+x,0)/a.length;
@@ -370,13 +366,13 @@ function runPSA(){
   document.getElementById("psaResults").innerHTML=`
     <div class="calculation-info">
       <p><strong>BCR mean:</strong> ${mean(BCR).toFixed(2)} (95% CI ${bL.toFixed(2)}–${bU.toFixed(2)})</p>
-      <p><strong>ICER mean:</strong> ₹${formatINR(mean(ICER))} (95% CI ₹${formatINR(iL)}–₹${formatINR(iU)})</p>
+      <p><strong>ICER mean:</strong> ₹${INR.format(Math.round(mean(ICER)))} (95% CI ₹${INR.format(Math.round(iL))}–₹${INR.format(Math.round(iU))})</p>
       <p><strong>P(BCR&gt;1):</strong> ${(BCR.filter(x=>x>1).length/iters*100).toFixed(1)}%</p>
       <p><strong>P(ICER&lt;Threshold):</strong> ${(ICER.filter(x=>x<threshold).length/iters*100).toFixed(1)}%</p>
     </div>
   `;
-  renderHistogram("psaBCR",BCR,"BCR",PUB_COLORS[1]);
-  renderHistogram("psaICER",ICER,"ICER (₹/QALY)",PUB_COLORS[3]);
+  renderHistogram("psaBCR",BCR,"BCR",COLORS[1]);
+  renderHistogram("psaICER",ICER,"ICER (₹/QALY)",COLORS[3]);
 }
 
 function truncNormal(mean,sd,min,max){
@@ -386,8 +382,8 @@ function randn_bm(){
   let u=0,v=0; while(u===0)u=Math.random(); while(v===0)v=Math.random();
   return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
 }
-function renderHistogram(canvasId,data,label,color){
-  const ctx=document.getElementById(canvasId).getContext("2d");
+function renderHistogram(id,data,label,color){
+  const ctx=document.getElementById(id).getContext("2d");
   const bins=20,min=Math.min(...data),max=Math.max(...data),width=(max-min)/bins||1;
   const counts=new Array(bins).fill(0);
   data.forEach(v=>{let idx=Math.floor((v-min)/width); if(idx>=bins)idx=bins-1; counts[idx]++;});
@@ -397,14 +393,12 @@ function renderHistogram(canvasId,data,label,color){
     data:{labels,datasets:[{label,data:counts,backgroundColor:color,borderColor:"#243447",borderWidth:1}]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},title:{display:true,text:`${label} Distribution`,font:{size:16}}},
-      scales:{y:{beginAtZero:true}}}
-  };
-  if(canvasId==="psaBCR"){ if(psaBCRChart) psaBCRChart.destroy(); psaBCRChart=new Chart(ctx,cfg); }
+      scales:{y:{beginAtZero:true}}};
+  if(id==="psaBCR"){ if(psaBCRChart) psaBCRChart.destroy(); psaBCRChart=new Chart(ctx,cfg); }
   else{ if(psaICERChart) psaICERChart.destroy(); psaICERChart=new Chart(ctx,cfg); }
 }
 
-/* ---------- SAVE / EXPORT ---------- */
-let savedScenarios=[];
+/* ---------- Save / Export ---------- */
 function saveScenario(){
   const sc=buildScenario(); if(!sc)return;
   const eShare=endorsementProb(sc), e=eShare*100;
@@ -423,7 +417,7 @@ function appendScenarioRow(s){
   ["name","ptype","duration","focus","mode","resp","capacity","costPerTM","stakeholders","cohortsYear","yearsHorizon","discRate","endorse","totalWTP","totalCost","bcr","net","icer"]
     .forEach(c=>{
       const td=document.createElement("td"); let v=s[c];
-      if(["totalWTP","totalCost","net","costPerTM","icer"].includes(c)) v="₹"+formatINR(v);
+      if(["totalWTP","totalCost","net","costPerTM","icer"].includes(c)) v="₹"+INR.format(Math.round(v));
       if(c==="bcr") v=s[c].toFixed(2);
       if(c==="endorse") v=s[c].toFixed(1)+"%";
       if(c==="discRate") v=(s[c]*100).toFixed(1)+"%";
@@ -435,8 +429,7 @@ function appendScenarioRow(s){
 function exportPDF(){
   if(savedScenarios.length===0){ alert("No scenarios saved."); return; }
   const { jsPDF } = window.jspdf;
-  const doc=new jsPDF({unit:"mm",format:"a4"});
-  const pw=doc.internal.pageSize.getWidth();
+  const doc=new jsPDF({unit:"mm",format:"a4"}), pw=doc.internal.pageSize.getWidth();
   let y=15;
   doc.setFontSize(16); doc.text("FETP India – Scenario Comparison",pw/2,y,{align:"center"}); y+=8;
   savedScenarios.forEach(s=>{
@@ -445,21 +438,20 @@ function exportPDF(){
     [
       `Type:${s.ptype} Dur:${s.duration}m Focus:${s.focus} Mode:${s.mode} Resp:${s.resp}d`,
       `Cap:${s.capacity} Coh/yr:${s.cohortsYear} Yr:${s.yearsHorizon} Disc:${(s.discRate*100).toFixed(1)}%`,
-      `₹/T/M:${formatINR(s.costPerTM)} Stakeh:${s.stakeholders}`,
-      `Endorse:${s.endorse.toFixed(1)}%  WTP:₹${formatINR(s.totalWTP)}  Cost:₹${formatINR(s.totalCost)}`,
-      `BCR:${s.bcr.toFixed(2)}  Net:₹${formatINR(s.net)}  ICER:₹${formatINR(s.icer)}/QALY`
+      `₹/T/M:${INR.format(Math.round(s.costPerTM))} Stakeh:${s.stakeholders}`,
+      `Endorse:${s.endorse.toFixed(1)}%  WTP:₹${INR.format(Math.round(s.totalWTP))}  Cost:₹${INR.format(Math.round(s.totalCost))}`,
+      `BCR:${s.bcr.toFixed(2)}  Net:₹${INR.format(Math.round(s.net))}  ICER:₹${INR.format(Math.round(s.icer))}/QALY`
     ].forEach(line=>{ doc.text(line,15,y); y+=5; });
     y+=3;
   });
   doc.save("FETP_Scenarios.pdf");
 }
 
-/* ---------- MODAL & UTILS ---------- */
+/* ---------- Modal & expose ---------- */
 function openModal(){ document.getElementById("resultModal").style.display="block"; }
 function closeModal(){ document.getElementById("resultModal").style.display="none"; }
-function formatINR(num){ return Math.round(num).toString().replace(/\B?(?=(\d{2})+(?!\d))/g,","); }
 
-/* expose for HTML buttons */
+/* Expose functions for HTML */
 window.updateCostDisplay=updateCostDisplay;
 window.updateCapDisplay=updateCapDisplay;
 window.updateStakeDisplay=updateStakeDisplay;
@@ -467,11 +459,9 @@ window.calculateAll=calculateAll;
 window.renderWTPChart=renderWTPChart;
 window.renderEndorseChart=renderEndorseChart;
 window.renderCostsBenefits=renderCostsBenefits;
-window.toggleCostBreakdown=toggleCostBreakdown;
+window.toggleCostBreakdown=()=>{const el=document.getElementById("detailedCostBreakdown"); el.style.display=(el.style.display==="none"||el.style.display==="")?"flex":"none";};
 window.renderQALY=renderQALY;
 window.runPSA=runPSA;
 window.saveScenario=saveScenario;
 window.exportPDF=exportPDF;
 window.closeModal=closeModal;
-
-})();
