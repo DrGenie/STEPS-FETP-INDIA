@@ -1,9 +1,9 @@
 // script.js
 /**************************************************************************
  * FETP India Decision Aid Tool
- * - Placeholder coefficients for WTP & endorsement (update when DCE ready)
- * - Benefits = Total WTP (₹), Costs = detailed cost model
- * - BCR, Net Benefit, warnings, charts, scenario saving
+ * - Dynamic costs using multipliers by attribute levels
+ * - Benefits: WTP (₹) & QALYs
+ * - Professional charts (palette & fonts)
  **************************************************************************/
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -11,6 +11,10 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.addEventListener("click", function(){ openTab(this.getAttribute("data-tab"), this); })
   );
   openTab("introTab", document.querySelector(".tablink"));
+
+  // Chart.js global defaults (fonts/colours)
+  Chart.defaults.font.size = 14;
+  Chart.defaults.color = "#243447";
 });
 
 /* -------- Tab switching -------- */
@@ -32,10 +36,7 @@ function updateCostDisplay(v){ document.getElementById("costLabel").textContent 
 function updateCapDisplay(v){ document.getElementById("capLabel").textContent = v; }
 function updateStakeDisplay(v){ document.getElementById("stakeLabel").textContent = v; }
 
-/* -------- Placeholder Coefficients --------
-   Utility (endorsement) model: logit on endorsement yes/no
-   U = β0 + β_type* + β_dur* + β_focus* + β_mode* + β_resp* + β_cost*cost
-   (All β are placeholders.) */
+/* -------- Placeholder Coefficients (update with real DCE later) -------- */
 const COEFS = {
   ASC: 0.2,
   type_intermediate: 0.35,
@@ -49,10 +50,9 @@ const COEFS = {
   resp_7: 0.20,
   resp_3: 0.35,
   resp_1: 0.60,
-  cost_perT_perM: -0.00001 // utility drop per ₹1 increase
+  cost_perT_perM: -0.00001 // utility drop per ₹1
 };
 
-/* Marginal WTP in ₹ (placeholder). Each is relative to the reference level. */
 const WTP = {
   type_intermediate: 12000,
   type_advanced: 22000,
@@ -67,33 +67,44 @@ const WTP = {
   resp_1: 18000
 };
 
-/* Cost components (₹ per year unless noted). Adjust these realistically as needed. */
-const COST_COMPONENTS = [
-  { major:"Direct", category:"Salary & Benefits", sub:"In-Country Program Staff", desc:"Local staff (faculty/secretariat) salaries & benefits", value: 18000000 },
-  { major:"Direct", category:"Salary & Benefits", sub:"Other (consultants/advisors)", desc:"External consultants and advisors", value: 5000000 },
-  { major:"Direct", category:"Equipment & Supplies", sub:"Office Equipment", desc:"Computers, projectors, printers, etc.", value: 1500000 },
-  { major:"Direct", category:"Equipment & Supplies", sub:"Office Software", desc:"Software licenses (analysis, LMS, office)", value: 600000 },
-  { major:"Direct", category:"Facilities", sub:"Rent & Utilities", desc:"Office rent, electricity, internet", value: 2400000 },
-  { major:"Direct", category:"Trainee Support", sub:"Allowances", desc:"Stipends/scholarships", value_per_trainee: 150000 }, // /trainee/year
-  { major:"Direct", category:"Trainee Support", sub:"Trainee Equipment", desc:"Laptops, dongles, etc.", value_per_trainee: 40000 },
-  { major:"Direct", category:"Trainee Support", sub:"Trainee Software", desc:"Software for trainees", value_per_trainee: 8000 },
-  { major:"Direct", category:"Training", sub:"Materials", desc:"Printing manuals/other resources", value_per_trainee: 5000 },
-  { major:"Direct", category:"Training", sub:"Workshops & Seminars", desc:"Venue, catering, logistics", value: 2000000 },
-  { major:"Direct", category:"Travel", sub:"In-Country Travel", desc:"Faculty/trainee travel & per diems", value: 3500000 },
-  { major:"Direct", category:"Travel", sub:"International Travel", desc:"Conferences/outbreak assistance", value: 1200000 },
-  { major:"Direct", category:"Other", sub:"Miscellaneous direct", desc:"Other direct programme expenses", value: 800000 },
+/* -------- Cost model (₹). Fixed & per trainee, with multipliers -------- */
+const BASE_COSTS = {
+  staff_local: 18000000,          // In-country staff
+  staff_consult: 5000000,
+  equip_office: 1500000,
+  sw_office: 600000,
+  rent_utils: 2400000,
+  workshops: 2000000,
+  travel_in: 3500000,
+  travel_int: 1200000,
+  other_direct: 800000,
+  mgmt: 3000000,
+  maint: 600000,
+  inkind_salary: 2000000,
+  facility_up: 1000000,
+  depreciation: 500000,
+  shared_utils: 700000,
+  legal_fin: 400000,
+  staff_dev: 900000,
+  other_indirect: 500000
+};
 
-  { major:"Indirect", category:"Administrative Support", sub:"Management & Oversight", desc:"Senior management salaries (shared)", value: 3000000 },
-  { major:"Indirect", category:"Administrative Support", sub:"Office Maintenance", desc:"General office maintenance", value: 600000 },
-  { major:"Indirect", category:"In-kind", sub:"Salary (trainers/mentors)", desc:"In-kind support not directly costed", value: 2000000 },
-  { major:"Indirect", category:"Infrastructure", sub:"Facility Upgrades", desc:"Upgrading/maintaining training facilities", value: 1000000 },
-  { major:"Indirect", category:"Infrastructure", sub:"Equipment Depreciation", desc:"Depreciation of high-value equipment", value: 500000 },
-  { major:"Indirect", category:"Utilities", sub:"Shared Services", desc:"Security, cleaning, shared internet", value: 700000 },
-  { major:"Indirect", category:"Professional Services", sub:"Legal & Financial", desc:"Auditing, compliance, contracts", value: 400000 },
-  { major:"Indirect", category:"Training & Capacity", sub:"Staff Development", desc:"Upskilling non-trainee staff", value: 900000 },
-  { major:"Indirect", category:"Opportunity cost", sub:"Trainee salary foregone", desc:"Income trainees could earn", value_per_trainee: 180000 },
-  { major:"Indirect", category:"Other indirect", sub:"Miscellaneous indirect", desc:"Other indirect programme costs", value: 500000 }
-];
+const PER_TRAINEE = {
+  allowance: 150000,
+  equip: 40000,
+  sw: 8000,
+  materials: 5000,
+  opp_cost: 180000 // salary foregone
+};
+
+/* Multipliers by attribute */
+const MULTIPLIERS = {
+  ptype: { frontline:1, intermediate:1.25, advanced:1.6 },
+  duration: { "6":1, "12":1.6, "24":2.2 },
+  mode_cost_adj: { inperson:1, hybrid:1.1, online:0.85 }, // online cheaper travel, but extra software
+  focus_cost_adj: { human:1, animal:1.1, onehealth:1.25 },
+  resp_cost_adj: { "14":1, "7":1.15, "3":1.3, "1":1.5 }
+};
 
 /* -------- Build scenario from inputs -------- */
 function buildScenario(){
@@ -113,7 +124,7 @@ function buildScenario(){
 
   const warn = [];
   if(mode==="online" && (ptype==="advanced" || focus==="onehealth")){
-    warn.push("Fully online with Advanced or One Health focus may be unrealistic. Consider Hybrid/In-person.");
+    warn.push("Fully online with Advanced/One Health focus may be unrealistic. Consider Hybrid/In-person.");
   }
   displayWarnings(warn);
 
@@ -154,7 +165,7 @@ function endorsementProb(sc){
   return Math.exp(U)/(1+Math.exp(U));
 }
 
-/* -------- Total WTP -------- */
+/* -------- WTP -------- */
 function scenarioWTP(sc){
   let tot = 0;
   if(sc.ptype==="intermediate") tot+=WTP.type_intermediate;
@@ -168,27 +179,44 @@ function scenarioWTP(sc){
   if(sc.resp==="7") tot+=WTP.resp_7;
   if(sc.resp==="3") tot+=WTP.resp_3;
   if(sc.resp==="1") tot+=WTP.resp_1;
-  // Multiply by stakeholders to get aggregate
   return tot * sc.stakeholders;
 }
 
-/* -------- Costs -------- */
+/* -------- Costs (dynamic) -------- */
 function scenarioCost(sc){
-  // Split components into per trainee and fixed
-  let total = 0;
-  COST_COMPONENTS.forEach(c=>{
-    if(typeof c.value_per_trainee!=="undefined"){
-      total += c.value_per_trainee * sc.capacity;
-    }else{
-      total += c.value;
-    }
-  });
-  // Add MoH training cost: costPerTM * months * capacity
-  total += sc.costPerTM * (+sc.duration) * sc.capacity;
-  return total;
+  // base multipliers
+  const mType = MULTIPLIERS.ptype[sc.ptype];
+  const mDur = MULTIPLIERS.duration[sc.duration];
+  const mMode = MULTIPLIERS.mode_cost_adj[sc.mode];
+  const mFocus = MULTIPLIERS.focus_cost_adj[sc.focus];
+  const mResp = MULTIPLIERS.resp_cost_adj[sc.resp];
+
+  const overallMult = mType * mDur * mMode * mFocus * mResp;
+
+  // Fixed blocks (apply overall multiplier)
+  let fixed = 0;
+  Object.values(BASE_COSTS).forEach(v=> fixed += v);
+  fixed *= overallMult;
+
+  // Per trainee blocks
+  let perT = 0;
+  Object.values(PER_TRAINEE).forEach(v=> perT += v);
+  perT *= sc.capacity * mType * mDur * mFocus; // opp cost etc scale w/ type/duration/focus
+
+  // MoH training cost slider
+  const moh = sc.costPerTM * (+sc.duration) * sc.capacity;
+
+  return fixed + perT + moh;
 }
 
-/* -------- Calculate & populate -------- */
+/* -------- QALY Analysis -------- */
+function scenarioQALY(sc, qalyPerTrainee){
+  // Assume all capacity * endorsement proportion complete training effectively
+  const endorsed = endorsementProb(sc);
+  return sc.capacity * endorsed * qalyPerTrainee;
+}
+
+/* -------- Calculate & show modal -------- */
 function calculateAll(){
   const sc = buildScenario();
   if(!sc) return;
@@ -199,38 +227,38 @@ function calculateAll(){
   const bcr = totalWTP/totalCost;
   const net = totalWTP-totalCost;
 
-  // Modal
   const rec = recommendation(sc, endorse, bcr);
   document.getElementById("modalResults").innerHTML = `
     <h4>Results</h4>
     <p><strong>Endorsement:</strong> ${endorse.toFixed(1)}%</p>
     <p><strong>Total WTP:</strong> ₹${formatINR(totalWTP)}</p>
     <p><strong>Total Cost:</strong> ₹${formatINR(totalCost)}</p>
-    <p><strong>BCR:</strong> ${bcr.toFixed(2)}</p>
+    <p><strong>BCR (WTP/Cost):</strong> ${bcr.toFixed(2)}</p>
     <p><strong>Net Benefit:</strong> ₹${formatINR(net)}</p>
     <p>${rec}</p>`;
   openModal();
 
-  // Update charts/tabs content
   renderWTPChart(sc);
   renderEndorseChart(sc);
   renderCostsBenefits(sc, endorse, totalWTP, totalCost, bcr, net);
 }
 
-/* -------- Recommendation text -------- */
+/* -------- Recommendation -------- */
 function recommendation(sc, endorse, bcr){
-  if(endorse>=70 && bcr>=1) return "High endorsement and value-for-money. Configuration is strong.";
-  let r="Consider adjustments: ";
+  if(endorse>=70 && bcr>=1) return "High endorsement and positive BCR. Strong case.";
+  let r="Consider: ";
   if(endorse<50) r+="boost practical components or shorten duration; ";
-  if(bcr<1) r+="reduce costly features or target higher response capacity to raise WTP; ";
+  if(bcr<1) r+="trim costly items or target faster response to raise WTP; ";
   if(sc.mode==="online" && (sc.ptype==="advanced"||sc.focus==="onehealth")) r+="switch from fully online to hybrid/in-person; ";
   return r;
 }
 
 /* -------- Charts -------- */
-let wtpChart=null, endorseChart=null, combinedChart=null;
+let wtpChart=null, endorseChart=null, combinedChart=null, qalyChart=null;
 
-function renderWTPChart(sc=null){
+const PUB_COLORS = ["#2a76d2","#009688","#f39c12","#e74c3c","#7f8c8d","#8e44ad","#27ae60","#d35400","#16a085","#c0392b"];
+
+function renderWTPChart(){
   const ctx = document.getElementById("wtpChartMain").getContext("2d");
   if(wtpChart) wtpChart.destroy();
 
@@ -244,13 +272,18 @@ function renderWTPChart(sc=null){
       datasets:[{
         label:"Marginal WTP (₹)",
         data:dataVals,
+        backgroundColor: PUB_COLORS.slice(0,dataVals.length),
+        borderColor: "#243447",
         borderWidth:1
       }]
     },
     options:{
       responsive:true,
       scales:{y:{beginAtZero:true}},
-      plugins:{legend:{display:false},title:{display:true,text:"Marginal WTP (₹)"}}
+      plugins:{
+        legend:{display:false},
+        title:{display:true,text:"Marginal WTP (₹)",font:{size:18,weight:'600'}}
+      }
     }
   });
 }
@@ -269,12 +302,17 @@ function renderEndorseChart(sc=null){
     type:"doughnut",
     data:{
       labels:["Endorse","Not Endorse"],
-      datasets:[{data:[p,100-p]}]
+      datasets:[{
+        data:[p,100-p],
+        backgroundColor:[PUB_COLORS[0], "#cccccc"],
+        borderColor:"#ffffff",
+        borderWidth:2
+      }]
     },
     options:{
       responsive:true,maintainAspectRatio:false,
       plugins:{
-        title:{display:true,text:`Predicted Endorsement: ${p.toFixed(1)}%`},
+        title:{display:true,text:`Predicted Endorsement: ${p.toFixed(1)}%`,font:{size:18,weight:'600'}},
         tooltip:{callbacks:{label:(c)=>`${c.label}: ${c.parsed.toFixed(1)}%`}}
       }
     }
@@ -299,28 +337,37 @@ function renderCostsBenefits(sc=null, endorse=null, totWTP=null, totCost=null, b
       <p><strong>Endorsement:</strong> ${e.toFixed(1)}%</p>
       <p><strong>Total WTP:</strong> ₹${formatINR(w)}</p>
       <p><strong>Total Cost:</strong> ₹${formatINR(c)}</p>
-      <p><strong>BCR:</strong> ${b.toFixed(2)} ${b<1?'<span style="color:#dc3545">(BCR < 1)</span>':''}</p>
+      <p><strong>BCR:</strong> ${b.toFixed(2)} ${b<1?'<span style="color:#e74c3c">(BCR &lt; 1)</span>':''}</p>
       <p><strong>Net Benefit:</strong> ₹${formatINR(n)}</p>
     </div>
     <div><canvas id="combinedChart"></canvas></div>
   `;
 
-  // Fill cost breakdown list
+  // Cost breakdown
   const listDiv = document.getElementById("detailedCostBreakdown");
   listDiv.innerHTML = "";
-  COST_COMPONENTS.forEach(item=>{
-    const val = typeof item.value_per_trainee!=="undefined"
-      ? item.value_per_trainee*s.capacity
-      : item.value;
-    const el = document.createElement("div");
-    el.className="cost-card";
-    el.innerHTML = `<h4>${item.category} – ${item.sub}</h4>
-                    <p><strong>${item.major}</strong></p>
-                    <p>${item.desc}</p>
-                    <p><strong>₹ ${formatINR(val)}</strong></p>`;
-    listDiv.appendChild(el);
-  });
+  const mType = MULTIPLIERS.ptype[s.ptype];
+  const mDur = MULTIPLIERS.duration[s.duration];
+  const mMode = MULTIPLIERS.mode_cost_adj[s.mode];
+  const mFocus = MULTIPLIERS.focus_cost_adj[s.focus];
+  const mResp = MULTIPLIERS.resp_cost_adj[s.resp];
+  const overallMult = mType*mDur*mMode*mFocus*mResp;
 
+  // Fixed components
+  Object.entries(BASE_COSTS).forEach(([key,val])=>{
+    const calc = val*overallMult;
+    addCostCard(listDiv, key, calc, false);
+  });
+  // Per trainee
+  Object.entries(PER_TRAINEE).forEach(([key,val])=>{
+    const calc = val*s.capacity*mType*mDur*mFocus;
+    addCostCard(listDiv, key, calc, true);
+  });
+  // MoH cost slider
+  const moh = s.costPerTM * (+s.duration) * s.capacity;
+  addCostCard(listDiv, "moh_training_cost", moh, true, "MoH Training Cost (slider)");
+
+  // Combined chart
   const ctx = document.getElementById("combinedChart").getContext("2d");
   if(combinedChart) combinedChart.destroy();
   combinedChart = new Chart(ctx,{
@@ -330,20 +377,82 @@ function renderCostsBenefits(sc=null, endorse=null, totWTP=null, totCost=null, b
       datasets:[{
         label:"₹",
         data:[c,w,n],
+        backgroundColor:[PUB_COLORS[3],PUB_COLORS[1],PUB_COLORS[2]],
+        borderColor:"#243447",
         borderWidth:1
       }]
     },
     options:{
       responsive:true,
-      plugins:{legend:{display:false},title:{display:true,text:"Cost–Benefit Summary"}},
+      plugins:{
+        legend:{display:false},
+        title:{display:true,text:"Cost–Benefit Summary (₹)",font:{size:18,weight:'600'}}
+      },
       scales:{y:{beginAtZero:true}}
     }
   });
 }
 
+function addCostCard(container, key, val, perT, labelOverride){
+  const nice = key.replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
+  const card=document.createElement("div");
+  card.className="cost-card";
+  card.innerHTML = `<h4>${labelOverride||nice}</h4>
+                    <p>${perT?"Per trainee component":"Fixed component"}</p>
+                    <p><strong>₹ ${formatINR(val)}</strong></p>`;
+  container.appendChild(card);
+}
+
 function toggleCostBreakdown(){
   const el=document.getElementById("detailedCostBreakdown");
   el.style.display = (el.style.display==="none"||el.style.display==="") ? "flex":"none";
+}
+
+/* -------- QALY Tab -------- */
+function renderQALY(){
+  const sc = buildScenario();
+  if(!sc) return;
+
+  const qalyPerTrainee = parseFloat(document.getElementById("qalyPerTrainee").value);
+  const threshold = +document.getElementById("threshold").value;
+
+  const totalCost = scenarioCost(sc);
+  const totalQALY = scenarioQALY(sc, qalyPerTrainee);
+  const icer = totalCost/totalQALY;
+
+  const div=document.getElementById("qalyResults");
+  div.innerHTML = `
+    <div class="calculation-info">
+      <p><strong>Total QALYs:</strong> ${totalQALY.toFixed(2)}</p>
+      <p><strong>Total Cost:</strong> ₹${formatINR(totalCost)}</p>
+      <p><strong>ICER:</strong> ₹${formatINR(icer)} per QALY</p>
+      <p><strong>Threshold:</strong> ₹${formatINR(threshold)} / QALY – ${icer<=threshold?'<span style="color:#27ae60">Cost-effective</span>':'<span style="color:#e74c3c">Not cost-effective</span>'}</p>
+    </div>
+  `;
+
+  const ctx=document.getElementById("qalyChart").getContext("2d");
+  if(qalyChart) qalyChart.destroy();
+  qalyChart=new Chart(ctx,{
+    type:"bar",
+    data:{
+      labels:["ICER","Threshold"],
+      datasets:[{
+        label:"₹/QALY",
+        data:[icer,threshold],
+        backgroundColor:[PUB_COLORS[0],PUB_COLORS[4]],
+        borderColor:"#243447",
+        borderWidth:1
+      }]
+    },
+    options:{
+      responsive:true,
+      plugins:{
+        legend:{display:false},
+        title:{display:true,text:"ICER vs Threshold",font:{size:18,weight:'600'}}
+      },
+      scales:{y:{beginAtZero:true}}
+    }
+  });
 }
 
 /* -------- Scenario storage -------- */
@@ -358,7 +467,12 @@ function saveScenario(){
   const bcr = totalWTP/totalCost;
   const net = totalWTP-totalCost;
 
-  const obj = {...sc, endorse, totalWTP, totalCost, bcr, net, name:`Scenario ${savedScenarios.length+1}`};
+  // QALY metrics (use current QALY tab inputs)
+  const qalyPerTrainee = parseFloat(document.getElementById("qalyPerTrainee").value || "0.03");
+  const totalQALY = scenarioQALY(sc, qalyPerTrainee);
+  const icer = totalCost/totalQALY;
+
+  const obj = {...sc, endorse, totalWTP, totalCost, bcr, net, icer, name:`Scenario ${savedScenarios.length+1}`};
   savedScenarios.push(obj);
   appendScenarioRow(obj);
   alert(`Saved ${obj.name}.`);
@@ -368,11 +482,11 @@ function appendScenarioRow(s){
   const tbody=document.querySelector("#scenarioTable tbody");
   const tr=document.createElement("tr");
   const cols=["name","ptype","duration","focus","mode","resp","capacity","costPerTM","stakeholders",
-              "endorse","totalWTP","totalCost","bcr","net"];
+              "endorse","totalWTP","totalCost","bcr","net","icer"];
   cols.forEach(c=>{
     const td=document.createElement("td");
     let val=s[c];
-    if(["totalWTP","totalCost","net","costPerTM"].includes(c)) val="₹"+formatINR(val);
+    if(["totalWTP","totalCost","net","costPerTM","icer"].includes(c)) val="₹"+formatINR(val);
     if(c==="bcr") val=s[c].toFixed(2);
     if(c==="endorse") val=s[c].toFixed(1)+"%";
     td.textContent=val;
@@ -396,10 +510,10 @@ function exportPDF(){
     doc.setFontSize(12);
     doc.text(`${s.name}`,15,y); y+=5;
     const lines=[
-      `Type: ${s.ptype}, Duration: ${s.duration}m, Focus: ${s.focus}, Mode: ${s.mode}`,
-      `Resp: ${s.resp}d, Capacity: ${s.capacity}, ₹/T/M: ${formatINR(s.costPerTM)}, Stakeholders: ${s.stakeholders}`,
-      `Endorse: ${s.endorse.toFixed(1)}%, Total WTP: ₹${formatINR(s.totalWTP)}, Total Cost: ₹${formatINR(s.totalCost)}`,
-      `BCR: ${s.bcr.toFixed(2)}, Net Benefit: ₹${formatINR(s.net)}`
+      `Type: ${s.ptype}, Dur: ${s.duration}m, Focus: ${s.focus}, Mode: ${s.mode}, Resp: ${s.resp}d`,
+      `Cap: ${s.capacity}, ₹/T/M: ${formatINR(s.costPerTM)}, Stakeholders: ${s.stakeholders}`,
+      `Endorse: ${s.endorse.toFixed(1)}%, WTP: ₹${formatINR(s.totalWTP)}, Cost: ₹${formatINR(s.totalCost)}`,
+      `BCR: ${s.bcr.toFixed(2)}, Net: ₹${formatINR(s.net)}, ICER: ₹${formatINR(s.icer)}/QALY`
     ];
     lines.forEach(t=>{doc.text(t,15,y);y+=5;});
     y+=3;
@@ -413,5 +527,6 @@ function closeModal(){ document.getElementById("resultModal").style.display="non
 
 /* -------- Helpers -------- */
 function formatINR(num){
+  // Indian number format
   return Math.round(num).toString().replace(/\B(?=(\d{2})+(?!\d))/g, ",");
 }
