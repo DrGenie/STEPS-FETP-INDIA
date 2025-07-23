@@ -1,6 +1,6 @@
 /* ================================
    FETP India Decision Aid Tool JS
-   (All tabs now work: no inline JS, single init())
+   (All tabs now work: noo inline JS, single init())
 ================================ */
 (function(){
 "use strict";
