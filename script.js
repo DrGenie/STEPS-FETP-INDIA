@@ -3,7 +3,7 @@
  * FETP India Decision Aid Tool
  * - Dynamic costs using multipliers by attribute levels
  * - Benefits: WTP (₹) & QALYs
- * - Professional charts (palette & fonts)
+ * - Professional charts (palette & fontss)
  **************************************************************************/
 
 document.addEventListener("DOMContentLoaded", () => {
