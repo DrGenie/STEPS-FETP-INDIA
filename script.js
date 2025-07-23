@@ -1,9 +1,8 @@
-// script.js
 /**************************************************************************
  * FETP India Decision Aid Tool
- * - Dynamic costs using multipliers by attribute levels
- * - Benefits: WTP (₹) & QALYs
- * - Professional charts (palette & fontss)
+ * - Costs trimmed & dynamic (scaling by capacity, multipliers & endorsement)
+ * - Benefits = WTP × endorsement × stakeholders
+ * - QALY = capacity × endorsement × QALY/trainee
  **************************************************************************/
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -12,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
   );
   openTab("introTab", document.querySelector(".tablink"));
 
-  // Chart.js global defaults (fonts/colours)
+  // Chart.js global defaults
   Chart.defaults.font.size = 14;
   Chart.defaults.color = "#243447";
 });
@@ -36,7 +35,7 @@ function updateCostDisplay(v){ document.getElementById("costLabel").textContent 
 function updateCapDisplay(v){ document.getElementById("capLabel").textContent = v; }
 function updateStakeDisplay(v){ document.getElementById("stakeLabel").textContent = v; }
 
-/* -------- Placeholder Coefficients (update with real DCE later) -------- */
+/* -------- Placeholder Coefficients -------- */
 const COEFS = {
   ASC: 0.2,
   type_intermediate: 0.35,
@@ -50,7 +49,7 @@ const COEFS = {
   resp_7: 0.20,
   resp_3: 0.35,
   resp_1: 0.60,
-  cost_perT_perM: -0.00001 // utility drop per ₹1
+  cost_perT_perM: -0.00001
 };
 
 const WTP = {
@@ -67,46 +66,46 @@ const WTP = {
   resp_1: 18000
 };
 
-/* -------- Cost model (₹). Fixed & per trainee, with multipliers -------- */
+/* -------- Cost parameters (trimmed) -------- */
 const BASE_COSTS = {
-  staff_local: 18000000,          // In-country staff
-  staff_consult: 5000000,
-  equip_office: 1500000,
-  sw_office: 600000,
-  rent_utils: 2400000,
-  workshops: 2000000,
-  travel_in: 3500000,
-  travel_int: 1200000,
-  other_direct: 800000,
-  mgmt: 3000000,
-  maint: 600000,
-  inkind_salary: 2000000,
-  facility_up: 1000000,
-  depreciation: 500000,
-  shared_utils: 700000,
-  legal_fin: 400000,
-  staff_dev: 900000,
-  other_indirect: 500000
+  staff_local:    9000000,   // 90 lakh
+  staff_consult:  2500000,
+  equip_office:    800000,
+  sw_office:       300000,
+  rent_utils:     1200000,
+  workshops:      1200000,
+  travel_in:      1800000,
+  travel_int:      600000,
+  other_direct:    500000,
+  mgmt:           1500000,
+  maint:           300000,
+  inkind_salary:  1000000,
+  facility_up:     500000,
+  depreciation:    250000,
+  shared_utils:    350000,
+  legal_fin:       250000,
+  staff_dev:       450000,
+  other_indirect:  250000
 };
 
 const PER_TRAINEE = {
-  allowance: 150000,
-  equip: 40000,
-  sw: 8000,
-  materials: 5000,
-  opp_cost: 180000 // salary foregone
+  allowance: 90000,
+  equip:     25000,
+  sw:         5000,
+  materials:   4000,
+  opp_cost: 100000
 };
 
-/* Multipliers by attribute */
+/* Multipliers */
 const MULTIPLIERS = {
-  ptype: { frontline:1, intermediate:1.25, advanced:1.6 },
-  duration: { "6":1, "12":1.6, "24":2.2 },
-  mode_cost_adj: { inperson:1, hybrid:1.1, online:0.85 }, // online cheaper travel, but extra software
-  focus_cost_adj: { human:1, animal:1.1, onehealth:1.25 },
-  resp_cost_adj: { "14":1, "7":1.15, "3":1.3, "1":1.5 }
+  ptype:        { frontline:1.0, intermediate:1.15, advanced:1.35 },
+  duration:     { "6":1.0, "12":1.4, "24":2.0 },
+  mode_cost_adj:{ inperson:1.0, hybrid:1.08, online:0.85 },
+  focus_cost_adj:{ human:1.0, animal:1.08, onehealth:1.18 },
+  resp_cost_adj:{ "14":1.0, "7":1.12, "3":1.22, "1":1.35 }
 };
 
-/* -------- Build scenario from inputs -------- */
+/* -------- Build scenario -------- */
 function buildScenario(){
   const ptype = valRadio("ptype");
   const duration = valRadio("duration");
@@ -124,7 +123,7 @@ function buildScenario(){
 
   const warn = [];
   if(mode==="online" && (ptype==="advanced" || focus==="onehealth")){
-    warn.push("Fully online with Advanced/One Health focus may be unrealistic. Consider Hybrid/In-person.");
+    warn.push("Fully online with Advanced/One Health may be unrealistic. Consider Hybrid/In-person.");
   }
   displayWarnings(warn);
 
@@ -166,7 +165,7 @@ function endorsementProb(sc){
 }
 
 /* -------- WTP -------- */
-function scenarioWTP(sc){
+function scenarioWTP(sc, endorseShare){
   let tot = 0;
   if(sc.ptype==="intermediate") tot+=WTP.type_intermediate;
   if(sc.ptype==="advanced") tot+=WTP.type_advanced;
@@ -179,58 +178,60 @@ function scenarioWTP(sc){
   if(sc.resp==="7") tot+=WTP.resp_7;
   if(sc.resp==="3") tot+=WTP.resp_3;
   if(sc.resp==="1") tot+=WTP.resp_1;
-  return tot * sc.stakeholders;
+  // Aggregate over stakeholders & endorsement
+  return tot * sc.stakeholders * endorseShare;
 }
 
-/* -------- Costs (dynamic) -------- */
-function scenarioCost(sc){
-  // base multipliers
-  const mType = MULTIPLIERS.ptype[sc.ptype];
-  const mDur = MULTIPLIERS.duration[sc.duration];
-  const mMode = MULTIPLIERS.mode_cost_adj[sc.mode];
+/* -------- Costs -------- */
+function scenarioCost(sc, endorseShare){
+  const mType  = MULTIPLIERS.ptype[sc.ptype];
+  const mDur   = MULTIPLIERS.duration[sc.duration];
+  const mMode  = MULTIPLIERS.mode_cost_adj[sc.mode];
   const mFocus = MULTIPLIERS.focus_cost_adj[sc.focus];
-  const mResp = MULTIPLIERS.resp_cost_adj[sc.resp];
+  const mResp  = MULTIPLIERS.resp_cost_adj[sc.resp];
 
   const overallMult = mType * mDur * mMode * mFocus * mResp;
 
-  // Fixed blocks (apply overall multiplier)
+  // Fixed blocks (not scaled by endorsement)
   let fixed = 0;
   Object.values(BASE_COSTS).forEach(v=> fixed += v);
   fixed *= overallMult;
 
-  // Per trainee blocks
+  // Per trainee blocks – scale by endorsed trainees
+  const endorsedTrainees = sc.capacity * endorseShare;
   let perT = 0;
   Object.values(PER_TRAINEE).forEach(v=> perT += v);
-  perT *= sc.capacity * mType * mDur * mFocus; // opp cost etc scale w/ type/duration/focus
+  perT *= endorsedTrainees * mType * mDur * mFocus; // still scale by some multipliers
 
-  // MoH training cost slider
+  // MoH training cost slider (assume paid for all enrolled, not only endorsed)
   const moh = sc.costPerTM * (+sc.duration) * sc.capacity;
 
   return fixed + perT + moh;
 }
 
-/* -------- QALY Analysis -------- */
-function scenarioQALY(sc, qalyPerTrainee){
-  // Assume all capacity * endorsement proportion complete training effectively
-  const endorsed = endorsementProb(sc);
-  return sc.capacity * endorsed * qalyPerTrainee;
+/* -------- QALY -------- */
+function scenarioQALY(sc, endorseShare, qalyPerTrainee){
+  return sc.capacity * endorseShare * qalyPerTrainee;
 }
 
-/* -------- Calculate & show modal -------- */
+/* -------- Calculate All -------- */
 function calculateAll(){
   const sc = buildScenario();
   if(!sc) return;
 
-  const endorse = endorsementProb(sc)*100;
-  const totalWTP = scenarioWTP(sc);
-  const totalCost = scenarioCost(sc);
+  const endorseShare = endorsementProb(sc);
+  const endorsePct = endorseShare*100;
+
+  const totalWTP = scenarioWTP(sc, endorseShare);
+  const totalCost = scenarioCost(sc, endorseShare);
   const bcr = totalWTP/totalCost;
   const net = totalWTP-totalCost;
 
-  const rec = recommendation(sc, endorse, bcr);
+  const rec = recommendation(sc, endorsePct, bcr);
+
   document.getElementById("modalResults").innerHTML = `
     <h4>Results</h4>
-    <p><strong>Endorsement:</strong> ${endorse.toFixed(1)}%</p>
+    <p><strong>Endorsement:</strong> ${endorsePct.toFixed(1)}%</p>
     <p><strong>Total WTP:</strong> ₹${formatINR(totalWTP)}</p>
     <p><strong>Total Cost:</strong> ₹${formatINR(totalCost)}</p>
     <p><strong>BCR (WTP/Cost):</strong> ${bcr.toFixed(2)}</p>
@@ -240,22 +241,21 @@ function calculateAll(){
 
   renderWTPChart(sc);
   renderEndorseChart(sc);
-  renderCostsBenefits(sc, endorse, totalWTP, totalCost, bcr, net);
+  renderCostsBenefits(sc, endorsePct, totalWTP, totalCost, bcr, net, endorseShare);
 }
 
 /* -------- Recommendation -------- */
-function recommendation(sc, endorse, bcr){
-  if(endorse>=70 && bcr>=1) return "High endorsement and positive BCR. Strong case.";
+function recommendation(sc, endorsePct, bcr){
+  if(endorsePct>=70 && bcr>=1) return "High endorsement and positive BCR. Strong case.";
   let r="Consider: ";
-  if(endorse<50) r+="boost practical components or shorten duration; ";
-  if(bcr<1) r+="trim costly items or target faster response to raise WTP; ";
+  if(endorsePct<50) r+="boost practical exposure or shorten duration; ";
+  if(bcr<1) r+="trim per-trainee costs or increase response speed to raise WTP; ";
   if(sc.mode==="online" && (sc.ptype==="advanced"||sc.focus==="onehealth")) r+="switch from fully online to hybrid/in-person; ";
   return r;
 }
 
 /* -------- Charts -------- */
 let wtpChart=null, endorseChart=null, combinedChart=null, qalyChart=null;
-
 const PUB_COLORS = ["#2a76d2","#009688","#f39c12","#e74c3c","#7f8c8d","#8e44ad","#27ae60","#d35400","#16a085","#c0392b"];
 
 function renderWTPChart(){
@@ -279,6 +279,7 @@ function renderWTPChart(){
     },
     options:{
       responsive:true,
+      maintainAspectRatio:false,
       scales:{y:{beginAtZero:true}},
       plugins:{
         legend:{display:false},
@@ -319,16 +320,17 @@ function renderEndorseChart(sc=null){
   });
 }
 
-function renderCostsBenefits(sc=null, endorse=null, totWTP=null, totCost=null, bcr=null, net=null){
+function renderCostsBenefits(sc=null, endorsePct=null, totWTP=null, totCost=null, bcr=null, net=null, endorseShare=null){
   const container = document.getElementById("costsBenefitsResults");
   if(!container) return;
 
   const s = sc || buildScenario();
   if(!s) return;
 
-  const e = endorse!==null?endorse:(endorsementProb(s)*100);
-  const w = totWTP!==null?totWTP:scenarioWTP(s);
-  const c = totCost!==null?totCost:scenarioCost(s);
+  const eShare = endorseShare!==null?endorseShare:endorsementProb(s);
+  const e = endorsePct!==null?endorsePct:eShare*100;
+  const w = totWTP!==null?totWTP:scenarioWTP(s,eShare);
+  const c = totCost!==null?totCost:scenarioCost(s,eShare);
   const b = bcr!==null?bcr:(w/c);
   const n = net!==null?net:(w-c);
 
@@ -346,24 +348,25 @@ function renderCostsBenefits(sc=null, endorse=null, totWTP=null, totCost=null, b
   // Cost breakdown
   const listDiv = document.getElementById("detailedCostBreakdown");
   listDiv.innerHTML = "";
-  const mType = MULTIPLIERS.ptype[s.ptype];
-  const mDur = MULTIPLIERS.duration[s.duration];
-  const mMode = MULTIPLIERS.mode_cost_adj[s.mode];
+  const mType  = MULTIPLIERS.ptype[s.ptype];
+  const mDur   = MULTIPLIERS.duration[s.duration];
+  const mMode  = MULTIPLIERS.mode_cost_adj[s.mode];
   const mFocus = MULTIPLIERS.focus_cost_adj[s.focus];
-  const mResp = MULTIPLIERS.resp_cost_adj[s.resp];
+  const mResp  = MULTIPLIERS.resp_cost_adj[s.resp];
   const overallMult = mType*mDur*mMode*mFocus*mResp;
+  const endorsedTrainees = s.capacity * eShare;
 
   // Fixed components
   Object.entries(BASE_COSTS).forEach(([key,val])=>{
     const calc = val*overallMult;
     addCostCard(listDiv, key, calc, false);
   });
-  // Per trainee
+  // Per trainee (endorsed)
   Object.entries(PER_TRAINEE).forEach(([key,val])=>{
-    const calc = val*s.capacity*mType*mDur*mFocus;
+    const calc = val*endorsedTrainees*mType*mDur*mFocus;
     addCostCard(listDiv, key, calc, true);
   });
-  // MoH cost slider
+  // MoH cost slider (all trainees)
   const moh = s.costPerTM * (+s.duration) * s.capacity;
   addCostCard(listDiv, "moh_training_cost", moh, true, "MoH Training Cost (slider)");
 
@@ -413,11 +416,12 @@ function renderQALY(){
   const sc = buildScenario();
   if(!sc) return;
 
+  const endorseShare = endorsementProb(sc);
   const qalyPerTrainee = parseFloat(document.getElementById("qalyPerTrainee").value);
   const threshold = +document.getElementById("threshold").value;
 
-  const totalCost = scenarioCost(sc);
-  const totalQALY = scenarioQALY(sc, qalyPerTrainee);
+  const totalCost = scenarioCost(sc, endorseShare);
+  const totalQALY = scenarioQALY(sc, endorseShare, qalyPerTrainee);
   const icer = totalCost/totalQALY;
 
   const div=document.getElementById("qalyResults");
@@ -461,15 +465,15 @@ function saveScenario(){
   const sc = buildScenario();
   if(!sc) return;
 
-  const endorse = endorsementProb(sc)*100;
-  const totalWTP = scenarioWTP(sc);
-  const totalCost = scenarioCost(sc);
+  const endorseShare = endorsementProb(sc);
+  const endorse = endorseShare*100;
+  const totalWTP = scenarioWTP(sc, endorseShare);
+  const totalCost = scenarioCost(sc, endorseShare);
   const bcr = totalWTP/totalCost;
   const net = totalWTP-totalCost;
 
-  // QALY metrics (use current QALY tab inputs)
   const qalyPerTrainee = parseFloat(document.getElementById("qalyPerTrainee").value || "0.03");
-  const totalQALY = scenarioQALY(sc, qalyPerTrainee);
+  const totalQALY = scenarioQALY(sc, endorseShare, qalyPerTrainee);
   const icer = totalCost/totalQALY;
 
   const obj = {...sc, endorse, totalWTP, totalCost, bcr, net, icer, name:`Scenario ${savedScenarios.length+1}`};
@@ -510,10 +514,10 @@ function exportPDF(){
     doc.setFontSize(12);
     doc.text(`${s.name}`,15,y); y+=5;
     const lines=[
-      `Type: ${s.ptype}, Dur: ${s.duration}m, Focus: ${s.focus}, Mode: ${s.mode}, Resp: ${s.resp}d`,
-      `Cap: ${s.capacity}, ₹/T/M: ${formatINR(s.costPerTM)}, Stakeholders: ${s.stakeholders}`,
-      `Endorse: ${s.endorse.toFixed(1)}%, WTP: ₹${formatINR(s.totalWTP)}, Cost: ₹${formatINR(s.totalCost)}`,
-      `BCR: ${s.bcr.toFixed(2)}, Net: ₹${formatINR(s.net)}, ICER: ₹${formatINR(s.icer)}/QALY`
+      `Type:${s.ptype} Dur:${s.duration}m Focus:${s.focus} Mode:${s.mode} Resp:${s.resp}d`,
+      `Cap:${s.capacity} ₹/T/M:${formatINR(s.costPerTM)} Stakeh:${s.stakeholders}`,
+      `Endorse:${s.endorse.toFixed(1)}%  WTP:₹${formatINR(s.totalWTP)}  Cost:₹${formatINR(s.totalCost)}`,
+      `BCR:${s.bcr.toFixed(2)}  Net:₹${formatINR(s.net)}  ICER:₹${formatINR(s.icer)}/QALY`
     ];
     lines.forEach(t=>{doc.text(t,15,y);y+=5;});
     y+=3;
@@ -527,6 +531,5 @@ function closeModal(){ document.getElementById("resultModal").style.display="non
 
 /* -------- Helpers -------- */
 function formatINR(num){
-  // Indian number format
   return Math.round(num).toString().replace(/\B(?=(\d{2})+(?!\d))/g, ",");
 }
