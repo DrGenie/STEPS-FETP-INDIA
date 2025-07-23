@@ -5,31 +5,29 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>FETP India Decision Aid Tool</title>
 
-  <!-- Google Fontt -->
+  <!-- Fonts & Icons -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-  <!-- Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
         integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkXzk5bV+nTtDIv5R16vuMJ6MqqV9iQ9M/dGv+VY8Gq60YxYFz+4Ib4Hg=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
-  <!-- Chart.js & jsPDF -->
-  <script defer src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <!-- Styles -->
   <link rel="stylesheet" href="styles.css" />
+
+  <!-- Libs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 
 <body>
 <noscript><p class="nojs">Enable JavaScript to use this tool.</p></noscript>
 
 <div class="container">
-
   <header>
     <h1>FETP India Decision Aid Tool</h1>
-    <p>Design and evaluate Field Epidemiology Training Programme (FETP) configurations using discrete‑choice evidence (WTP & endorsement), programme costs, QALYs and PSA.</p>
+    <p>Evaluate FETP configurations using stakeholder WTP & endorsement, costs, QALYs and PSA.</p>
   </header>
 
-  <!-- Error banner -->
   <div id="globalError" class="error-box" style="display:none;"></div>
 
   <!-- Tabs -->
@@ -47,115 +45,65 @@
   </nav>
 
   <!-- Intro -->
-  <section id="introTab" class="tabcontent" style="display:block" tabindex="0">
+  <section id="introTab" class="tabcontent" style="display:block" tabindex="0" aria-hidden="false">
     <div class="intro-box">
-      <h2>What this tool does</h2>
-      <p><strong>Purpose:</strong> Support national / state decision‑makers to compare FETP expansion options on value (stakeholder WTP, endorsement), costs, health gains, and uncertainty.</p>
+      <h2>Purpose</h2>
+      <p>Support decision‑makers to assess FETP expansion options using discrete‑choice evidence, costs and health‑economic outcomes.</p>
       <ul>
-        <li>Select attribute levels (type, duration, focus, delivery, response time, capacity, cost).</li>
-        <li>Obtain marginal & total WTP; predicted endorsement probability.</li>
-        <li>Compute present‑value costs, benefits (₹), benefit–cost ratio (BCR), and net benefit.</li>
-        <li>Estimate QALYs and ICER vs a threshold.</li>
-        <li>Run Monte Carlo probabilistic sensitivity analysis (PSA).</li>
-        <li>Save scenarios and export summaries to PDF.</li>
+        <li>Select attribute levels (type, duration, focus, delivery mode, response time, capacity, cost).</li>
+        <li>Get marginal & total WTP and endorsement probability.</li>
+        <li>Compute PV costs, benefits (₹), BCR and net benefit.</li>
+        <li>Estimate QALYs and ICER vs thresholds.</li>
+        <li>Run Monte Carlo PSA and export scenarios.</li>
       </ul>
-      <p class="tip"><i class="fa-solid fa-lightbulb"></i> Tip: start with Inputs → Calculate & View Results, then explore each tab.</p>
+      <p class="tip"><i class="fa-solid fa-lightbulb"></i> Start in <strong>Inputs</strong> → click “Calculate & View Results”.</p>
     </div>
   </section>
 
   <!-- Attributes -->
-  <section id="attributesTab" class="tabcontent" tabindex="0">
+  <section id="attributesTab" class="tabcontent" tabindex="0" aria-hidden="true">
     <h2>Attributes & Levels</h2>
-    <p>These are the characteristics respondents evaluated in the DCE. Values in brackets are reference levels in the model.</p>
+    <p>Reference levels are in brackets.</p>
     <div class="attributes-list">
       <div class="attribute-card" tabindex="0">
-        <div class="attribute-icon"><i class="fa-solid fa-graduation-cap"></i>
-          <div class="tooltip">Frontline (ref); Intermediate; Advanced</div>
-        </div>
-        <div class="attribute-content">
-          <h4>Programme Type</h4>
-          <p>Frontline (ref), Intermediate, Advanced.</p>
-          <small>Defines depth of training, mentorship intensity, and technical content.</small>
-        </div>
+        <div class="attribute-icon"><i class="fa-solid fa-graduation-cap"></i><div class="tooltip">Frontline (ref); Intermediate; Advanced</div></div>
+        <div class="attribute-content"><h4>Programme Type</h4><p>Frontline (ref), Intermediate, Advanced.</p><small>Defines training depth and mentorship intensity.</small></div>
       </div>
-
       <div class="attribute-card" tabindex="0">
-        <div class="attribute-icon"><i class="fa-solid fa-hourglass-half"></i>
-          <div class="tooltip">6 months (ref); 12 months; 24 months</div>
-        </div>
-        <div class="attribute-content">
-          <h4>Duration</h4>
-          <p>6 months (ref), 12 months, 24 months.</p>
-          <small>Longer duration increases skills but also cost and opportunity cost.</small>
-        </div>
+        <div class="attribute-icon"><i class="fa-solid fa-hourglass-half"></i><div class="tooltip">6 months (ref); 12 months; 24 months</div></div>
+        <div class="attribute-content"><h4>Duration</h4><p>6m (ref), 12m, 24m.</p><small>Longer = more skills, higher costs.</small></div>
       </div>
-
       <div class="attribute-card" tabindex="0">
-        <div class="attribute-icon"><i class="fa-solid fa-virus-covid"></i>
-          <div class="tooltip">Human (ref); Animal; One Health</div>
-        </div>
-        <div class="attribute-content">
-          <h4>Focus</h4>
-          <p>Human (ref), Animal, One Health.</p>
-          <small>One Health integrates human–animal–environment sectors.</small>
-        </div>
+        <div class="attribute-icon"><i class="fa-solid fa-virus-covid"></i><div class="tooltip">Human (ref); Animal; One Health</div></div>
+        <div class="attribute-content"><h4>Focus</h4><p>Human (ref), Animal, One Health.</p><small>One Health links human–animal–environment.</small></div>
       </div>
-
       <div class="attribute-card" tabindex="0">
-        <div class="attribute-icon"><i class="fa-solid fa-laptop-medical"></i>
-          <div class="tooltip">In‑person (ref); Hybrid; Online</div>
-        </div>
-        <div class="attribute-content">
-          <h4>Delivery Mode</h4>
-          <p>In‑person (ref), Hybrid, Fully online.</p>
-          <small>Influences travel, mentorship, and scalability.</small>
-        </div>
+        <div class="attribute-icon"><i class="fa-solid fa-laptop-medical"></i><div class="tooltip">In‑person (ref); Hybrid; Online</div></div>
+        <div class="attribute-content"><h4>Delivery Mode</h4><p>In‑person (ref), Hybrid, Online.</p><small>Affects mentoring, travel and scalability.</small></div>
       </div>
-
       <div class="attribute-card" tabindex="0">
-        <div class="attribute-icon"><i class="fa-solid fa-users"></i>
-          <div class="tooltip">200–1500 trainees per year</div>
-        </div>
-        <div class="attribute-content">
-          <h4>Annual Capacity</h4>
-          <p>200–1500 trainees/year.</p>
-          <small>Determines scale of output and total benefits/costs.</small>
-        </div>
+        <div class="attribute-icon"><i class="fa-solid fa-users"></i><div class="tooltip">200–1500 trainees/year</div></div>
+        <div class="attribute-content"><h4>Annual Capacity</h4><p>200–1500 trainees/year.</p><small>Sets scale of outputs and benefits.</small></div>
       </div>
-
       <div class="attribute-card" tabindex="0">
-        <div class="attribute-icon"><i class="fa-solid fa-stopwatch"></i>
-          <div class="tooltip">14d (ref); 7d; 3d; 24h</div>
-        </div>
-        <div class="attribute-content">
-          <h4>Public Health Event Response Capacity</h4>
-          <p>Detection & response within 14 days (ref), 7 days, 3 days, 24 hours.</p>
-          <small>Faster response increases value to stakeholders.</small>
-        </div>
+        <div class="attribute-icon"><i class="fa-solid fa-stopwatch"></i><div class="tooltip">14d (ref); 7d; 3d; 24h</div></div>
+        <div class="attribute-content"><h4>Response Capacity</h4><p>14d (ref), 7d, 3d, 24h.</p><small>Faster outbreak response increases value.</small></div>
       </div>
-
       <div class="attribute-card" tabindex="0">
-        <div class="attribute-icon"><i class="fa-solid fa-indian-rupee-sign"></i>
-          <div class="tooltip">₹30k–₹90k per trainee per month (MoH cost)</div>
-        </div>
-        <div class="attribute-content">
-          <h4>Cost to MoH per Trainee per Month</h4>
-          <p>₹30,000–₹90,000.</p>
-          <small>Budget line for stipends, supervision, travel, etc.</small>
-        </div>
+        <div class="attribute-icon"><i class="fa-solid fa-indian-rupee-sign"></i><div class="tooltip">₹30k–₹90k per trainee/month</div></div>
+        <div class="attribute-content"><h4>MoH Cost / Trainee / Month</h4><p>₹30,000–₹90,000.</p><small>Stipends, supervision, travel, etc.</small></div>
       </div>
     </div>
   </section>
 
   <!-- Inputs -->
-  <section id="inputsTab" class="tabcontent" tabindex="0">
+  <section id="inputsTab" class="tabcontent" tabindex="0" aria-hidden="true">
     <div class="input-card">
       <h2>Scenario Inputs</h2>
-      <p>Adjust levels and sliders. Warnings flag unrealistic combinations.</p>
+      <p>Adjust the levels. Warnings highlight unrealistic mixes.</p>
 
       <form id="scenarioForm" onsubmit="return false;">
         <div class="input-cards">
-          <!-- Programme type -->
           <div class="input-level-card">
             <h3>Programme Type <span class="reference">(Frontline)</span></h3>
             <div class="options">
@@ -165,7 +113,6 @@
             </div>
           </div>
 
-          <!-- Duration -->
           <div class="input-level-card">
             <h3>Duration <span class="reference">(6 months)</span></h3>
             <div class="options">
@@ -175,7 +122,6 @@
             </div>
           </div>
 
-          <!-- Focus -->
           <div class="input-level-card">
             <h3>Focus <span class="reference">(Human)</span></h3>
             <div class="options">
@@ -185,7 +131,6 @@
             </div>
           </div>
 
-          <!-- Mode -->
           <div class="input-level-card">
             <h3>Delivery Mode <span class="reference">(In‑person)</span></h3>
             <div class="options">
@@ -195,7 +140,6 @@
             </div>
           </div>
 
-          <!-- Response -->
           <div class="input-level-card">
             <h3>Response Capacity <span class="reference">(14 days)</span></h3>
             <div class="options">
@@ -206,7 +150,6 @@
             </div>
           </div>
 
-          <!-- Capacity -->
           <div class="input-level-card">
             <h3>Trainees / Year</h3>
             <div class="options slider-option">
@@ -215,7 +158,6 @@
             </div>
           </div>
 
-          <!-- Cost slider -->
           <div class="input-level-card">
             <h3>₹ / Trainee / Month (MoH)</h3>
             <div class="options slider-option">
@@ -224,12 +166,11 @@
             </div>
           </div>
 
-          <!-- Stakeholders -->
           <div class="input-level-card">
             <h3>Stakeholders represented
               <span class="info-container">
                 <button type="button" class="info-button" aria-label="Number of stakeholders aggregated"><i class="fa-solid fa-circle-info"></i></button>
-                <span class="tooltip-text">Used to scale total WTP. Set 1 for per-respondent values.</span>
+                <span class="tooltip-text">Scales total WTP. Set 1 for per-respondent.</span>
               </span>
             </h3>
             <div class="options slider-option">
@@ -238,12 +179,11 @@
             </div>
           </div>
 
-          <!-- Horizon etc -->
           <div class="input-level-card">
             <h3>Cohorts / Year & Horizon
               <span class="info-container">
                 <button type="button" class="info-button" aria-label="Explanation"><i class="fa-solid fa-circle-info"></i></button>
-                <span class="tooltip-text">Cohorts/year = batches per year. Horizon = years for present value. Discount converts future values to present terms.</span>
+                <span class="tooltip-text">Cohorts/year = batches per year. Horizon = PV years. Discount rate converts future to present.</span>
               </span>
             </h3>
             <div class="form-mini">
@@ -261,7 +201,6 @@
         </div>
       </form>
 
-      <!-- Modal -->
       <div id="resultModal" class="modal" aria-modal="true" role="dialog">
         <div class="modal-content">
           <span class="close-button" id="closeModalBtn">&times;</span>
@@ -272,37 +211,37 @@
   </section>
 
   <!-- WTP -->
-  <section id="wtpTab" class="tabcontent" tabindex="0">
+  <section id="wtpTab" class="tabcontent" tabindex="0" aria-hidden="true">
     <div class="calculation-info">
-      <h4>Marginal Willingness to Pay (₹)</h4>
-      <p>Benefit = (Σ marginal WTP for chosen levels) × endorsement rate × stakeholders represented.</p>
+      <h4>Marginal WTP (₹)</h4>
+      <p>Total benefit = Σ(marginal WTP for chosen levels) × endorsement × stakeholders.</p>
       <div class="buttons-row"><button id="showWTP">Show Chart</button></div>
       <div class="chart-grid">
         <div class="chart-box fixed-height">
           <h3>Marginal WTP (₹)</h3>
-          <canvas id="wtpChart" aria-label="Marginal WTP bar chart"></canvas>
+          <canvas id="wtpChart"></canvas>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Endorsement -->
-  <section id="endorseTab" class="tabcontent" tabindex="0">
+  <section id="endorseTab" class="tabcontent" tabindex="0" aria-hidden="true">
     <div class="calculation-info">
       <h4>Predicted Endorsement Rate</h4>
-      <p>Estimated using a logistic model (replace coefficients when final DCE results are available).</p>
+      <p>Logit model using placeholder coefficients (replace with final DCE estimates).</p>
       <div class="buttons-row"><button id="showEndorse">Show Plot</button></div>
       <div class="chart-grid">
         <div class="chart-box fixed-height">
           <h3>Endorse vs Not Endorse</h3>
-          <canvas id="endorseChart" aria-label="Endorsement doughnut chart"></canvas>
+          <canvas id="endorseChart"></canvas>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Cost-Benefit -->
-  <section id="costsTab" class="tabcontent" tabindex="0">
+  <section id="costsTab" class="tabcontent" tabindex="0" aria-hidden="true">
     <div class="calculation-info">
       <h4>₹ Cost–Benefit Analysis</h4>
       <div id="costsBenefitsResults"></div>
@@ -314,10 +253,10 @@
   </section>
 
   <!-- QALY -->
-  <section id="qalyTab" class="tabcontent" tabindex="0">
+  <section id="qalyTab" class="tabcontent" tabindex="0" aria-hidden="true">
     <div class="calculation-info">
       <h4>QALY-Based Cost-Effectiveness</h4>
-      <p>Present value (PV) of QALYs gained and the incremental cost-effectiveness ratio (ICER).</p>
+      <p>PV QALYs and ICER vs threshold.</p>
       <div class="form-grid">
         <div class="form-item">
           <label for="qalyPerTrainee">QALY gain per trainee</label>
@@ -337,17 +276,17 @@
       <div class="chart-grid">
         <div class="chart-box fixed-height">
           <h3>ICER vs Threshold</h3>
-          <canvas id="qalyChart" aria-label="ICER bar chart"></canvas>
+          <canvas id="qalyChart"></canvas>
         </div>
       </div>
     </div>
   </section>
 
   <!-- PSA -->
-  <section id="psaTab" class="tabcontent" tabindex="0">
+  <section id="psaTab" class="tabcontent" tabindex="0" aria-hidden="true">
     <div class="calculation-info">
       <h4>Probabilistic Sensitivity Analysis (PSA)</h4>
-      <p>Applies uncertainty (Normal, truncated) to costs, WTP, endorsement and QALY inputs.</p>
+      <p>Normal draws (truncated) on costs, WTP, endorsement & QALYs.</p>
       <div class="form-grid">
         <div class="form-item"><label>SE % Costs <input type="number" id="seCost" value="10" min="0" step="1"></label></div>
         <div class="form-item"><label>SE % WTP <input type="number" id="seWTP" value="10" min="0" step="1"></label></div>
@@ -359,18 +298,18 @@
       <div class="chart-grid">
         <div class="chart-box fixed-height">
           <h3>BCR Distribution</h3>
-          <canvas id="psaBCR" aria-label="BCR histogram"></canvas>
+          <canvas id="psaBCR"></canvas>
         </div>
         <div class="chart-box fixed-height">
           <h3>ICER Distribution</h3>
-          <canvas id="psaICER" aria-label="ICER histogram"></canvas>
+          <canvas id="psaICER"></canvas>
         </div>
       </div>
     </div>
   </section>
 
   <!-- Methods -->
-  <section id="methodsTab" class="tabcontent" tabindex="0">
+  <section id="methodsTab" class="tabcontent" tabindex="0" aria-hidden="true">
     <div class="calculation-info">
       <h4>Methods (Brief)</h4>
       <details open>
@@ -379,24 +318,24 @@
       </details>
       <details>
         <summary><strong>Benefits (₹)</strong></summary>
-        <p>Total Benefit = (Σ marginal WTP) × endorsement rate × number of stakeholders represented.</p>
+        <p>Total Benefit = (Σ marginal WTP) × endorsement rate × stakeholders represented.</p>
       </details>
       <details>
         <summary><strong>QALYs</strong></summary>
-        <p>PV QALYs = Σ<sub>t</sub>[capacity × cohorts/year × endorsement rate × QALY per trainee]/(1+r)<sup>t</sup>; ICER = PV Cost / PV QALYs.</p>
+        <p>PV QALYs = Σ<sub>t</sub>[capacity × cohorts/year × endorsement × QALY/trainee]/(1+r)<sup>t</sup>; ICER = PV Cost / PV QALYs.</p>
       </details>
       <details>
         <summary><strong>PSA</strong></summary>
-        <p>Random draws from Normal(mean, sd = SE% × mean), truncated to acceptable ranges (e.g., endorsement 0–1). Report mean and 95% CI for BCR & ICER.</p>
+        <p>Normal(mean, sd = SE%×mean), truncated to valid ranges. Report mean & 95% CI for BCR & ICER.</p>
       </details>
     </div>
   </section>
 
-  <!-- Saved Scenarios -->
-  <section id="scenariosTab" class="tabcontent" tabindex="0">
+  <!-- Saved -->
+  <section id="scenariosTab" class="tabcontent" tabindex="0" aria-hidden="true">
     <div class="calculation-info">
       <h4>Saved Scenarios</h4>
-      <p>Save multiple configurations and export a PDF summary.</p>
+      <p>Store configurations and export to PDF.</p>
       <div class="buttons-row">
         <button id="saveScenarioBtn">Save Current Scenario</button>
         <button id="exportPDFBtn">Export to PDF</button>
@@ -417,11 +356,11 @@
   </section>
 
   <footer>
-    <p>&copy; 2025 FETP India Decision Aid Tool. The University of Newcastle, Australia.</p>
+    <p>&copy; 2025 FETP India Decision Aid Tool. University of Newcastle, Australia.</p>
   </footer>
 </div>
 
-<!-- App JS -->
-<script defer src="script.js"></script>
+<!-- Main JS -->
+<script src="script.js"></script>
 </body>
 </html>
