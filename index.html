@@ -1,0 +1,334 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FETP India Decision Aid Tool</title>
+
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+        integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkXzk5bV+nTtDIv5R16vuMJ6MqqV9iQ9M/dGv+VY8Gq60YxYFz+4Ib4Hg=="
+        crossorigin="anonymous" referrerpolicy="no-referrer"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>FETP India Decision Aid Tool</h1>
+      <p>Simulate Field Epidemiology Training Program (FETP) configurations, estimate stakeholders’ willingness to pay (WTP), predicted endorsement, and cost–benefit ratios.</p>
+    </header>
+
+    <nav class="tabs" role="tablist">
+      <button class="tablink active" data-tab="introTab" aria-selected="true"><i class="fa-solid fa-info-circle"></i><span> Introduction</span></button>
+      <button class="tablink" data-tab="attributesTab" aria-selected="false"><i class="fa-solid fa-list"></i><span> Attributes</span></button>
+      <button class="tablink" data-tab="inputsTab" aria-selected="false"><i class="fa-solid fa-sliders"></i><span> Inputs</span></button>
+      <button class="tablink" data-tab="wtpTab" aria-selected="false"><i class="fa-solid fa-chart-bar"></i><span> WTP</span></button>
+      <button class="tablink" data-tab="endorseTab" aria-selected="false"><i class="fa-solid fa-thumbs-up"></i><span> Endorsement</span></button>
+      <button class="tablink" data-tab="costsTab" aria-selected="false"><i class="fa-solid fa-calculator"></i><span> Costs &amp; Benefits</span></button>
+      <button class="tablink" data-tab="scenariosTab" aria-selected="false"><i class="fa-solid fa-folder-open"></i><span> Saved Scenarios</span></button>
+    </nav>
+
+    <!-- INTRO -->
+    <section id="introTab" class="tabcontent" style="display:block;" tabindex="0">
+      <div class="intro-box">
+        <p><strong>What is FETP?</strong> Field Epidemiology Training Programs build a skilled public health workforce capable of detecting, investigating and responding to outbreaks. Scaling FETPs aligns with India’s PM-ABHIM agenda to strengthen health security.</p>
+        <p><strong>Purpose of this tool:</strong> Allow decision-makers to configure realistic program designs and instantly view:</p>
+        <ul>
+          <li>Total stakeholder WTP (benefit proxy)</li>
+          <li>Predicted endorsement rate</li>
+          <li>Annual programme cost and Benefit–Cost Ratio (BCR)</li>
+          <li>Warnings for implausible combinations</li>
+        </ul>
+        <p>Tabs guide you from understanding attributes to exporting scenario comparisons.</p>
+      </div>
+    </section>
+
+    <!-- ATTRIBUTES -->
+    <section id="attributesTab" class="tabcontent" tabindex="0">
+      <h2>Programme Attributes & Levels</h2>
+      <p>Reference levels are marked “(ref)”. Hover icons for details.</p>
+      <div class="attributes-list">
+
+        <!-- Program Type -->
+        <div class="attribute-card" tabindex="0">
+          <div class="attribute-icon">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <div class="tooltip">Frontline (ref): basic outbreak skills; Intermediate & Advanced require deeper mentoring & fieldwork.</div>
+          </div>
+          <div class="attribute-content">
+            <h4>Program Type</h4>
+            <p>Frontline (ref), Intermediate, Advanced</p>
+          </div>
+        </div>
+
+        <!-- Duration -->
+        <div class="attribute-card" tabindex="0">
+          <div class="attribute-icon">
+            <i class="fa-solid fa-hourglass-half"></i>
+            <div class="tooltip">6 months (ref), 12 or 24 months. Longer duration implies more intensive curricula.</div>
+          </div>
+          <div class="attribute-content">
+            <h4>Duration</h4>
+            <p>6 months (ref), 12 months, 24 months</p>
+          </div>
+        </div>
+
+        <!-- Focus -->
+        <div class="attribute-card" tabindex="0">
+          <div class="attribute-icon">
+            <i class="fa-solid fa-virus-covid"></i>
+            <div class="tooltip">Human health (ref), Animal health, One Health (multi-sectoral, requires cross-discipline work).</div>
+          </div>
+          <div class="attribute-content">
+            <h4>Focus of FETP</h4>
+            <p>Human Health (ref), Animal Health, One Health</p>
+          </div>
+        </div>
+
+        <!-- Delivery Mode -->
+        <div class="attribute-card" tabindex="0">
+          <div class="attribute-icon">
+            <i class="fa-solid fa-laptop-medical"></i>
+            <div class="tooltip">In-person (ref), Hybrid, Fully online. Advanced/One Health often need practical in-person components.</div>
+          </div>
+          <div class="attribute-content">
+            <h4>Delivery Mode</h4>
+            <p>In-person (ref), Hybrid, Fully Online</p>
+          </div>
+        </div>
+
+        <!-- Capacity -->
+        <div class="attribute-card" tabindex="0">
+          <div class="attribute-icon">
+            <i class="fa-solid fa-people-group"></i>
+            <div class="tooltip">Training capacity (200–1500 trainees/year).</div>
+          </div>
+          <div class="attribute-content">
+          <h4>Training Capacity</h4>
+          <p>Slider: 200–1500 trainees/year</p>
+          </div>
+        </div>
+
+        <!-- Response Capacity -->
+        <div class="attribute-card" tabindex="0">
+          <div class="attribute-icon">
+            <i class="fa-solid fa-stopwatch"></i>
+            <div class="tooltip">Median time to detect & respond: 14 days (ref), 7 days, 3 days, 24 hours.</div>
+          </div>
+          <div class="attribute-content">
+            <h4>Public Health Event Response Capacity</h4>
+            <p>14d (ref), 7d, 3d, 24h</p>
+          </div>
+        </div>
+
+        <!-- Cost -->
+        <div class="attribute-card" tabindex="0">
+          <div class="attribute-icon">
+            <i class="fa-solid fa-indian-rupee-sign"></i>
+            <div class="tooltip">Cost to Health Ministry per trainee per month (₹30k–₹90k).</div>
+          </div>
+          <div class="attribute-content">
+            <h4>Cost to MoH per Trainee / Month</h4>
+            <p>Slider: ₹30,000–₹90,000</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- INPUTS -->
+    <section id="inputsTab" class="tabcontent" tabindex="0">
+      <div class="input-card">
+        <h2>Configure Scenario</h2>
+        <form onsubmit="event.preventDefault();">
+          <div class="input-cards">
+
+            <!-- Program Type -->
+            <div class="input-level-card">
+              <h3>Program Type <span class="reference">(ref: Frontline)</span></h3>
+              <div class="options">
+                <label><input type="radio" name="ptype" value="frontline" /> Frontline</label>
+                <label><input type="radio" name="ptype" value="intermediate" /> Intermediate</label>
+                <label><input type="radio" name="ptype" value="advanced" /> Advanced</label>
+              </div>
+            </div>
+
+            <!-- Duration -->
+            <div class="input-level-card">
+              <h3>Duration <span class="reference">(ref: 6 months)</span></h3>
+              <div class="options">
+                <label><input type="radio" name="duration" value="6" /> 6 months</label>
+                <label><input type="radio" name="duration" value="12" /> 12 months</label>
+                <label><input type="radio" name="duration" value="24" /> 24 months</label>
+              </div>
+            </div>
+
+            <!-- Focus -->
+            <div class="input-level-card">
+              <h3>Focus <span class="reference">(ref: Human Health)</span></h3>
+              <div class="options">
+                <label><input type="radio" name="focus" value="human" /> Human health</label>
+                <label><input type="radio" name="focus" value="animal" /> Animal health</label>
+                <label><input type="radio" name="focus" value="onehealth" /> One Health</label>
+              </div>
+            </div>
+
+            <!-- Delivery Mode -->
+            <div class="input-level-card">
+              <h3>Delivery Mode <span class="reference">(ref: In-person)</span></h3>
+              <div class="options">
+                <label><input type="radio" name="mode" value="inperson" /> In-person</label>
+                <label><input type="radio" name="mode" value="hybrid" /> Hybrid</label>
+                <label><input type="radio" name="mode" value="online" /> Fully online</label>
+              </div>
+            </div>
+
+            <!-- Response Capacity -->
+            <div class="input-level-card">
+              <h3>Response Capacity <span class="reference">(ref: 14 days)</span></h3>
+              <div class="options">
+                <label><input type="radio" name="resp" value="14" /> 14 days</label>
+                <label><input type="radio" name="resp" value="7" /> 7 days</label>
+                <label><input type="radio" name="resp" value="3" /> 3 days</label>
+                <label><input type="radio" name="resp" value="1" /> 24 hours</label>
+              </div>
+            </div>
+
+            <!-- Capacity Slider -->
+            <div class="input-level-card">
+              <h3>Training Capacity (trainees/year)</h3>
+              <div class="options slider-option">
+                <label for="capSlider"><i class="fa-solid fa-users"></i> <span id="capLabel">200</span></label>
+                <input type="range" id="capSlider" min="200" max="1500" step="50" value="200" oninput="updateCapDisplay(this.value)" />
+              </div>
+            </div>
+
+            <!-- Cost Slider -->
+            <div class="input-level-card">
+              <h3>₹ / Trainee / Month (MoH cost)</h3>
+              <div class="options slider-option">
+                <label for="costSlider"><i class="fa-solid fa-indian-rupee-sign"></i> <span id="costLabel">30000</span></label>
+                <input type="range" id="costSlider" min="30000" max="90000" step="1000" value="30000" oninput="updateCostDisplay(this.value)" />
+              </div>
+            </div>
+
+            <!-- Stakeholder Count (for scaling total WTP) -->
+            <div class="input-level-card">
+              <h3>Number of Stakeholders Represented</h3>
+              <div class="options slider-option">
+                <label for="stakeSlider"><i class="fa-solid fa-people-roof"></i> <span id="stakeLabel">500</span></label>
+                <input type="range" id="stakeSlider" min="50" max="2000" step="50" value="500" oninput="updateStakeDisplay(this.value)" />
+              </div>
+            </div>
+
+          </div>
+
+          <div id="warnings" class="warning-box" style="display:none;"></div>
+
+          <div class="buttons-row">
+            <button type="button" onclick="calculateAll()">Calculate &amp; View Results</button>
+          </div>
+        </form>
+
+        <!-- Modal -->
+        <div id="resultModal" class="modal">
+          <div class="modal-content">
+            <span class="close-button" onclick="closeModal()">&times;</span>
+            <div id="modalResults"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WTP -->
+    <section id="wtpTab" class="tabcontent" tabindex="0">
+      <div class="calculation-info">
+        <h4>WTP by Attribute (₹)</h4>
+        <p>Total WTP is the sum of selected marginal WTPs × number of stakeholders. Edit placeholder coefficients in <code>script.js</code> when DCE results are ready.</p>
+        <div class="buttons-row">
+          <button onclick="renderWTPChart()">Show WTP Chart</button>
+        </div>
+        <div class="chart-grid">
+          <div class="chart-box">
+            <h3>Marginal WTP (₹)</h3>
+            <canvas id="wtpChartMain"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ENDORSEMENT -->
+    <section id="endorseTab" class="tabcontent" tabindex="0">
+      <div class="calculation-info">
+        <h4>Predicted Endorsement</h4>
+        <p>Endorsement probability is derived from a logistic model using placeholder coefficients.</p>
+        <div class="buttons-row">
+          <button onclick="renderEndorseChart()">Show Endorsement Plot</button>
+        </div>
+        <div class="chart-grid">
+          <div class="chart-box" style="position:relative;height:300px;">
+            <h3>Endorse vs. Not Endorse</h3>
+            <canvas id="endorseChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- COSTS & BENEFITS -->
+    <section id="costsTab" class="tabcontent" tabindex="0">
+      <div class="calculation-info">
+        <h4>Cost–Benefit Analysis</h4>
+        <div id="costsBenefitsResults"></div>
+        <div class="buttons-row">
+          <button onclick="toggleCostBreakdown()">Toggle Cost Breakdown</button>
+        </div>
+        <div id="detailedCostBreakdown" class="cost-cards" style="display:none;"></div>
+      </div>
+    </section>
+
+    <!-- SAVED SCENARIOS -->
+    <section id="scenariosTab" class="tabcontent" tabindex="0">
+      <div class="calculation-info">
+        <h4>Saved Scenarios</h4>
+        <p>Compare configurations side-by-side. Export to PDF.</p>
+        <div class="buttons-row">
+          <button onclick="saveScenario()">Save Current Scenario</button>
+          <button onclick="exportPDF()">Export to PDF</button>
+        </div>
+        <div class="table-container">
+          <table id="scenarioTable">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Type</th>
+                <th>Duration</th>
+                <th>Focus</th>
+                <th>Mode</th>
+                <th>Resp (d)</th>
+                <th>Capacity</th>
+                <th>₹/T/M</th>
+                <th>Stakeholders</th>
+                <th>Endorse %</th>
+                <th>Total WTP (₹)</th>
+                <th>Total Cost (₹)</th>
+                <th>BCR</th>
+                <th>Net Benefit (₹)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <p>&copy; 2025 FETP India Decision Aid Tool. University of Newcastle & Partners.</p>
+    </footer>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
