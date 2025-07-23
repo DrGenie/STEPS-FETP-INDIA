@@ -1,6 +1,6 @@
 /**************************************************************************
  * FETP India Decision Aid Tool
- * - Costs trimmed & dynamic (scaling by capacity, multipliers & endorsement)
+ * - Costs trimmed & dynamics (scaling by capacity, multipliers & endorsement)
  * - Benefits = WTP × endorsement × stakeholders
  * - QALY = capacity × endorsement × QALY/trainee
  **************************************************************************/
