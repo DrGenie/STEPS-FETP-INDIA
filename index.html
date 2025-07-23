@@ -19,7 +19,7 @@
   <div class="container">
     <header>
       <h1>FETP India Decision Aid Tool</h1>
-      <p>Evaluate FETP configurations using stakeholder WTP, endorsement, costs, QALYs, and probabilistic sensitivity analysis.</p>
+      <p>Explore FETP designs: endorsement, WTP, realistic costs, QALYs, and Monte Carlo PSA.</p>
     </header>
 
     <nav class="tabs" role="tablist">
@@ -38,8 +38,8 @@
     <!-- INTRO -->
     <section id="introTab" class="tabcontent" style="display:block;" tabindex="0">
       <div class="intro-box">
-        <p><strong>Purpose:</strong> Help decision‑makers explore FETP scenarios, quantify costs and benefits, and test robustness with PSA.</p>
-        <p>Steps: review attributes → set scenario → view WTP, endorsement, costs & QALYs → run PSA → save/export.</p>
+        <p><strong>Purpose:</strong> Build a business case for scaling FETPs in India using stakeholder value and cost-effectiveness evidence.</p>
+        <p>Steps: check attributes → set inputs → calculate → inspect WTP, endorsement, costs & QALYs → run PSA → save/export.</p>
       </div>
     </section>
 
@@ -167,7 +167,7 @@
                   <button class="info-button" aria-label="Aggregate WTP across stakeholders" tabindex="0">
                     <i class="fa-solid fa-circle-info"></i>
                   </button>
-                  <span class="tooltip-text">Used to scale aggregate WTP. Set to 1 if not needed.</span>
+                  <span class="tooltip-text">Scales aggregate WTP. Set to 1 for per-respondent.</span>
                 </span>
               </h3>
               <div class="options slider-option">
@@ -211,7 +211,7 @@
         <p>Total WTP = (Σ marginal WTP) × Endorsement × Stakeholders.</p>
         <div class="buttons-row"><button onclick="renderWTPChart()">Show WTP Chart</button></div>
         <div class="chart-grid">
-          <div class="chart-box">
+          <div class="chart-box fixed-height">
             <h3>Marginal WTP (₹)</h3>
             <canvas id="wtpChartMain"></canvas>
           </div>
@@ -223,10 +223,10 @@
     <section id="endorseTab" class="tabcontent" tabindex="0">
       <div class="calculation-info">
         <h4>Predicted Endorsement</h4>
-        <p>Placeholder logistic model. Replace coefficients with final estimates.</p>
+        <p>Placeholder logistic model. Replace with final coefficients once ready.</p>
         <div class="buttons-row"><button onclick="renderEndorseChart()">Show Endorsement Plot</button></div>
         <div class="chart-grid">
-          <div class="chart-box" style="position:relative;height:300px;">
+          <div class="chart-box" style="position:relative;height:320px;">
             <h3>Endorse vs Not Endorse</h3>
             <canvas id="endorseChart"></canvas>
           </div>
@@ -268,7 +268,7 @@
         <div class="buttons-row"><button onclick="renderQALY()">Run QALY Analysis</button></div>
         <div id="qalyResults"></div>
         <div class="chart-grid">
-          <div class="chart-box">
+          <div class="chart-box fixed-height">
             <h3>ICER vs Threshold</h3>
             <canvas id="qalyChart"></canvas>
           </div>
@@ -280,33 +280,33 @@
     <section id="psaTab" class="tabcontent" tabindex="0">
       <div class="calculation-info">
         <h4>Probabilistic Sensitivity Analysis (Monte Carlo)</h4>
-        <p>Draw parameters from Normal distributions using user-defined %SE. Results show distributions for BCR, Net Benefit, ICER.</p>
+        <p>Normal draws with user-defined %SE. Negatives truncated. 1,000+ iterations recommended.</p>
         <div class="form-grid">
           <div class="form-item">
-            <label for="seCost">SE % for Costs</label>
+            <label for="seCost">SE % Costs</label>
             <input type="number" id="seCost" min="0" step="1" value="10">
           </div>
           <div class="form-item">
-            <label for="seWTP">SE % for WTP</label>
+            <label for="seWTP">SE % WTP</label>
             <input type="number" id="seWTP" min="0" step="1" value="10">
           </div>
           <div class="form-item">
-            <label for="seEndorse">SE % for Endorsement</label>
+            <label for="seEndorse">SE % Endorse</label>
             <input type="number" id="seEndorse" min="0" step="1" value="5">
           </div>
           <div class="form-item">
             <label for="iterations">Iterations</label>
-            <input type="number" id="iterations" min="100" step="100" value="1000">
+            <input type="number" id="iterations" min="200" step="100" value="1000">
           </div>
         </div>
         <div class="buttons-row"><button onclick="runPSA()">Run PSA</button></div>
         <div id="psaResults"></div>
         <div class="chart-grid">
-          <div class="chart-box">
+          <div class="chart-box fixed-height">
             <h3>BCR Distribution</h3>
             <canvas id="psaBCR"></canvas>
           </div>
-          <div class="chart-box">
+          <div class="chart-box fixed-height">
             <h3>ICER Distribution</h3>
             <canvas id="psaICER"></canvas>
           </div>
@@ -317,33 +317,27 @@
     <!-- METHODS -->
     <section id="methodsTab" class="tabcontent" tabindex="0">
       <div class="calculation-info">
-        <h4>How Calculations Are Done</h4>
+        <h4>Methods Summary</h4>
         <details open>
           <summary><strong>Costs</strong></summary>
-          <p>Total Cost (present value) = Σ<sub>t=0..T-1</sub> [(Fixed<sub>t</sub> + Per‑trainee<sub>t</sub> + MoH<sub>t</sub>) / (1+r)<sup>t</sup>].</p>
-          <ul>
-            <li>Fixed blocks scale with attribute multipliers (type, duration, focus, mode, response).</li>
-            <li>Per‑trainee blocks scale with endorsed trainees (capacity × cohorts/year × endorsement).</li>
-            <li>MoH cost slider applies to all enrolled trainees (capacity × cohorts/year).</li>
-            <li>Discounting uses the chosen rate.</li>
-          </ul>
+          <p>PV Cost = Σ<sub>t=0..T-1</sub> [(Fixed × multipliers) + (Per‑trainee × endorsed trainees) + (MoH slider cost)] /(1+r)<sup>t</sup>.</p>
         </details>
         <details>
           <summary><strong>Benefits (₹)</strong></summary>
-          <p>Total Benefit = [Σ marginal WTP] × Endorsement × Stakeholders. Discounting can be added if WTP is treated across years (extend easily in JS).</p>
+          <p>PV WTP = (Σ marginal WTP) × endorsement × stakeholders. (Currently undiscounted since WTP is assumed upfront; extend easily.)</p>
         </details>
         <details>
           <summary><strong>QALYs</strong></summary>
-          <p>Total QALYs = Capacity × Cohorts/year × Years × Endorsement × QALY/trainee, discounted annually. ICER = PV(Cost)/PV(QALYs).</p>
+          <p>PV QALYs = Capacity × cohorts/year × years × endorsement × QALY/trainee, discounted. ICER = PV Cost / PV QALYs.</p>
         </details>
         <details>
           <summary><strong>PSA</strong></summary>
-          <p>Each iteration draws Costs, WTP, and Endorsement from Normal(mean, SD=SE%×mean). Negative draws truncated at small positive values. Recalculate BCR, Net Benefit, ICER. Display histograms.</p>
+          <p>Draw cost, WTP, endorsement, QALYs from Normal(mean, sd=SE%×mean), truncate below zero. Recompute BCR, Net Benefit, ICER each run.</p>
         </details>
       </div>
     </section>
 
-    <!-- SAVED SCENARIOS -->
+    <!-- SAVED -->
     <section id="scenariosTab" class="tabcontent" tabindex="0">
       <div class="calculation-info">
         <h4>Saved Scenarios</h4>
