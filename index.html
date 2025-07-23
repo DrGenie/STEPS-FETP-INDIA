@@ -19,7 +19,7 @@
   <div class="container">
     <header>
       <h1>FETP India Decision Aid Tool</h1>
-      <p>Explore FETP designs: endorsement, WTP, realistic costs, QALYs, and Monte Carlo PSA.</p>
+      <p>Simulate FETP configurations and view endorsement, WTP, realistic costs, QALYs and PSA.</p>
     </header>
 
     <nav class="tabs" role="tablist">
@@ -38,8 +38,7 @@
     <!-- INTRO -->
     <section id="introTab" class="tabcontent" style="display:block;" tabindex="0">
       <div class="intro-box">
-        <p><strong>Purpose:</strong> Build a business case for scaling FETPs in India using stakeholder value and cost-effectiveness evidence.</p>
-        <p>Steps: check attributes → set inputs → calculate → inspect WTP, endorsement, costs & QALYs → run PSA → save/export.</p>
+        <p><strong>Purpose:</strong> Support India’s FETP business case with stakeholder-informed WTP, endorsement, realistic costs & cost‑effectiveness.</p>
       </div>
     </section>
 
@@ -49,43 +48,43 @@
       <div class="attributes-list">
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-graduation-cap"></i>
-            <div class="tooltip">Frontline (ref); Intermediate; Advanced.</div>
+            <div class="tooltip">Frontline (ref); Intermediate; Advanced</div>
           </div>
           <div class="attribute-content"><h4>Program Type</h4><p>Frontline (ref), Intermediate, Advanced</p></div>
         </div>
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-hourglass-half"></i>
-            <div class="tooltip">6 m (ref); 12 m; 24 m.</div>
+            <div class="tooltip">6 m (ref); 12 m; 24 m</div>
           </div>
           <div class="attribute-content"><h4>Duration</h4><p>6 (ref), 12, 24 months</p></div>
         </div>
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-virus-covid"></i>
-            <div class="tooltip">Human (ref); Animal; One Health.</div>
+            <div class="tooltip">Human (ref); Animal; One Health</div>
           </div>
           <div class="attribute-content"><h4>Focus</h4><p>Human (ref), Animal, One Health</p></div>
         </div>
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-laptop-medical"></i>
-            <div class="tooltip">In-person (ref); Hybrid; Online.</div>
+            <div class="tooltip">In-person (ref); Hybrid; Online</div>
           </div>
           <div class="attribute-content"><h4>Delivery Mode</h4><p>In-person (ref), Hybrid, Online</p></div>
         </div>
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-people-group"></i>
-            <div class="tooltip">Annual intake: 200–1500.</div>
+            <div class="tooltip">200–1500 trainees / year</div>
           </div>
-          <div class="attribute-content"><h4>Capacity</h4><p>200–1500 trainees/year</p></div>
+          <div class="attribute-content"><h4>Capacity</h4><p>200–1500 / year</p></div>
         </div>
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-stopwatch"></i>
-            <div class="tooltip">14 d (ref); 7 d; 3 d; 24 h.</div>
+            <div class="tooltip">14 d (ref); 7 d; 3 d; 24 h</div>
           </div>
           <div class="attribute-content"><h4>Response Capacity</h4><p>14d (ref), 7d, 3d, 24h</p></div>
         </div>
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-indian-rupee-sign"></i>
-            <div class="tooltip">₹30k–₹90k per trainee/month.</div>
+            <div class="tooltip">₹30k–₹90k / trainee / month</div>
           </div>
           <div class="attribute-content"><h4>₹ / Trainee / Month</h4><p>₹30,000–₹90,000</p></div>
         </div>
@@ -223,10 +222,10 @@
     <section id="endorseTab" class="tabcontent" tabindex="0">
       <div class="calculation-info">
         <h4>Predicted Endorsement</h4>
-        <p>Placeholder logistic model. Replace with final coefficients once ready.</p>
+        <p>Placeholder logistic model; update with final survey coefficients when available.</p>
         <div class="buttons-row"><button onclick="renderEndorseChart()">Show Endorsement Plot</button></div>
         <div class="chart-grid">
-          <div class="chart-box" style="position:relative;height:320px;">
+          <div class="chart-box fixed-height">
             <h3>Endorse vs Not Endorse</h3>
             <canvas id="endorseChart"></canvas>
           </div>
@@ -280,7 +279,7 @@
     <section id="psaTab" class="tabcontent" tabindex="0">
       <div class="calculation-info">
         <h4>Probabilistic Sensitivity Analysis (Monte Carlo)</h4>
-        <p>Normal draws with user-defined %SE. Negatives truncated. 1,000+ iterations recommended.</p>
+        <p>Normal draws with user-defined %SE, truncated at plausible bounds (no negative values).</p>
         <div class="form-grid">
           <div class="form-item">
             <label for="seCost">SE % Costs</label>
@@ -317,14 +316,14 @@
     <!-- METHODS -->
     <section id="methodsTab" class="tabcontent" tabindex="0">
       <div class="calculation-info">
-        <h4>Methods Summary</h4>
+        <h4>Methods</h4>
         <details open>
           <summary><strong>Costs</strong></summary>
           <p>PV Cost = Σ<sub>t=0..T-1</sub> [(Fixed × multipliers) + (Per‑trainee × endorsed trainees) + (MoH slider cost)] /(1+r)<sup>t</sup>.</p>
         </details>
         <details>
           <summary><strong>Benefits (₹)</strong></summary>
-          <p>PV WTP = (Σ marginal WTP) × endorsement × stakeholders. (Currently undiscounted since WTP is assumed upfront; extend easily.)</p>
+          <p>Benefit = (Σ marginal WTP) × endorsement × stakeholders. (Treat as upfront; discount if modelling over time.)</p>
         </details>
         <details>
           <summary><strong>QALYs</strong></summary>
@@ -332,7 +331,7 @@
         </details>
         <details>
           <summary><strong>PSA</strong></summary>
-          <p>Draw cost, WTP, endorsement, QALYs from Normal(mean, sd=SE%×mean), truncate below zero. Recompute BCR, Net Benefit, ICER each run.</p>
+          <p>Draws from Normal(mean, sd=SE%×mean), truncated at >0. Recompute BCR, Net Benefit, ICER in each iteration; summary gives mean & 95% CI.</p>
         </details>
       </div>
     </section>
