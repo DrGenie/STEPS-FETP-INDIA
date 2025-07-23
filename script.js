@@ -1,22 +1,38 @@
-/* ============================================================
-   FETP India Decision Aid Tool – Fully functional
-   Tab system simplified to avoid silent failures.
-============================================================ */
+/* ========================== script.js ========================== */
 (function(){
 "use strict";
 
-/* ------------ Helpers ------------ */
+/* ---------- Global tab fallback ---------- */
+window.openTab = function(tabId, btn){
+  const tabs = document.querySelectorAll(".tabcontent");
+  tabs.forEach(sec=>{
+    const show = sec.id===tabId;
+    sec.style.display = show ? "block" : "none";
+    sec.setAttribute("aria-hidden", show ? "false" : "true");
+  });
+  const buttons=document.querySelectorAll(".tablink");
+  buttons.forEach(b=>{
+    const active=b===btn;
+    b.classList.toggle("active",active);
+    b.setAttribute("aria-selected",active?"true":"false");
+  });
+
+  if(tabId==="wtpTab") renderWTPChart();
+  if(tabId==="endorseTab") renderEndorseChart();
+  if(tabId==="costsTab") renderCostsBenefits();
+};
+
+/* ---------- Helpers ---------- */
 const $  = sel => document.querySelector(sel);
 const $$ = sel => document.querySelectorAll(sel);
 const INRfmt = n => new Intl.NumberFormat('en-IN',{maximumFractionDigits:0}).format(Math.round(n));
+function showError(msg){ const b=$("#globalError"); if(!b) return; b.textContent=msg; b.style.display="block"; }
+function hideError(){ const b=$("#globalError"); if(!b) return; b.style.display="none"; }
 
-function showError(msg){ const b=$("#globalError"); b.textContent=msg; b.style.display="block"; }
-function hideError(){ const b=$("#globalError"); b.style.display="none"; }
-
-/* ------------ Charts refs ------------ */
+/* ---------- Charts refs ---------- */
 let wtpChart, endorseChart, combinedChart, qalyChart, psaBCRChart, psaICERChart;
 
-/* ------------ Parameters (placeholders) ------------ */
+/* ---------- Parameters (placeholders) ---------- */
 const COEFS={
   ASC:0.30,
   type_intermediate:0.28, type_advanced:0.48,
@@ -26,6 +42,7 @@ const COEFS={
   resp_7:0.16, resp_3:0.30, resp_1:0.52,
   cost_perT_perM:-0.0000085
 };
+/* Marginal WTP (₹) */
 const WTP={
   type_intermediate:10000, type_advanced:20000,
   dur_12:5000, dur_24:8000,
@@ -33,8 +50,12 @@ const WTP={
   mode_hybrid:3000, mode_online:-6500,
   resp_7:4000, resp_3:9500, resp_1:16000
 };
-const BASE_COSTS={staff_consult:1200000,rent_utils:150000,workshops:220000,office_maint:60000,staff_dev:80000};
-const PER_TRAINEE={allowance:18000,equip:6000,materials:1200,opp_cost:25000};
+
+/* *** REMOVED the specific fixed/per‑trainee components you listed *** */
+const BASE_COSTS={};     // No fixed components (removed Staff Consult, Rent Utils, Workshops, Office Maint, Staff Dev)
+const PER_TRAINEE={};    // No per trainee components (removed Allowance, Equip, etc.)
+
+/* Multipliers */
 const MULTIPLIERS={
   ptype:{frontline:1.0,intermediate:1.08,advanced:1.18},
   duration:{"6":1.0,"12":1.25,"24":1.7},
@@ -44,58 +65,41 @@ const MULTIPLIERS={
 };
 const COLORS=["#2a76d2","#009688","#f39c12","#e74c3c","#7f8c8d"];
 
-/* ------------ State ------------ */
+/* ---------- State ---------- */
 let savedScenarios=[];
 
-/* ------------ Init ------------ */
+/* ---------- Init ---------- */
 document.addEventListener("DOMContentLoaded",()=>{
+  try{
+    bindInputs();
+    $("#calcBtn").addEventListener("click", safe(calcAndDisplay));
+    $("#closeModalBtn").addEventListener("click", closeModal);
 
-  // Tab binding
-  const tabButtons=$$(".tablink");
-  tabButtons.forEach(btn=>{
-    btn.addEventListener("click",()=>{
-      const targetId=btn.dataset.tab;
-      // set active class
-      tabButtons.forEach(b=>{b.classList.toggle("active",b===btn); b.setAttribute("aria-selected",b===btn?"true":"false");});
-      // show/hide sections
-      $$(".tabcontent").forEach(sec=>{
-        const show = sec.id===targetId;
-        sec.style.display = show ? "block" : "none";
-        sec.setAttribute("aria-hidden", show ? "false" : "true");
-      });
-      if(targetId==="wtpTab") renderWTPChart();
-      if(targetId==="endorseTab") renderEndorseChart();
-      if(targetId==="costsTab") renderCostsBenefits();
-    });
-  });
-
-  // Inputs
-  bindInputs();
-
-  // Buttons
-  $("#calcBtn").addEventListener("click", safe(calcAndDisplay));
-  $("#closeModalBtn").addEventListener("click", closeModal);
-  $("#showWTP").addEventListener("click", safe(renderWTPChart));
-  $("#showEndorse").addEventListener("click", safe(renderEndorseChart));
-  $("#toggleBreakdown").addEventListener("click", toggleCostBreakdown);
-  $("#runQALY").addEventListener("click", safe(runQALY));
-  $("#runPSA").addEventListener("click", safe(runPSA));
-  $("#saveScenarioBtn").addEventListener("click", safe(saveScenario));
-  $("#exportPDFBtn").addEventListener("click", safe(exportPDF));
+    $("#showWTP").addEventListener("click", safe(renderWTPChart));
+    $("#showEndorse").addEventListener("click", safe(()=>renderEndorseChart()));
+    $("#toggleBreakdown").addEventListener("click", toggleCostBreakdown);
+    $("#runQALY").addEventListener("click", safe(runQALY));
+    $("#runPSA").addEventListener("click", safe(runPSA));
+    $("#saveScenarioBtn").addEventListener("click", safe(saveScenario));
+    $("#exportPDFBtn").addEventListener("click", safe(exportPDF));
+  }catch(e){
+    console.error(e);
+    showError("Initialisation error. See console.");
+  }
 });
 
-/* ------------ Safe wrapper ------------ */
+/* ---------- Safe wrapper ---------- */
 function safe(fn){ return (...args)=>{ try{ hideError(); fn(...args); }catch(e){ console.error(e); showError(e.message); } }; }
 
-/* ------------ Inputs ------------ */
+/* ---------- Inputs ---------- */
 function bindInputs(){
   const cap=$("#capSlider"), cost=$("#costSlider"), stake=$("#stakeSlider");
-  cap.addEventListener("input",()=>{$("#capLabel").textContent=cap.value;});
-  cost.addEventListener("input",()=>{$("#costLabel").textContent=Number(cost.value).toLocaleString();});
-  stake.addEventListener("input",()=>{$("#stakeLabel").textContent=stake.value;});
+  cap.addEventListener("input",()=>$("#capLabel").textContent=cap.value);
+  cost.addEventListener("input",()=>$("#costLabel").textContent=Number(cost.value).toLocaleString());
+  stake.addEventListener("input",()=>$("#stakeLabel").textContent=stake.value);
 }
 
-/* Scenario builder */
+/* Build scenario object */
 function buildScenario(){
   const sc={
     ptype:document.querySelector('input[name="ptype"]:checked')?.value,
@@ -127,7 +131,7 @@ function setWarnings(arr){
   }
 }
 
-/* ------------ Calculations ------------ */
+/* ---------- Core calculations ---------- */
 function endorsementProb(sc){
   let U=COEFS.ASC;
   if(sc.ptype==="intermediate")U+=COEFS.type_intermediate;
@@ -145,7 +149,8 @@ function endorsementProb(sc){
   const p=Math.exp(U)/(1+Math.exp(U));
   return Math.max(0.01,Math.min(0.99,p));
 }
-function totalWTP(sc,e){
+
+function totalWTP(sc,eShare){
   let m=0;
   if(sc.ptype==="intermediate")m+=WTP.type_intermediate;
   if(sc.ptype==="advanced")m+=WTP.type_advanced;
@@ -158,50 +163,56 @@ function totalWTP(sc,e){
   if(sc.resp==="7")m+=WTP.resp_7;
   if(sc.resp==="3")m+=WTP.resp_3;
   if(sc.resp==="1")m+=WTP.resp_1;
-  return m*sc.stakeholders*e;
+  return m*sc.stakeholders*eShare;
 }
-function pvCost(sc,e){
+
+function pvCost(sc,eShare){
   const yrs=sc.yearsHorizon,r=sc.discRate,coh=sc.cohortsYear;
   const mT=MULTIPLIERS.ptype[sc.ptype],mD=MULTIPLIERS.duration[sc.duration],
         mMo=MULTIPLIERS.mode_cost[sc.mode],mF=MULTIPLIERS.focus_cost[sc.focus],
         mR=MULTIPLIERS.resp_cost[sc.resp],mult=mT*mD*mMo*mF*mR;
+
   let pv=0;
   for(let t=0;t<yrs;t++){
+    // fixed components removed → 0
     let fixed=0; Object.values(BASE_COSTS).forEach(v=>fixed+=v);
     fixed*=mult;
-    const endorsed=sc.capacity*e*coh;
+
+    const endorsed=sc.capacity*eShare*coh;
     let perT=0; Object.values(PER_TRAINEE).forEach(v=>perT+=v);
     perT*=endorsed*mT*mD*mF;
+
     const moh=sc.costPerTM*(sc.duration/12)*sc.capacity*coh;
     const yearCost=fixed+perT+moh;
     pv+=yearCost/Math.pow(1+r,t);
   }
   return pv;
 }
-function pvQALY(sc,e,qPerT){
+
+function pvQALY(sc,eShare,qalyPerT){
   const yrs=sc.yearsHorizon,r=sc.discRate,coh=sc.cohortsYear;
   let pv=0;
   for(let t=0;t<yrs;t++){
-    pv+= (sc.capacity*coh*e*qPerT)/Math.pow(1+r,t);
+    pv+= (sc.capacity*coh*eShare*qalyPerT) / Math.pow(1+r,t);
   }
   return pv;
 }
 
-/* ------------ Recommendation ------------ */
+/* ---------- Recommendation ---------- */
 function buildRecommendation(sc,ePct,bcr,net){
   const msgs=[];
-  if(ePct>=70 && bcr>=1 && net>0) msgs.push("High endorsement and positive net benefit—advance to implementation planning.");
-  if(ePct<45) msgs.push("Endorsement <45%: shorten duration, improve response time or delivery mode.");
-  if(bcr<1 || net<0) msgs.push("Benefits < costs: reduce fixed/per‑trainee costs or increase WTP base.");
-  if(sc.mode==="online" && (sc.ptype==="advanced"||sc.focus==="onehealth")) msgs.push("Switch to Hybrid to preserve field mentorship.");
-  if(sc.duration==="24") msgs.push("24‑month duration is costly; consider 12‑month core plus refreshers.");
-  if(sc.resp==="14") msgs.push("Improve response capacity (≤7 days) to boost value.");
-  if(sc.costPerTM>70000) msgs.push("₹/Trainee/Month high; explore co‑funding or economies of scale.");
-  if(!msgs.length) msgs.push("Configuration balanced—endorsement strong and cost‑effectiveness favourable.");
-  return "Recommendations: "+msgs.join(" ");
+  if(ePct>=75 && bcr>=1.2 && net>0){ msgs.push("Strong case for scale‑up: high endorsement and clear net benefit."); }
+  if(ePct<50){ msgs.push("Endorsement is low (<50%). Shorten duration, improve response capacity or switch to hybrid/in‑person delivery."); }
+  if(bcr<1 || net<0){ msgs.push("Benefits are below costs. Reduce MoH cost/trainee or increase perceived value (e.g. faster response)."); }
+  if(sc.mode==="online" && (sc.ptype==="advanced"||sc.focus==="onehealth")){ msgs.push("Hybrid delivery would safeguard field mentoring for Advanced/One Health tracks."); }
+  if(sc.duration==="24"){ msgs.push("Consider a 12‑month core plus refresher modules to reduce costs."); }
+  if(sc.resp==="14"){ msgs.push("Improving response time (≤7 days) materially increases WTP and endorsement."); }
+  if(sc.costPerTM>70000){ msgs.push("₹/Trainee/Month is high; negotiate co‑funding or explore economies of scale."); }
+  if(!msgs.length) msgs.push("Configuration balanced—endorsement and cost‑effectiveness look favourable.");
+  return msgs;
 }
 
-/* ------------ Main pipeline ------------ */
+/* ---------- Main pipeline ---------- */
 function calcAndDisplay(){
   const sc=buildScenario();
   const eShare=endorsementProb(sc);
@@ -210,7 +221,7 @@ function calcAndDisplay(){
   const c=pvCost(sc,eShare);
   const bcr=w/c;
   const net=w-c;
-  const rec=buildRecommendation(sc,ePct,bcr,net);
+  const recList=buildRecommendation(sc,ePct,bcr,net);
 
   $("#modalResults").innerHTML=`
     <h4>Summary</h4>
@@ -219,7 +230,7 @@ function calcAndDisplay(){
     <p><strong>Total Cost (PV):</strong> ₹${INRfmt(c)}</p>
     <p><strong>BCR:</strong> ${bcr.toFixed(2)}</p>
     <p><strong>Net Benefit:</strong> ₹${INRfmt(net)}</p>
-    <p>${rec}</p>`;
+    <div class="rec-box"><h5>Recommendations</h5><ul>${recList.map(r=>`<li>${r}</li>`).join("")}</ul></div>`;
   openModal();
 
   renderWTPChart();
@@ -227,9 +238,9 @@ function calcAndDisplay(){
   renderCostsBenefits(sc,ePct,w,c,bcr,net,eShare);
 }
 
-/* ------------ Charts ------------ */
+/* ---------- Charts ---------- */
 function renderWTPChart(){
-  const canvas=$("#wtpChart"); if(!canvas) return;
+  const canvas=$("#wtpChart"); if(!canvas)return;
   const ctx=canvas.getContext("2d");
   if(wtpChart) wtpChart.destroy();
   const labels=Object.keys(WTP).map(k=>k.replace(/_/g," "));
@@ -241,8 +252,9 @@ function renderWTPChart(){
       plugins:{legend:{display:false},title:{display:true,text:"Marginal WTP (₹)",font:{size:18}}}}
   });
 }
+
 function renderEndorseChart(sc=null){
-  const canvas=$("#endorseChart"); if(!canvas) return;
+  const canvas=$("#endorseChart"); if(!canvas)return;
   const ctx=canvas.getContext("2d");
   if(endorseChart) endorseChart.destroy();
   const s=sc||buildScenario();
@@ -254,8 +266,9 @@ function renderEndorseChart(sc=null){
       plugins:{title:{display:true,text:`Endorsement: ${p.toFixed(1)}%`,font:{size:18}},legend:{display:false}}}
   });
 }
+
 function renderCostsBenefits(sc=null,ePct=null,w=null,c=null,bcr=null,net=null,eShare=null){
-  const cont=$("#costsBenefitsResults"); if(!cont) return;
+  const cont=$("#costsBenefitsResults"); if(!cont)return;
   const s=sc||buildScenario();
   const es=eShare??endorsementProb(s); const ep=ePct??(es*100);
   const W=w??totalWTP(s,es); const C=c??pvCost(s,es);
@@ -272,14 +285,24 @@ function renderCostsBenefits(sc=null,ePct=null,w=null,c=null,bcr=null,net=null,e
     <div class="chart-box fixed-height"><canvas id="combinedChart"></canvas></div>
   `;
 
-  const list=$("#detailedCostBreakdown"); list.innerHTML="";
-  const mT=MULTIPLIERS.ptype[s.ptype],mD=MULTIPLIERS.duration[s.duration],
-        mMo=MULTIPLIERS.mode_cost[s.mode],mF=MULTIPLIERS.focus_cost[s.focus],
-        mR=MULTIPLIERS.resp_cost[s.resp],mult=mT*mD*mMo*mF*mR;
-  const endorsed=s.capacity*es*s.cohortsYear;
+  const list=$("#detailedCostBreakdown");
+  list.innerHTML="";
 
-  Object.entries(BASE_COSTS).forEach(([k,v])=>addCostCard(list,k,v*mult,"Fixed"));
-  Object.entries(PER_TRAINEE).forEach(([k,v])=>addCostCard(list,k,v*endorsed*mT*mD*mF,"Per trainee"));
+  // Since cost components are removed, show a placeholder if user toggles
+  if(Object.keys(BASE_COSTS).length===0 && Object.keys(PER_TRAINEE).length===0){
+    const msg=document.createElement("div");
+    msg.style.fontSize=".9rem";
+    msg.style.color="#555";
+    msg.textContent="No detailed cost components currently specified.";
+    list.appendChild(msg);
+  }else{
+    const mT=MULTIPLIERS.ptype[s.ptype],mD=MULTIPLIERS.duration[s.duration],
+          mMo=MULTIPLIERS.mode_cost[s.mode],mF=MULTIPLIERS.focus_cost[s.focus],
+          mR=MULTIPLIERS.resp_cost[s.resp],mult=mT*mD*mMo*mF*mR;
+    const endorsed=s.capacity*es*s.cohortsYear;
+    Object.entries(BASE_COSTS).forEach(([k,v])=>addCostCard(list,k,v*mult,"Fixed"));
+    Object.entries(PER_TRAINEE).forEach(([k,v])=>addCostCard(list,k,v*endorsed*mT*mD*mF,"Per trainee"));
+  }
   const moh=s.costPerTM*(s.duration/12)*s.capacity*s.cohortsYear;
   addCostCard(list,"MoH Training Cost",moh,"Per trainee");
 
@@ -293,6 +316,7 @@ function renderCostsBenefits(sc=null,ePct=null,w=null,c=null,bcr=null,net=null,e
       scales:{y:{beginAtZero:true}}}
   });
 }
+
 function addCostCard(container,title,val,type){
   const div=document.createElement("div");
   div.className="cost-card";
@@ -302,15 +326,15 @@ function addCostCard(container,title,val,type){
   container.appendChild(div);
 }
 
-/* ------------ QALY ------------ */
+/* ---------- QALY ---------- */
 function runQALY(){
   const sc=buildScenario();
-  const e=endorsementProb(sc);
-  const qpt=parseFloat($("#qalyPerTrainee").value);
+  const eShare=endorsementProb(sc);
+  const qalyPerT=parseFloat($("#qalyPerTrainee").value);
   const thr=+$("#threshold").value;
 
-  const cost=pvCost(sc,e);
-  const qaly=pvQALY(sc,e,qpt);
+  const cost=pvCost(sc,eShare);
+  const qaly=pvQALY(sc,eShare,qalyPerT);
   const icer=cost/qaly;
 
   $("#qalyResults").innerHTML=`
@@ -332,20 +356,20 @@ function runQALY(){
   });
 }
 
-/* ------------ PSA ------------ */
+/* ---------- PSA ---------- */
 function runPSA(){
   const sc=buildScenario();
   const seCost=+$("#seCost").value/100;
   const seWTP=+$("#seWTP").value/100;
   const seEnd=+$("#seEndorse").value/100;
   const iters=+$("#iterations").value;
-  const qpt=parseFloat($("#qalyPerTrainee").value);
+  const qalyPerT=parseFloat($("#qalyPerTrainee").value);
   const thr=+$("#threshold").value;
 
   const eMean=endorsementProb(sc),
         wMean=totalWTP(sc,eMean),
         cMean=pvCost(sc,eMean),
-        qMean=pvQALY(sc,eMean,qpt);
+        qMean=pvQALY(sc,eMean,qalyPerT);
 
   const BCR=[],ICER=[];
   for(let i=0;i<iters;i++){
@@ -370,6 +394,7 @@ function runPSA(){
   renderHistogram("psaBCR",BCR,"BCR",COLORS[1],psaBCRChart,(h)=>psaBCRChart=h);
   renderHistogram("psaICER",ICER,"ICER (₹/QALY)",COLORS[3],psaICERChart,(h)=>psaICERChart=h);
 }
+
 function truncNormal(mean,sd,min,max){
   let x; let tries=0;
   do{ x=mean+sd*randn_bm(); tries++; if(tries>500){x=Math.min(Math.max(x,min),max);break;} }while(x<min||x>max);
@@ -396,7 +421,7 @@ function renderHistogram(id,data,label,color,chartRef,setRef){
   }));
 }
 
-/* ------------ Save / Export ------------ */
+/* ---------- Save / Export ---------- */
 function saveScenario(){
   const sc=buildScenario();
   const eShare=endorsementProb(sc), e=eShare*100;
@@ -409,7 +434,7 @@ function saveScenario(){
   alert(`Saved ${obj.name}.`);
 }
 function appendScenarioRow(s){
-  const tbody=$("#scenarioTable tbody");
+  const tbody=$("#scenarioTable tbody"); if(!tbody) return;
   const tr=document.createElement("tr");
   const cols=["name","ptype","duration","focus","mode","resp","capacity","costPerTM","stakeholders","cohortsYear","yearsHorizon","discRate","endorse","totalWTP","totalCost","bcr","net","icer"];
   cols.forEach(c=>{
@@ -444,12 +469,12 @@ function exportPDF(){
   doc.save("FETP_Scenarios.pdf");
 }
 
-/* ------------ Modal & breakdown ------------ */
-function openModal(){ $("#resultModal").style.display="block"; }
-function closeModal(){ $("#resultModal").style.display="none"; }
+/* ---------- Modal / breakdown ---------- */
+function openModal(){ const m=$("#resultModal"); if(m) m.style.display="block"; }
+function closeModal(){ const m=$("#resultModal"); if(m) m.style.display="none"; }
 function toggleCostBreakdown(){
-  const el=$("#detailedCostBreakdown");
+  const el=$("#detailedCostBreakdown"); if(!el) return;
   el.style.display=(el.style.display==="none"||el.style.display==="")?"flex":"none";
 }
 
-})(); // end IIFE
+})(); 
