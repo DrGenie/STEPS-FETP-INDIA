@@ -1,3 +1,4 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -18,17 +19,18 @@
   <div class="container">
     <header>
       <h1>FETP India Decision Aid Tool</h1>
-      <p>Configure FETP designs and see endorsement, WTP, costs, and cost‑effectiveness (₹ & QALYs).</p>
+      <p>Evaluate FETP configurations using stakeholder WTP, endorsement, realistic costs, QALYs, and probabilistic sensitivity analysis.</p>
     </header>
 
     <nav class="tabs" role="tablist">
-      <button class="tablink active" data-tab="introTab" aria-selected="true"><i class="fa-solid fa-info-circle"></i><span> Introduction</span></button>
+      <button class="tablink active" data-tab="introTab" aria-selected="true"><i class="fa-solid fa-info-circle"></i><span> Intro</span></button>
       <button class="tablink" data-tab="attributesTab" aria-selected="false"><i class="fa-solid fa-list"></i><span> Attributes</span></button>
       <button class="tablink" data-tab="inputsTab" aria-selected="false"><i class="fa-solid fa-sliders"></i><span> Inputs</span></button>
       <button class="tablink" data-tab="wtpTab" aria-selected="false"><i class="fa-solid fa-chart-bar"></i><span> WTP</span></button>
-      <button class="tablink" data-tab="endorseTab" aria-selected="false"><i class="fa-solid fa-thumbs-up"></i><span> Endorsement</span></button>
+      <button class="tablink" data-tab="endorseTab" aria-selected="false"><i class="fa-solid fa-thumbs-up"></i><span> Endorse</span></button>
       <button class="tablink" data-tab="costsTab" aria-selected="false"><i class="fa-solid fa-calculator"></i><span> ₹ Cost–Benefit</span></button>
-      <button class="tablink" data-tab="qalyTab" aria-selected="false"><i class="fa-solid fa-heart-pulse"></i><span> QALY Analysis</span></button>
+      <button class="tablink" data-tab="qalyTab" aria-selected="false"><i class="fa-solid fa-heart-pulse"></i><span> QALY</span></button>
+      <button class="tablink" data-tab="psaTab" aria-selected="false"><i class="fa-solid fa-flask"></i><span> PSA</span></button>
       <button class="tablink" data-tab="methodsTab" aria-selected="false"><i class="fa-solid fa-book-open"></i><span> Methods</span></button>
       <button class="tablink" data-tab="scenariosTab" aria-selected="false"><i class="fa-solid fa-folder-open"></i><span> Saved</span></button>
     </nav>
@@ -36,79 +38,57 @@
     <!-- INTRO -->
     <section id="introTab" class="tabcontent" style="display:block;" tabindex="0">
       <div class="intro-box">
-        <p><strong>Goal:</strong> Support India’s FETP scale‑up business case with evidence on stakeholder value (WTP), endorsement, and costs.</p>
-        <p><strong>How to use:</strong> Review attributes → set inputs → view WTP, endorsement, costs, QALYs → compare scenarios.</p>
+        <p><strong>Purpose:</strong> Help decision‑makers explore realistic FETP scenarios, quantify costs and benefits, and test robustness with PSA.</p>
+        <p>Steps: review attributes → set scenario → view WTP, endorsement, costs & QALYs → run PSA → save/export.</p>
       </div>
     </section>
 
     <!-- ATTRIBUTES -->
     <section id="attributesTab" class="tabcontent" tabindex="0">
-      <h2>Attributes & Levels (reference levels in brackets)</h2>
+      <h2>Attributes & Levels (reference in brackets)</h2>
       <div class="attributes-list">
-
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-graduation-cap"></i>
-            <div class="tooltip">Frontline (ref): basic outbreak skills; Intermediate & Advanced require more mentoring/field work.</div>
+            <div class="tooltip">Frontline (ref); Intermediate; Advanced.</div>
           </div>
-          <div class="attribute-content">
-            <h4>Program Type</h4><p>Frontline (ref), Intermediate, Advanced</p>
-          </div>
+          <div class="attribute-content"><h4>Program Type</h4><p>Frontline (ref), Intermediate, Advanced</p></div>
         </div>
-
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-hourglass-half"></i>
-            <div class="tooltip">6 months (ref), 12 months, 24 months. Longer → higher cost, potential higher value.</div>
+            <div class="tooltip">6 m (ref); 12 m; 24 m.</div>
           </div>
-          <div class="attribute-content">
-            <h4>Duration</h4><p>6 (ref), 12, 24 months</p>
-          </div>
+          <div class="attribute-content"><h4>Duration</h4><p>6 (ref), 12, 24 months</p></div>
         </div>
-
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-virus-covid"></i>
-            <div class="tooltip">Human health (ref); Animal health; One Health (multi-sector).</div>
+            <div class="tooltip">Human (ref); Animal; One Health.</div>
           </div>
-          <div class="attribute-content">
-            <h4>Focus</h4><p>Human (ref), Animal, One Health</p>
-          </div>
+          <div class="attribute-content"><h4>Focus</h4><p>Human (ref), Animal, One Health</p></div>
         </div>
-
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-laptop-medical"></i>
-            <div class="tooltip">In-person (ref), Hybrid, Fully online. Advanced/One Health often need in-person practicum.</div>
+            <div class="tooltip">In-person (ref); Hybrid; Online.</div>
           </div>
-          <div class="attribute-content">
-            <h4>Delivery Mode</h4><p>In-person (ref), Hybrid, Fully online</p>
-          </div>
+          <div class="attribute-content"><h4>Delivery Mode</h4><p>In-person (ref), Hybrid, Online</p></div>
         </div>
-
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-people-group"></i>
-            <div class="tooltip">Annual intake 200–1500 trainees.</div>
+            <div class="tooltip">Annual intake: 200–1500.</div>
           </div>
-          <div class="attribute-content">
-            <h4>Training Capacity</h4><p>200–1500 / year</p>
-          </div>
+          <div class="attribute-content"><h4>Capacity</h4><p>200–1500 trainees/year</p></div>
         </div>
-
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-stopwatch"></i>
-            <div class="tooltip">Median detection/response: 14 d (ref), 7 d, 3 d, 24 h. Faster = costlier but higher value.</div>
+            <div class="tooltip">14 d (ref); 7 d; 3 d; 24 h.</div>
           </div>
-          <div class="attribute-content">
-            <h4>Response Capacity</h4><p>14d (ref), 7d, 3d, 24h</p>
-          </div>
+          <div class="attribute-content"><h4>Response Capacity</h4><p>14d (ref), 7d, 3d, 24h</p></div>
         </div>
-
         <div class="attribute-card" tabindex="0">
           <div class="attribute-icon"><i class="fa-solid fa-indian-rupee-sign"></i>
-            <div class="tooltip">Monthly MoH cost per trainee: ₹30k–₹90k.</div>
+            <div class="tooltip">₹30k–₹90k per trainee/month.</div>
           </div>
-          <div class="attribute-content">
-            <h4>₹ / Trainee / Month</h4><p>₹30,000–₹90,000</p>
-          </div>
+          <div class="attribute-content"><h4>₹ / Trainee / Month</h4><p>₹30,000–₹90,000</p></div>
         </div>
-
       </div>
     </section>
 
@@ -151,7 +131,7 @@
               <div class="options">
                 <label><input type="radio" name="mode" value="inperson" /> In-person</label>
                 <label><input type="radio" name="mode" value="hybrid" /> Hybrid</label>
-                <label><input type="radio" name="mode" value="online" /> Fully online</label>
+                <label><input type="radio" name="mode" value="online" /> Online</label>
               </div>
             </div>
 
@@ -184,15 +164,24 @@
             <div class="input-level-card">
               <h3>Stakeholders Represented
                 <span class="info-container">
-                  <button class="info-button" aria-label="Aggregate WTP across stakeholders you represent" tabindex="0">
+                  <button class="info-button" aria-label="Aggregate WTP across stakeholders" tabindex="0">
                     <i class="fa-solid fa-circle-info"></i>
                   </button>
-                  <span class="tooltip-text">Number of stakeholder units you want to aggregate over. Remove/ignore if you only need per‑respondent WTP.</span>
+                  <span class="tooltip-text">Used to scale aggregate WTP. Set to 1 if not needed.</span>
                 </span>
               </h3>
               <div class="options slider-option">
                 <label for="stakeSlider"><i class="fa-solid fa-people-roof"></i> <span id="stakeLabel">500</span></label>
-                <input type="range" id="stakeSlider" min="50" max="2000" step="50" value="500" oninput="updateStakeDisplay(this.value)" />
+                <input type="range" id="stakeSlider" min="1" max="2000" step="1" value="500" oninput="updateStakeDisplay(this.value)" />
+              </div>
+            </div>
+
+            <div class="input-level-card">
+              <h3>Cohorts / Year & Horizon</h3>
+              <div class="form-mini">
+                <label>Cohorts / year <input type="number" id="cohortsYear" min="1" max="4" step="1" value="1"></label>
+                <label>Years horizon <input type="number" id="yearsHorizon" min="1" max="10" step="1" value="5"></label>
+                <label>Discount rate (%) <input type="number" id="discRate" min="0" step="0.5" value="3"></label>
               </div>
             </div>
 
@@ -219,7 +208,7 @@
     <section id="wtpTab" class="tabcontent" tabindex="0">
       <div class="calculation-info">
         <h4>WTP (₹) by Attribute</h4>
-        <p>Total WTP = (sum of selected marginal WTPs) × Endorsement × Stakeholder count.</p>
+        <p>Total WTP = (Σ marginal WTP) × Endorsement × Stakeholders.</p>
         <div class="buttons-row"><button onclick="renderWTPChart()">Show WTP Chart</button></div>
         <div class="chart-grid">
           <div class="chart-box">
@@ -234,7 +223,7 @@
     <section id="endorseTab" class="tabcontent" tabindex="0">
       <div class="calculation-info">
         <h4>Predicted Endorsement</h4>
-        <p>Logit model with placeholder coefficients. Replace with final estimates when available.</p>
+        <p>Placeholder logistic model. Replace coefficients with final estimates.</p>
         <div class="buttons-row"><button onclick="renderEndorseChart()">Show Endorsement Plot</button></div>
         <div class="chart-grid">
           <div class="chart-box" style="position:relative;height:300px;">
@@ -261,7 +250,7 @@
     <section id="qalyTab" class="tabcontent" tabindex="0">
       <div class="calculation-info">
         <h4>QALY-Based Cost-Effectiveness</h4>
-        <p>QALYs = Capacity × Endorsement × QALY gain per trainee. ICER = Cost / QALY. Thresholds from 1–3× GDPpc (approx ₹150k–₹500k).</p>
+        <p>QALYs = Capacity × Cohorts/year × Years × Endorsement × QALY/trainee (discounted).</p>
         <div class="form-grid">
           <div class="form-item">
             <label for="qalyPerTrainee">QALY Gain / Trainee</label>
@@ -287,28 +276,69 @@
       </div>
     </section>
 
+    <!-- PSA -->
+    <section id="psaTab" class="tabcontent" tabindex="0">
+      <div class="calculation-info">
+        <h4>Probabilistic Sensitivity Analysis (Monte Carlo)</h4>
+        <p>Draw parameters from Normal distributions using user-defined %SE. Results show distributions for BCR, Net Benefit, ICER.</p>
+        <div class="form-grid">
+          <div class="form-item">
+            <label for="seCost">SE % for Costs</label>
+            <input type="number" id="seCost" min="0" step="1" value="10">
+          </div>
+          <div class="form-item">
+            <label for="seWTP">SE % for WTP</label>
+            <input type="number" id="seWTP" min="0" step="1" value="10">
+          </div>
+          <div class="form-item">
+            <label for="seEndorse">SE % for Endorsement</label>
+            <input type="number" id="seEndorse" min="0" step="1" value="5">
+          </div>
+          <div class="form-item">
+            <label for="iterations">Iterations</label>
+            <input type="number" id="iterations" min="100" step="100" value="1000">
+          </div>
+        </div>
+        <div class="buttons-row"><button onclick="runPSA()">Run PSA</button></div>
+        <div id="psaResults"></div>
+        <div class="chart-grid">
+          <div class="chart-box">
+            <h3>BCR Distribution</h3>
+            <canvas id="psaBCR"></canvas>
+          </div>
+          <div class="chart-box">
+            <h3>ICER Distribution</h3>
+            <canvas id="psaICER"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- METHODS -->
     <section id="methodsTab" class="tabcontent" tabindex="0">
       <div class="calculation-info">
         <h4>How Calculations Are Done</h4>
         <details open>
           <summary><strong>Costs</strong></summary>
-          <p>Total Cost = (Fixed blocks × multipliers) + (Per‑trainee blocks × Capacity × multipliers × Endorsement) + (MoH cost slider × Duration × Capacity).</p>
+          <p>Total Cost (present value) = Σ<sub>t=0..T-1</sub> [(Fixed<sub>t</sub> + Per‑trainee<sub>t</sub> + MoH<sub>t</sub>) / (1+r)<sup>t</sup>].</p>
           <ul>
-            <li><em>Multipliers</em> depend on Program Type, Duration, Focus, Delivery Mode, Response Capacity.</li>
-            <li>Per‑trainee and some service costs scale with endorsement (only endorsed trainees fully participate).</li>
-            <li>Edit <code>BASE_COSTS</code>, <code>PER_TRAINEE</code>, and <code>MULTIPLIERS</code> in <code>script.js</code>.</li>
+            <li>Fixed blocks scale with attribute multipliers (type, duration, focus, mode, response).</li>
+            <li>Per‑trainee blocks scale with endorsed trainees (capacity × cohorts/year × endorsement).</li>
+            <li>MoH cost slider applies to all enrolled trainees (capacity × cohorts/year).</li>
+            <li>Discounting uses the chosen rate.</li>
           </ul>
         </details>
         <details>
           <summary><strong>Benefits (₹)</strong></summary>
-          <p>Total Benefit (₹) = [Sum of marginal WTPs for chosen levels] × Endorsement × Stakeholders.</p>
-          <p>Replace placeholder WTP coefficients with your DCE estimates (₹).</p>
+          <p>Total Benefit = [Σ marginal WTP] × Endorsement × Stakeholders. Discounting can be added if WTP is treated across years (extend easily in JS).</p>
         </details>
         <details>
-          <summary><strong>QALY Analysis</strong></summary>
-          <p>QALYs = Capacity × Endorsement × QALY gain per trainee (user entry). ICER = Total Cost / Total QALY.</p>
-          <p>Compare ICER to selected threshold to judge cost-effectiveness.</p>
+          <summary><strong>QALYs</strong></summary>
+          <p>Total QALYs = Capacity × Cohorts/year × Years × Endorsement × QALY/trainee, discounted annually. ICER = PV(Cost)/PV(QALYs).</p>
+        </details>
+        <details>
+          <summary><strong>PSA</strong></summary>
+          <p>Each iteration draws Costs, WTP, and Endorsement from Normal(mean, SD=SE%×mean). Negative draws truncated at small positive values. Recalculate BCR, Net Benefit, ICER. Display histograms.</p>
         </details>
       </div>
     </section>
@@ -317,7 +347,6 @@
     <section id="scenariosTab" class="tabcontent" tabindex="0">
       <div class="calculation-info">
         <h4>Saved Scenarios</h4>
-        <p>Compare & export.</p>
         <div class="buttons-row">
           <button onclick="saveScenario()">Save Current Scenario</button>
           <button onclick="exportPDF()">Export to PDF</button>
@@ -335,6 +364,9 @@
                 <th>Cap</th>
                 <th>₹/T/M</th>
                 <th>Stakeh.</th>
+                <th>Coh/yr</th>
+                <th>Years</th>
+                <th>Disc%</th>
                 <th>Endorse %</th>
                 <th>Total WTP (₹)</th>
                 <th>Total Cost (₹)</th>
