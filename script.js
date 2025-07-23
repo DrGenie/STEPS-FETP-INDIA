@@ -1,27 +1,22 @@
 /* ============================================================
-   FETP India Decision Aid Tool  (Complete & functional)
-   - Bullet‑proof tab switching
-   - Detailed warnings & recommendations
-   - Charts and PSA
+   FETP India Decision Aid Tool – Fully functional
+   Tab system simplified to avoid silent failures.
 ============================================================ */
-(() => {
+(function(){
 "use strict";
 
-/* ---------- DOM helpers ---------- */
+/* ------------ Helpers ------------ */
 const $  = sel => document.querySelector(sel);
 const $$ = sel => document.querySelectorAll(sel);
 const INRfmt = n => new Intl.NumberFormat('en-IN',{maximumFractionDigits:0}).format(Math.round(n));
 
-function showError(msg){
-  const b=$("#globalError"); if(!b) return;
-  b.textContent=msg; b.style.display="block";
-}
-function hideError(){ const b=$("#globalError"); if(b) b.style.display="none"; }
+function showError(msg){ const b=$("#globalError"); b.textContent=msg; b.style.display="block"; }
+function hideError(){ const b=$("#globalError"); b.style.display="none"; }
 
-/* ---------- Chart refs ---------- */
+/* ------------ Charts refs ------------ */
 let wtpChart, endorseChart, combinedChart, qalyChart, psaBCRChart, psaICERChart;
 
-/* ---------- Parameters (placeholders; replace with final DCE outputs) ---------- */
+/* ------------ Parameters (placeholders) ------------ */
 const COEFS={
   ASC:0.30,
   type_intermediate:0.28, type_advanced:0.48,
@@ -49,71 +44,58 @@ const MULTIPLIERS={
 };
 const COLORS=["#2a76d2","#009688","#f39c12","#e74c3c","#7f8c8d"];
 
-/* ---------- State ---------- */
+/* ------------ State ------------ */
 let savedScenarios=[];
 
-/* ---------- Init ---------- */
-function init(){
-  bindTabs();
+/* ------------ Init ------------ */
+document.addEventListener("DOMContentLoaded",()=>{
+
+  // Tab binding
+  const tabButtons=$$(".tablink");
+  tabButtons.forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const targetId=btn.dataset.tab;
+      // set active class
+      tabButtons.forEach(b=>{b.classList.toggle("active",b===btn); b.setAttribute("aria-selected",b===btn?"true":"false");});
+      // show/hide sections
+      $$(".tabcontent").forEach(sec=>{
+        const show = sec.id===targetId;
+        sec.style.display = show ? "block" : "none";
+        sec.setAttribute("aria-hidden", show ? "false" : "true");
+      });
+      if(targetId==="wtpTab") renderWTPChart();
+      if(targetId==="endorseTab") renderEndorseChart();
+      if(targetId==="costsTab") renderCostsBenefits();
+    });
+  });
+
+  // Inputs
   bindInputs();
+
+  // Buttons
   $("#calcBtn").addEventListener("click", safe(calcAndDisplay));
   $("#closeModalBtn").addEventListener("click", closeModal);
-
   $("#showWTP").addEventListener("click", safe(renderWTPChart));
-  $("#showEndorse").addEventListener("click", safe(()=>renderEndorseChart()));
+  $("#showEndorse").addEventListener("click", safe(renderEndorseChart));
   $("#toggleBreakdown").addEventListener("click", toggleCostBreakdown);
   $("#runQALY").addEventListener("click", safe(runQALY));
   $("#runPSA").addEventListener("click", safe(runPSA));
   $("#saveScenarioBtn").addEventListener("click", safe(saveScenario));
   $("#exportPDFBtn").addEventListener("click", safe(exportPDF));
-}
+});
 
-/* Run when ready EVEN IF DOMContentLoaded already fired */
-if (document.readyState === "loading"){
-  document.addEventListener("DOMContentLoaded", init, {once:true});
-}else{
-  init();
-}
+/* ------------ Safe wrapper ------------ */
+function safe(fn){ return (...args)=>{ try{ hideError(); fn(...args); }catch(e){ console.error(e); showError(e.message); } }; }
 
-/* ---------- Safe wrapper ---------- */
-function safe(fn){
-  return (...args)=>{
-    try{ hideError(); fn(...args); }
-    catch(e){ console.error(e); showError(e.message || "Unknown error. Check console."); }
-  };
-}
-
-/* ---------- Tabs ---------- */
-function bindTabs(){
-  const tabNav=$("#tabs"); if(!tabNav) return;
-  tabNav.addEventListener("click",e=>{
-    const btn=e.target.closest(".tablink"); if(!btn) return;
-    const targetId=btn.dataset.tab;
-    $$(".tablink").forEach(b=>{
-      const active=b===btn;
-      b.classList.toggle("active",active);
-      b.setAttribute("aria-selected",active?"true":"false");
-    });
-    $$(".tabcontent").forEach(sec=>{
-      sec.style.display = sec.id===targetId?"block":"none";
-    });
-
-    // lazy render
-    if(targetId==="wtpTab") renderWTPChart();
-    if(targetId==="endorseTab") renderEndorseChart();
-    if(targetId==="costsTab") renderCostsBenefits();
-  });
-}
-
-/* ---------- Inputs ---------- */
+/* ------------ Inputs ------------ */
 function bindInputs(){
-  const capSlider=$("#capSlider"), costSlider=$("#costSlider"), stakeSlider=$("#stakeSlider");
-  if(capSlider) capSlider.addEventListener("input",()=>{$("#capLabel").textContent=capSlider.value;});
-  if(costSlider) costSlider.addEventListener("input",()=>{$("#costLabel").textContent=Number(costSlider.value).toLocaleString();});
-  if(stakeSlider) stakeSlider.addEventListener("input",()=>{$("#stakeLabel").textContent=stakeSlider.value;});
+  const cap=$("#capSlider"), cost=$("#costSlider"), stake=$("#stakeSlider");
+  cap.addEventListener("input",()=>{$("#capLabel").textContent=cap.value;});
+  cost.addEventListener("input",()=>{$("#costLabel").textContent=Number(cost.value).toLocaleString();});
+  stake.addEventListener("input",()=>{$("#stakeLabel").textContent=stake.value;});
 }
 
-/* Build scenario object */
+/* Scenario builder */
 function buildScenario(){
   const sc={
     ptype:document.querySelector('input[name="ptype"]:checked')?.value,
@@ -128,15 +110,15 @@ function buildScenario(){
     yearsHorizon:+$("#yearsHorizon").value,
     discRate:(+$("#discRate").value)/100
   };
-  if(!sc.ptype||!sc.duration||!sc.focus||!sc.mode||!sc.resp) throw new Error("Please select all attribute levels.");
+  if(!sc.ptype||!sc.duration||!sc.focus||!sc.mode||!sc.resp) throw new Error("Select all attribute levels.");
   const warn=[];
-  if(sc.mode==="online" && (sc.ptype==="advanced"||sc.focus==="onehealth")) warn.push("Fully online for Advanced / One Health may be unrealistic—consider Hybrid.");
-  if(sc.capacity>1200 && sc.mode==="inperson" && sc.resp==="1") warn.push("24‑hour response with fully in‑person delivery at capacity >1200 may strain logistics.");
+  if(sc.mode==="online" && (sc.ptype==="advanced"||sc.focus==="onehealth")) warn.push("Fully online for Advanced/One Health may be unrealistic—consider Hybrid.");
+  if(sc.capacity>1200 && sc.mode==="inperson" && sc.resp==="1") warn.push("24‑hour response with in‑person delivery at capacity >1200 may strain logistics.");
   setWarnings(warn);
   return sc;
 }
 function setWarnings(arr){
-  const box=$("#warnings"); if(!box)return;
+  const box=$("#warnings");
   if(arr.length){
     box.innerHTML="<ul>"+arr.map(x=>`<li>${x}</li>`).join("")+"</ul>";
     box.style.display="block";
@@ -145,7 +127,7 @@ function setWarnings(arr){
   }
 }
 
-/* ---------- Core calculations ---------- */
+/* ------------ Calculations ------------ */
 function endorsementProb(sc){
   let U=COEFS.ASC;
   if(sc.ptype==="intermediate")U+=COEFS.type_intermediate;
@@ -163,7 +145,7 @@ function endorsementProb(sc){
   const p=Math.exp(U)/(1+Math.exp(U));
   return Math.max(0.01,Math.min(0.99,p));
 }
-function totalWTP(sc,eShare){
+function totalWTP(sc,e){
   let m=0;
   if(sc.ptype==="intermediate")m+=WTP.type_intermediate;
   if(sc.ptype==="advanced")m+=WTP.type_advanced;
@@ -176,54 +158,50 @@ function totalWTP(sc,eShare){
   if(sc.resp==="7")m+=WTP.resp_7;
   if(sc.resp==="3")m+=WTP.resp_3;
   if(sc.resp==="1")m+=WTP.resp_1;
-  return m*sc.stakeholders*eShare;
+  return m*sc.stakeholders*e;
 }
-function pvCost(sc,eShare){
+function pvCost(sc,e){
   const yrs=sc.yearsHorizon,r=sc.discRate,coh=sc.cohortsYear;
   const mT=MULTIPLIERS.ptype[sc.ptype],mD=MULTIPLIERS.duration[sc.duration],
         mMo=MULTIPLIERS.mode_cost[sc.mode],mF=MULTIPLIERS.focus_cost[sc.focus],
         mR=MULTIPLIERS.resp_cost[sc.resp],mult=mT*mD*mMo*mF*mR;
-
   let pv=0;
   for(let t=0;t<yrs;t++){
-    // fixed
     let fixed=0; Object.values(BASE_COSTS).forEach(v=>fixed+=v);
     fixed*=mult;
-    // per trainee
-    const endorsed=sc.capacity*eShare*coh;
+    const endorsed=sc.capacity*e*coh;
     let perT=0; Object.values(PER_TRAINEE).forEach(v=>perT+=v);
     perT*=endorsed*mT*mD*mF;
-    // MoH training cost slider
     const moh=sc.costPerTM*(sc.duration/12)*sc.capacity*coh;
     const yearCost=fixed+perT+moh;
     pv+=yearCost/Math.pow(1+r,t);
   }
   return pv;
 }
-function pvQALY(sc,eShare,qalyPerT){
+function pvQALY(sc,e,qPerT){
   const yrs=sc.yearsHorizon,r=sc.discRate,coh=sc.cohortsYear;
   let pv=0;
   for(let t=0;t<yrs;t++){
-    pv+= (sc.capacity*coh*eShare*qalyPerT) / Math.pow(1+r,t);
+    pv+= (sc.capacity*coh*e*qPerT)/Math.pow(1+r,t);
   }
   return pv;
 }
 
-/* ---------- Recommendation ---------- */
+/* ------------ Recommendation ------------ */
 function buildRecommendation(sc,ePct,bcr,net){
   const msgs=[];
-  if(ePct>=70 && bcr>=1 && net>0){ msgs.push("High endorsement and positive net benefit—advance to implementation planning and funding negotiations."); }
-  if(ePct<45){ msgs.push("Endorsement is low (<45%). Shorten duration, add in‑person/hybrid elements, or improve outbreak response time to boost perceived value."); }
-  if(bcr<1 || net<0){ msgs.push("Benefits < costs. Trim stipends/equipment, reduce fixed overheads, or broaden stakeholder base to increase WTP."); }
-  if(sc.mode==="online" && (sc.ptype==="advanced"||sc.focus==="onehealth")){ msgs.push("Consider Hybrid instead of fully Online to preserve field mentorship for Advanced/One Health tracks."); }
-  if(sc.duration==="24"){ msgs.push("24‑month programmes are expensive; a 12‑month core with refresher modules could be more efficient."); }
-  if(sc.resp==="14"){ msgs.push("Improving response capacity (≤7 days) materially increases WTP and endorsement."); }
-  if(sc.costPerTM>70000){ msgs.push("₹/Trainee/Month is high; explore co‑funding with states/partners or seek economies of scale."); }
-  if(msgs.length===0) msgs.push("Configuration balanced—endorsement strong and cost‑effectiveness favourable.");
+  if(ePct>=70 && bcr>=1 && net>0) msgs.push("High endorsement and positive net benefit—advance to implementation planning.");
+  if(ePct<45) msgs.push("Endorsement <45%: shorten duration, improve response time or delivery mode.");
+  if(bcr<1 || net<0) msgs.push("Benefits < costs: reduce fixed/per‑trainee costs or increase WTP base.");
+  if(sc.mode==="online" && (sc.ptype==="advanced"||sc.focus==="onehealth")) msgs.push("Switch to Hybrid to preserve field mentorship.");
+  if(sc.duration==="24") msgs.push("24‑month duration is costly; consider 12‑month core plus refreshers.");
+  if(sc.resp==="14") msgs.push("Improve response capacity (≤7 days) to boost value.");
+  if(sc.costPerTM>70000) msgs.push("₹/Trainee/Month high; explore co‑funding or economies of scale.");
+  if(!msgs.length) msgs.push("Configuration balanced—endorsement strong and cost‑effectiveness favourable.");
   return "Recommendations: "+msgs.join(" ");
 }
 
-/* ---------- Main pipeline ---------- */
+/* ------------ Main pipeline ------------ */
 function calcAndDisplay(){
   const sc=buildScenario();
   const eShare=endorsementProb(sc);
@@ -249,9 +227,9 @@ function calcAndDisplay(){
   renderCostsBenefits(sc,ePct,w,c,bcr,net,eShare);
 }
 
-/* ---------- Charts ---------- */
+/* ------------ Charts ------------ */
 function renderWTPChart(){
-  const canvas=$("#wtpChart"); if(!canvas)return;
+  const canvas=$("#wtpChart"); if(!canvas) return;
   const ctx=canvas.getContext("2d");
   if(wtpChart) wtpChart.destroy();
   const labels=Object.keys(WTP).map(k=>k.replace(/_/g," "));
@@ -264,7 +242,7 @@ function renderWTPChart(){
   });
 }
 function renderEndorseChart(sc=null){
-  const canvas=$("#endorseChart"); if(!canvas)return;
+  const canvas=$("#endorseChart"); if(!canvas) return;
   const ctx=canvas.getContext("2d");
   if(endorseChart) endorseChart.destroy();
   const s=sc||buildScenario();
@@ -273,12 +251,11 @@ function renderEndorseChart(sc=null){
     type:"doughnut",
     data:{labels:["Endorse","Not Endorse"],datasets:[{data:[p,100-p],backgroundColor:[COLORS[0],"#cccccc"],borderColor:"#fff",borderWidth:2}]},
     options:{responsive:true,maintainAspectRatio:false,
-      plugins:{title:{display:true,text:`Endorsement: ${p.toFixed(1)}%`,font:{size:18}},
-               legend:{display:false}}}
+      plugins:{title:{display:true,text:`Endorsement: ${p.toFixed(1)}%`,font:{size:18}},legend:{display:false}}}
   });
 }
 function renderCostsBenefits(sc=null,ePct=null,w=null,c=null,bcr=null,net=null,eShare=null){
-  const cont=$("#costsBenefitsResults"); if(!cont)return;
+  const cont=$("#costsBenefitsResults"); if(!cont) return;
   const s=sc||buildScenario();
   const es=eShare??endorsementProb(s); const ep=ePct??(es*100);
   const W=w??totalWTP(s,es); const C=c??pvCost(s,es);
@@ -292,35 +269,29 @@ function renderCostsBenefits(sc=null,ePct=null,w=null,c=null,bcr=null,net=null,e
       <p><strong>BCR:</strong> ${B.toFixed(2)} ${B<1?'<span style="color:#e74c3c">(BCR&lt;1)</span>':''}</p>
       <p><strong>Net Benefit:</strong> ₹${INRfmt(N)}</p>
     </div>
-    <div class="chart-box fixed-height"><canvas id="combinedChart" aria-label="Cost benefit summary"></canvas></div>
+    <div class="chart-box fixed-height"><canvas id="combinedChart"></canvas></div>
   `;
 
-  // breakdown cards
-  const list=$("#detailedCostBreakdown"); if(list){
-    list.innerHTML="";
-    const mT=MULTIPLIERS.ptype[s.ptype],mD=MULTIPLIERS.duration[s.duration],
-          mMo=MULTIPLIERS.mode_cost[s.mode],mF=MULTIPLIERS.focus_cost[s.focus],
-          mR=MULTIPLIERS.resp_cost[s.resp],mult=mT*mD*mMo*mF*mR;
-    const endorsed=s.capacity*es*s.cohortsYear;
+  const list=$("#detailedCostBreakdown"); list.innerHTML="";
+  const mT=MULTIPLIERS.ptype[s.ptype],mD=MULTIPLIERS.duration[s.duration],
+        mMo=MULTIPLIERS.mode_cost[s.mode],mF=MULTIPLIERS.focus_cost[s.focus],
+        mR=MULTIPLIERS.resp_cost[s.resp],mult=mT*mD*mMo*mF*mR;
+  const endorsed=s.capacity*es*s.cohortsYear;
 
-    Object.entries(BASE_COSTS).forEach(([k,v])=>addCostCard(list,k,v*mult,"Fixed"));
-    Object.entries(PER_TRAINEE).forEach(([k,v])=>addCostCard(list,k,v*endorsed*mT*mD*mF,"Per trainee"));
-    const moh=s.costPerTM*(s.duration/12)*s.capacity*s.cohortsYear;
-    addCostCard(list,"MoH Training Cost",moh,"Per trainee");
-  }
+  Object.entries(BASE_COSTS).forEach(([k,v])=>addCostCard(list,k,v*mult,"Fixed"));
+  Object.entries(PER_TRAINEE).forEach(([k,v])=>addCostCard(list,k,v*endorsed*mT*mD*mF,"Per trainee"));
+  const moh=s.costPerTM*(s.duration/12)*s.capacity*s.cohortsYear;
+  addCostCard(list,"MoH Training Cost",moh,"Per trainee");
 
-  // combined chart
-  const ctx=$("#combinedChart")?.getContext("2d");
-  if(ctx){
-    if(combinedChart) combinedChart.destroy();
-    combinedChart=new Chart(ctx,{
-      type:"bar",
-      data:{labels:["Total Cost","Total WTP","Net Benefit"],datasets:[{label:"₹",data:[C,W,N],backgroundColor:[COLORS[3],COLORS[1],COLORS[2]],borderColor:"#243447",borderWidth:1}]},
-      options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:false},title:{display:true,text:"Cost–Benefit Summary (₹)",font:{size:18}}},
-        scales:{y:{beginAtZero:true}}}
-    });
-  }
+  const ctx=$("#combinedChart").getContext("2d");
+  if(combinedChart) combinedChart.destroy();
+  combinedChart=new Chart(ctx,{
+    type:"bar",
+    data:{labels:["Total Cost","Total WTP","Net Benefit"],datasets:[{label:"₹",data:[C,W,N],backgroundColor:[COLORS[3],COLORS[1],COLORS[2]],borderColor:"#243447",borderWidth:1}]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},title:{display:true,text:"Cost–Benefit Summary (₹)",font:{size:18}}},
+      scales:{y:{beginAtZero:true}}}
+  });
 }
 function addCostCard(container,title,val,type){
   const div=document.createElement("div");
@@ -331,15 +302,15 @@ function addCostCard(container,title,val,type){
   container.appendChild(div);
 }
 
-/* ---------- QALY ---------- */
+/* ------------ QALY ------------ */
 function runQALY(){
   const sc=buildScenario();
-  const eShare=endorsementProb(sc);
-  const qalyPerT=parseFloat($("#qalyPerTrainee").value);
+  const e=endorsementProb(sc);
+  const qpt=parseFloat($("#qalyPerTrainee").value);
   const thr=+$("#threshold").value;
 
-  const cost=pvCost(sc,eShare);
-  const qaly=pvQALY(sc,eShare,qalyPerT);
+  const cost=pvCost(sc,e);
+  const qaly=pvQALY(sc,e,qpt);
   const icer=cost/qaly;
 
   $("#qalyResults").innerHTML=`
@@ -361,20 +332,20 @@ function runQALY(){
   });
 }
 
-/* ---------- PSA ---------- */
+/* ------------ PSA ------------ */
 function runPSA(){
   const sc=buildScenario();
   const seCost=+$("#seCost").value/100;
   const seWTP=+$("#seWTP").value/100;
   const seEnd=+$("#seEndorse").value/100;
   const iters=+$("#iterations").value;
-  const qalyPerT=parseFloat($("#qalyPerTrainee").value);
+  const qpt=parseFloat($("#qalyPerTrainee").value);
   const thr=+$("#threshold").value;
 
   const eMean=endorsementProb(sc),
         wMean=totalWTP(sc,eMean),
         cMean=pvCost(sc,eMean),
-        qMean=pvQALY(sc,eMean,qalyPerT);
+        qMean=pvQALY(sc,eMean,qpt);
 
   const BCR=[],ICER=[];
   for(let i=0;i<iters;i++){
@@ -401,7 +372,7 @@ function runPSA(){
 }
 function truncNormal(mean,sd,min,max){
   let x; let tries=0;
-  do{ x=mean+sd*randn_bm(); tries++; if(tries>1000){x=Math.min(Math.max(x,min),max);break;} }while(x<min||x>max);
+  do{ x=mean+sd*randn_bm(); tries++; if(tries>500){x=Math.min(Math.max(x,min),max);break;} }while(x<min||x>max);
   return x;
 }
 function randn_bm(){
@@ -416,15 +387,16 @@ function renderHistogram(id,data,label,color,chartRef,setRef){
   const counts=new Array(bins).fill(0);
   data.forEach(v=>{let k=Math.floor((v-min)/w); if(k>=bins)k=bins-1; counts[k]++;});
   const labels=counts.map((_,i)=>(min+i*w).toFixed(2));
-  const cfg={type:"bar",
+  setRef(new Chart(ctx,{
+    type:"bar",
     data:{labels,datasets:[{data:counts,backgroundColor:color,borderColor:"#243447",borderWidth:1}]},
     options:{responsive:true,maintainAspectRatio:false,
       plugins:{legend:{display:false},title:{display:true,text:`${label} Distribution`,font:{size:16}}},
-      scales:{y:{beginAtZero:true}}};
-  setRef(new Chart(ctx,cfg));
+      scales:{y:{beginAtZero:true}}}
+  }));
 }
 
-/* ---------- Save / Export ---------- */
+/* ------------ Save / Export ------------ */
 function saveScenario(){
   const sc=buildScenario();
   const eShare=endorsementProb(sc), e=eShare*100;
@@ -437,7 +409,7 @@ function saveScenario(){
   alert(`Saved ${obj.name}.`);
 }
 function appendScenarioRow(s){
-  const tbody=$("#scenarioTable tbody"); if(!tbody) return;
+  const tbody=$("#scenarioTable tbody");
   const tr=document.createElement("tr");
   const cols=["name","ptype","duration","focus","mode","resp","capacity","costPerTM","stakeholders","cohortsYear","yearsHorizon","discRate","endorse","totalWTP","totalCost","bcr","net","icer"];
   cols.forEach(c=>{
@@ -452,9 +424,7 @@ function appendScenarioRow(s){
 }
 function exportPDF(){
   if(savedScenarios.length===0){ alert("No scenarios saved."); return; }
-  const jsPDFLib = window.jspdf;
-  if(!jsPDFLib){ alert("jsPDF not loaded."); return; }
-  const { jsPDF } = jsPDFLib;
+  const { jsPDF } = window.jspdf;
   const doc=new jsPDF({unit:"mm",format:"a4"}), pw=doc.internal.pageSize.getWidth();
   let y=15;
   doc.setFontSize(16);
@@ -474,12 +444,12 @@ function exportPDF(){
   doc.save("FETP_Scenarios.pdf");
 }
 
-/* ---------- Modal / breakdown ---------- */
-function openModal(){ const m=$("#resultModal"); if(m) m.style.display="block"; }
-function closeModal(){ const m=$("#resultModal"); if(m) m.style.display="none"; }
+/* ------------ Modal & breakdown ------------ */
+function openModal(){ $("#resultModal").style.display="block"; }
+function closeModal(){ $("#resultModal").style.display="none"; }
 function toggleCostBreakdown(){
-  const el=$("#detailedCostBreakdown"); if(!el) return;
+  const el=$("#detailedCostBreakdown");
   el.style.display=(el.style.display==="none"||el.style.display==="")?"flex":"none";
 }
 
-})(); // IIFE end
+})(); // end IIFE
