@@ -1,12 +1,12 @@
 /* ================================
-   FETP India Decision Aidd Tosol JS
+   FETP India Decision Aid Tool JS
 ================================ */
 
 let wtpChart, endorseChart, combinedChart, qalyChart, psaBCRChart, psaICERChart;
 const COLORS=["#2a76d2","#009688","#f39c12","#e74c3c","#7f8c8d"];
 const INR = new Intl.NumberFormat('en-IN',{maximumFractionDigits:0});
 
-/* Placeholder coefficients for endorsement model */
+/* Endorsement model (placeholder) */
 const COEFS={
   ASC:0.30,
   type_intermediate:0.28, type_advanced:0.48,
@@ -26,9 +26,20 @@ const WTP={
   resp_7:4000, resp_3:9500, resp_1:16000
 };
 
-/* Trimmed costs */
-const BASE_COSTS={staff_consult:200000,rent_utils:200000,workshops:300000,maint:80000,staff_dev:100000};
-const PER_TRAINEE={allowance:25000,equip:8000,materials:1500,opp_cost:30000};
+/* Trimmed cost structure */
+const BASE_COSTS={ /* per year (fixed) */
+  staff_consult:200000,
+  rent_utils:200000,
+  workshops:300000,
+  maint:80000,
+  staff_dev:100000
+};
+const PER_TRAINEE={ /* per endorsed trainee */
+  allowance:25000,
+  equip:8000,
+  materials:1500,
+  opp_cost:30000
+};
 
 const MULTIPLIERS={
   ptype:{frontline:1.0,intermediate:1.08,advanced:1.18},
@@ -40,24 +51,15 @@ const MULTIPLIERS={
 
 let savedScenarios=[];
 
-/* -------- INIT -------- */
-document.addEventListener("DOMContentLoaded",()=>{
-  document.querySelectorAll(".tablink").forEach(btn=>{
-    btn.addEventListener("click",()=>openTab(btn.dataset.tab,btn));
-  });
-  openTab("introTab", document.querySelector(".tablink"));
-  if(window.Chart){
-    Chart.defaults.font.size=14;
-    Chart.defaults.color="#243447";
-  }
-});
-
-/* -------- Tabs -------- */
-function openTab(tabId, btn){
+/* ---- Tab switching ---- */
+function switchTab(tabId, btn){
   document.querySelectorAll(".tabcontent").forEach(t=>t.style.display="none");
-  document.querySelectorAll(".tablink").forEach(b=>{b.classList.remove("active");b.setAttribute("aria-selected","false");});
+  document.querySelectorAll(".tablink").forEach(b=>{
+    b.classList.remove("active");
+    b.setAttribute("aria-selected","false");
+  });
   const tab=document.getElementById(tabId);
-  if(tab){ tab.style.display="block"; }
+  if(tab) tab.style.display="block";
   if(btn){ btn.classList.add("active"); btn.setAttribute("aria-selected","true"); }
 
   if(tabId==='wtpTab') renderWTPChart();
@@ -65,7 +67,7 @@ function openTab(tabId, btn){
   if(tabId==='costsTab') renderCostsBenefits();
 }
 
-/* -------- UI helpers -------- */
+/* ---- UI helpers ---- */
 function updateCostDisplay(v){ document.getElementById("costLabel").textContent=Number(v).toLocaleString(); }
 function updateCapDisplay(v){ document.getElementById("capLabel").textContent=v; }
 function updateStakeDisplay(v){ document.getElementById("stakeLabel").textContent=v; }
@@ -81,7 +83,7 @@ function displayWarnings(arr){
   }
 }
 
-/* -------- Scenario -------- */
+/* ---- Scenario ---- */
 function buildScenario(){
   const sc={
     ptype:valRadio("ptype"),
@@ -97,17 +99,17 @@ function buildScenario(){
     discRate:(+document.getElementById("discRate").value)/100
   };
   if(!sc.ptype||!sc.duration||!sc.focus||!sc.mode||!sc.resp){
-    alert("Please select all categorical attributes."); return null;
+    alert("Select all categorical attributes."); return null;
   }
   const warn=[];
   if(sc.mode==="online"&&(sc.ptype==="advanced"||sc.focus==="onehealth")){
-    warn.push("Fully online for Advanced/One Health may limit field practice. Consider Hybrid or In-person.");
+    warn.push("Fully online for Advanced/One Health may limit field practice. Consider Hybrid or In‑person.");
   }
   displayWarnings(warn);
   return sc;
 }
 
-/* -------- Models -------- */
+/* ---- Models ---- */
 function endorsementProb(sc){
   let U=COEFS.ASC;
   if(sc.ptype==="intermediate")U+=COEFS.type_intermediate;
@@ -177,7 +179,7 @@ function scenarioQALY(sc,eShare,qalyPerT){
   return pv;
 }
 
-/* -------- Main calc -------- */
+/* ---- Main calc ---- */
 function calculateAll(){
   const sc=buildScenario(); if(!sc)return;
   const eShare=endorsementProb(sc), ePct=eShare*100;
@@ -203,17 +205,17 @@ function calculateAll(){
 
 function buildRecommendation(sc,ePct,bcr,net){
   const msgs=[];
-  if(ePct>=70 && bcr>=1 && net>0){ msgs.push("High endorsement and positive net benefit—proceed to detailed operational planning and funding negotiations."); }
-  if(ePct<45){ msgs.push("Endorsement is low. Shorten duration (6–12m), increase in-person mentoring, or improve response capacity to 3–7 days."); }
-  if(bcr<1 || net<0){ msgs.push("Costs exceed benefits. Trim trainee allowances/equipment, reduce fixed overheads, or broaden stakeholder base to raise WTP."); }
-  if(sc.mode==="online" && (sc.ptype==="advanced"||sc.focus==="onehealth")){ msgs.push("Advanced/One Health needs field components—shift to hybrid."); }
-  if(sc.duration==="24"){ msgs.push("24 months is costly; consider 12‑month core plus refresher modules."); }
-  if(sc.resp==="14"){ msgs.push("Upgrade response capacity (≤7 days) to boost perceived value."); }
-  if(sc.costPerTM>70000){ msgs.push("₹/Trainee/Month is high. Explore co‑funding or cost‑sharing with states/partners."); }
-  return msgs.length? "Recommendations: "+msgs.join(" ") : "Configuration looks balanced—endorsement strong and net benefit positive.";
+  if(ePct>=70 && bcr>=1 && net>0){ msgs.push("High endorsement and positive net benefit—proceed to detailed planning and funding negotiations."); }
+  if(ePct<45){ msgs.push("Low endorsement. Shorten duration (6–12m), add in‑person mentoring, or improve response capacity (≤7 days)."); }
+  if(bcr<1 || net<0){ msgs.push("Costs exceed benefits. Trim trainee allowances/equipment, lower fixed overheads, or expand stakeholder base to raise WTP."); }
+  if(sc.mode==="online" && (sc.ptype==="advanced"||sc.focus==="onehealth")){ msgs.push("Advanced/One Health requires field components—switch to hybrid."); }
+  if(sc.duration==="24"){ msgs.push("24 months is costly; consider a 12‑month core plus refresher modules."); }
+  if(sc.resp==="14"){ msgs.push("Improve response capacity (3–7 days) to increase value perception."); }
+  if(sc.costPerTM>70000){ msgs.push("₹/Trainee/Month is high. Explore co‑funding with states/partners or cost‑sharing."); }
+  return msgs.length? "Recommendations: "+msgs.join(" ") : "Configuration balanced—endorsement strong and net benefit positive.";
 }
 
-/* -------- Charts -------- */
+/* ---- Charts ---- */
 function renderWTPChart(){
   const canvas=document.getElementById("wtpChartMain"); if(!canvas)return;
   const ctx=canvas.getContext("2d");
@@ -296,7 +298,7 @@ function addCostCard(container,title,val,type){
   container.appendChild(div);
 }
 
-/* -------- QALY -------- */
+/* ---- QALY ---- */
 function renderQALY(){
   const sc=buildScenario(); if(!sc)return;
   const eShare=endorsementProb(sc);
@@ -327,7 +329,7 @@ function renderQALY(){
   });
 }
 
-/* -------- PSA -------- */
+/* ---- PSA ---- */
 function runPSA(){
   const sc=buildScenario(); if(!sc)return;
   const seCost=+document.getElementById("seCost").value/100;
@@ -389,7 +391,7 @@ function renderHistogram(id,data,label,color){
   else{ if(psaICERChart) psaICERChart.destroy(); psaICERChart=new Chart(ctx,cfg); }
 }
 
-/* -------- Save / Export -------- */
+/* ---- Save / Export ---- */
 function saveScenario(){
   const sc=buildScenario(); if(!sc)return;
   const eShare=endorsementProb(sc), e=eShare*100;
@@ -438,11 +440,12 @@ function exportPDF(){
   doc.save("FETP_Scenarios.pdf");
 }
 
-/* -------- Modal -------- */
+/* ---- Modal ---- */
 function openModal(){ document.getElementById("resultModal").style.display="block"; }
 function closeModal(){ document.getElementById("resultModal").style.display="none"; }
 
-/* Expose */
+/* Expose for HTML */
+window.switchTab=switchTab;
 window.updateCostDisplay=updateCostDisplay;
 window.updateCapDisplay=updateCapDisplay;
 window.updateStakeDisplay=updateStakeDisplay;
@@ -456,3 +459,6 @@ window.runPSA=runPSA;
 window.saveScenario=saveScenario;
 window.exportPDF=exportPDF;
 window.closeModal=closeModal;
+
+/* Default tab (safety if JS loads late) */
+switchTab('introTab', document.querySelector('.tablink'));
