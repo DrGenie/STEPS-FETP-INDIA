@@ -16,38 +16,48 @@
 <div class="container">
   <header>
     <h1>FETP India Decision Aid Tool</h1>
-    <p>Support India’s FETP expansion business case with stakeholder WTP, endorsement, streamlined costs, QALYs, and probabilistic analysis.</p>
+    <p>Support India’s FETP expansion business case with stakeholder WTP, endorsement, realistic costs, QALYs, and PSA.</p>
   </header>
 
   <nav class="tabs" role="tablist">
-    <button type="button" class="tablink active" data-tab="introTab" aria-selected="true">
+    <button type="button" class="tablink active" data-tab="introTab" aria-selected="true"
+            onclick="switchTab('introTab', this)">
       <i class="fa-solid fa-info-circle"></i><span> Introduction</span>
     </button>
-    <button type="button" class="tablink" data-tab="attributesTab" aria-selected="false">
+    <button type="button" class="tablink" data-tab="attributesTab" aria-selected="false"
+            onclick="switchTab('attributesTab', this)">
       <i class="fa-solid fa-list"></i><span> Attributes</span>
     </button>
-    <button type="button" class="tablink" data-tab="inputsTab" aria-selected="false">
+    <button type="button" class="tablink" data-tab="inputsTab" aria-selected="false"
+            onclick="switchTab('inputsTab', this)">
       <i class="fa-solid fa-sliders"></i><span> Inputs</span>
     </button>
-    <button type="button" class="tablink" data-tab="wtpTab" aria-selected="false">
+    <button type="button" class="tablink" data-tab="wtpTab" aria-selected="false"
+            onclick="switchTab('wtpTab', this)">
       <i class="fa-solid fa-chart-bar"></i><span> WTP</span>
     </button>
-    <button type="button" class="tablink" data-tab="endorseTab" aria-selected="false">
+    <button type="button" class="tablink" data-tab="endorseTab" aria-selected="false"
+            onclick="switchTab('endorseTab', this)">
       <i class="fa-solid fa-thumbs-up"></i><span> Endorsement rate</span>
     </button>
-    <button type="button" class="tablink" data-tab="costsTab" aria-selected="false">
+    <button type="button" class="tablink" data-tab="costsTab" aria-selected="false"
+            onclick="switchTab('costsTab', this)">
       <i class="fa-solid fa-calculator"></i><span> ₹ Cost–Benefit</span>
     </button>
-    <button type="button" class="tablink" data-tab="qalyTab" aria-selected="false">
+    <button type="button" class="tablink" data-tab="qalyTab" aria-selected="false"
+            onclick="switchTab('qalyTab', this)">
       <i class="fa-solid fa-heart-pulse"></i><span> QALY</span>
     </button>
-    <button type="button" class="tablink" data-tab="psaTab" aria-selected="false">
+    <button type="button" class="tablink" data-tab="psaTab" aria-selected="false"
+            onclick="switchTab('psaTab', this)">
       <i class="fa-solid fa-flask"></i><span> PSA</span>
     </button>
-    <button type="button" class="tablink" data-tab="methodsTab" aria-selected="false">
+    <button type="button" class="tablink" data-tab="methodsTab" aria-selected="false"
+            onclick="switchTab('methodsTab', this)">
       <i class="fa-solid fa-book-open"></i><span> Methods</span>
     </button>
-    <button type="button" class="tablink" data-tab="scenariosTab" aria-selected="false">
+    <button type="button" class="tablink" data-tab="scenariosTab" aria-selected="false"
+            onclick="switchTab('scenariosTab', this)">
       <i class="fa-solid fa-folder-open"></i><span> Saved</span>
     </button>
   </nav>
@@ -55,16 +65,16 @@
   <!-- Introduction -->
   <section id="introTab" class="tabcontent" style="display:block;" tabindex="0">
     <div class="intro-box">
-      <p><strong>Overview:</strong> Field Epidemiology Training Programs (FETPs) build surveillance and outbreak response capacity. This tool lets decision-makers test program configurations, see monetary value (WTP) and endorsement, compare costs vs. benefits, evaluate QALYs, and run probabilistic sensitivity analyses (PSA).</p>
+      <p><strong>Overview:</strong> Field Epidemiology Training Programs (FETPs) build surveillance and outbreak response capacity. This tool lets decision‑makers test program configurations, view marginal WTP, predicted endorsement, compare present‑value costs vs. benefits, evaluate QALYs, and run probabilistic sensitivity analyses.</p>
       <ul>
         <li><strong>Attributes</strong> – Program features.</li>
-        <li><strong>Inputs</strong> – Build scenarios (hints flag unrealistic mixes).</li>
+        <li><strong>Inputs</strong> – Configure scenarios (unrealistic mixes flagged).</li>
         <li><strong>WTP</strong> – Marginal values per attribute.</li>
         <li><strong>Endorsement rate</strong> – Predicted support probability.</li>
         <li><strong>₹ Cost–Benefit</strong> – Benefit (total WTP) vs. PV costs.</li>
         <li><strong>QALY</strong> – ICER vs. threshold.</li>
-        <li><strong>PSA</strong> – Monte Carlo uncertainty.</li>
-        <li><strong>Saved</strong> – Compare and export scenarios.</li>
+        <li><strong>PSA</strong> – Monte Carlo uncertainty (BCR & ICER distributions).</li>
+        <li><strong>Saved</strong> – Compare & export scenarios.</li>
       </ul>
     </div>
   </section>
@@ -122,8 +132,8 @@
   <section id="inputsTab" class="tabcontent" tabindex="0">
     <div class="input-card">
       <h2>Configure Scenario</h2>
-      <p>Select one level each. Sliders control continuous values. Unrealistic combos are flagged.</p>
-      <form onsubmit="event.preventDefault();">
+      <p>Select one level for each categorical attribute. Sliders adjust continuous values. Hints flag unrealistic mixes.</p>
+      <form onsubmit="return false;">
         <div class="input-cards">
           <div class="input-level-card">
             <h3>Program Type <span class="reference">(Frontline)</span></h3>
@@ -133,6 +143,7 @@
               <label><input type="radio" name="ptype" value="advanced" /> Advanced</label>
             </div>
           </div>
+
           <div class="input-level-card">
             <h3>Duration <span class="reference">(6 months)</span></h3>
             <div class="options">
@@ -141,6 +152,7 @@
               <label><input type="radio" name="duration" value="24" /> 24 months</label>
             </div>
           </div>
+
           <div class="input-level-card">
             <h3>Focus <span class="reference">(Human)</span></h3>
             <div class="options">
@@ -149,6 +161,7 @@
               <label><input type="radio" name="focus" value="onehealth" /> One Health</label>
             </div>
           </div>
+
           <div class="input-level-card">
             <h3>Delivery Mode <span class="reference">(In-person)</span></h3>
             <div class="options">
@@ -157,6 +170,7 @@
               <label><input type="radio" name="mode" value="online" /> Online</label>
             </div>
           </div>
+
           <div class="input-level-card">
             <h3>Response Capacity <span class="reference">(14 days)</span></h3>
             <div class="options">
@@ -166,6 +180,7 @@
               <label><input type="radio" name="resp" value="1" /> 24 hours</label>
             </div>
           </div>
+
           <div class="input-level-card">
             <h3>Trainees / Year</h3>
             <div class="options slider-option">
@@ -173,6 +188,7 @@
               <input type="range" id="capSlider" min="200" max="1500" step="50" value="200" oninput="updateCapDisplay(this.value)" />
             </div>
           </div>
+
           <div class="input-level-card">
             <h3>₹ / Trainee / Month (MoH)</h3>
             <div class="options slider-option">
@@ -180,13 +196,14 @@
               <input type="range" id="costSlider" min="30000" max="90000" step="1000" value="30000" oninput="updateCostDisplay(this.value)" />
             </div>
           </div>
+
           <div class="input-level-card">
             <h3>Stakeholders Represented
               <span class="info-container">
                 <button type="button" class="info-button" aria-label="Aggregate WTP across stakeholders">
                   <i class="fa-solid fa-circle-info"></i>
                 </button>
-                <span class="tooltip-text">Number of stakeholders whose aggregate WTP is modeled. Use “1” for per-respondent values.</span>
+                <span class="tooltip-text">Number of stakeholders whose aggregate WTP is modelled. Use “1” for per-respondent values.</span>
               </span>
             </h3>
             <div class="options slider-option">
@@ -194,6 +211,7 @@
               <input type="range" id="stakeSlider" min="1" max="2000" step="1" value="500" oninput="updateStakeDisplay(this.value)" />
             </div>
           </div>
+
           <div class="input-level-card">
             <h3>Cohorts / Year & Horizon
               <span class="info-container">
@@ -201,7 +219,7 @@
                   <i class="fa-solid fa-circle-info"></i>
                 </button>
                 <span class="tooltip-text">
-                  Cohorts/year = batches trained each year.<br>
+                  Cohorts/year = batches trained annually.<br>
                   Years horizon = projection years.<br>
                   Discount rate = present value adjustment.
                 </span>
@@ -236,7 +254,7 @@
   <section id="wtpTab" class="tabcontent" tabindex="0">
     <div class="calculation-info">
       <h4>Willingness-to-Pay (₹) by Attribute</h4>
-      <p><em>Total WTP</em> = (Σ marginal WTP) × endorsement rate × stakeholders.</p>
+      <p>Total WTP = (Σ marginal WTP) × endorsement rate × stakeholders.</p>
       <div class="buttons-row"><button type="button" onclick="renderWTPChart()">Show WTP Chart</button></div>
       <div class="chart-grid">
         <div class="chart-box fixed-height">
@@ -251,7 +269,7 @@
   <section id="endorseTab" class="tabcontent" tabindex="0">
     <div class="calculation-info">
       <h4>Predicted Endorsement Rate</h4>
-      <p>Logistic model; replace with final survey coefficients when available.</p>
+      <p>Logistic model placeholder—replace with final survey coefficients when available.</p>
       <div class="buttons-row"><button type="button" onclick="renderEndorseChart()">Show Endorsement Plot</button></div>
       <div class="chart-grid">
         <div class="chart-box fixed-height">
@@ -278,7 +296,7 @@
   <section id="qalyTab" class="tabcontent" tabindex="0">
     <div class="calculation-info">
       <h4>QALY-Based Cost-Effectiveness</h4>
-      <p>Present-value QALYs & ICERs over your selected horizon and discount rate.</p>
+      <p>Present-value QALYs & ICERs over the selected horizon and discount rate.</p>
       <div class="form-grid">
         <div class="form-item">
           <label for="qalyPerTrainee">QALY Gain per Trainee</label>
@@ -308,7 +326,7 @@
   <section id="psaTab" class="tabcontent" tabindex="0">
     <div class="calculation-info">
       <h4>Probabilistic Sensitivity Analysis (PSA)</h4>
-      <p>Monte Carlo simulation (normal draws, truncated) of WTP, costs, endorsement, and QALYs.</p>
+      <p>Monte Carlo simulation of WTP, costs, endorsement, and QALYs.</p>
       <div class="form-grid">
         <div class="form-item"><label for="seCost">SE % Costs</label><input type="number" id="seCost" min="0" step="1" value="10"></div>
         <div class="form-item"><label for="seWTP">SE % WTP</label><input type="number" id="seWTP" min="0" step="1" value="10"></div>
@@ -348,7 +366,7 @@
       </details>
       <details>
         <summary><strong>PSA</strong></summary>
-        <p>Normal draws with sd = SE% × mean (truncated at bounds). Outputs: mean & 95% CI for BCR, ICER, net benefit.</p>
+        <p>Normal draws with sd = SE% × mean (truncated). Outputs: mean & 95% CI for BCR, ICER, net benefit.</p>
       </details>
     </div>
   </section>
@@ -364,11 +382,11 @@
       <div class="table-container">
         <table id="scenarioTable">
           <thead>
-            <tr>
-              <th>Name</th><th>Type</th><th>Dur</th><th>Focus</th><th>Mode</th><th>Resp</th>
-              <th>Cap</th><th>₹/T/M</th><th>Stakeh.</th><th>C/Yr</th><th>Yr</th><th>Disc%</th>
-              <th>Endorse</th><th>WTP</th><th>Cost</th><th>BCR</th><th>Net</th><th>ICER</th>
-            </tr>
+          <tr>
+            <th>Name</th><th>Type</th><th>Dur</th><th>Focus</th><th>Mode</th><th>Resp</th>
+            <th>Cap</th><th>₹/T/M</th><th>Stakeh.</th><th>C/Yr</th><th>Yr</th><th>Disc%</th>
+            <th>Endorse</th><th>WTP</th><th>Cost</th><th>BCR</th><th>Net</th><th>ICER</th>
+          </tr>
           </thead>
           <tbody></tbody>
         </table>
@@ -381,7 +399,7 @@
   </footer>
 </div>
 
-<!-- Scripts at end to ensure DOM is ready -->
+<!-- Libs then app -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="script.js"></script>
