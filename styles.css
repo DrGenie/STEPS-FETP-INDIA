@@ -1,4 +1,4 @@
-/* styles.csss */
+/* styles.css */
 
 /* RESET & BASE */
 *{box-sizing:border-box;margin:0;padding:0}
@@ -101,7 +101,8 @@ header p{
 
 /* CHARTS */
 canvas{
-  margin-top:10px;background:#fff;border:1px solid #ccc;border-radius:6px
+  margin-top:10px;background:#fff;border:1px solid #ccc;border-radius:6px;
+  max-height:260px !important; /* prevents endless growth on mobile scroll */
 }
 .chart-grid{display:flex;flex-wrap:wrap;gap:20px;margin-top:20px}
 .chart-box{flex:1 1 45%;padding:10px;background:#fafafa;border:1px solid #ccc;border-radius:6px;position:relative}
@@ -122,7 +123,7 @@ canvas{
 }
 .form-item{display:flex;flex-direction:column}
 .form-item label{font-weight:600;color:#243447;margin-bottom:5px}
-.form-item input, .form-item select{
+.form-item input,.form-item select{
   padding:6px;border:1px solid #bdc3c7;border-radius:4px;font-size:0.95em
 }
 
