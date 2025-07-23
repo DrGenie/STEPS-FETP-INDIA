@@ -5,24 +5,18 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
   <title>FETP India Decision Aid Tool</title>
 
-  <!-- Styles -->
-  <link rel="stylesheet" href="styles.css" />
-
   <!-- Icons & Charts -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
         integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkXzk5bV+nTtDIv5R16vuMJ6MqqV9iQ9M/dGv+VY8Gq60YxYFz+4Ib4Hg=="
-        crossorigin="anonymous" referrerpolicy="no-referrer"/>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-  <!-- App logic -->
-  <script defer src="script.js"></script>
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
 <div class="container">
   <header>
     <h1>FETP India Decision Aid Tool</h1>
-    <p>Support India’s FETP expansion business case with stakeholder WTP, endorsement, costs, QALYs, and probabilistic analysis.</p>
+    <p>Support India’s FETP expansion business case with stakeholder WTP, endorsement, streamlined costs, QALYs, and probabilistic analysis.</p>
   </header>
 
   <nav class="tabs" role="tablist">
@@ -61,16 +55,16 @@
   <!-- Introduction -->
   <section id="introTab" class="tabcontent" style="display:block;" tabindex="0">
     <div class="intro-box">
-      <p><strong>Overview:</strong> Field Epidemiology Training Programs (FETPs) build surveillance and outbreak response capacity. This interactive tool helps policy-makers simulate program designs in India, compare stakeholder willingness-to-pay (WTP) against realistic cost structures, evaluate predicted endorsement rates, and assess cost-effectiveness using QALYs and probabilistic sensitivity analysis (PSA).</p>
+      <p><strong>Overview:</strong> Field Epidemiology Training Programs (FETPs) build surveillance and outbreak response capacity. This tool lets decision-makers test program configurations, see monetary value (WTP) and endorsement, compare costs vs. benefits, evaluate QALYs, and run probabilistic sensitivity analyses (PSA).</p>
       <ul>
-        <li><strong>Attributes</strong> – Explore key program dimensions.</li>
-        <li><strong>Inputs</strong> – Configure your scenario, with hints for realistic combinations.</li>
-        <li><strong>WTP</strong> – View marginal values stakeholders place on each attribute.</li>
-        <li><strong>Endorsement rate</strong> – Predicted probability decision-makers support the scenario.</li>
-        <li><strong>₹ Cost–Benefit</strong> – Compare total WTP vs. present-value costs.</li>
-        <li><strong>QALY</strong> – Compute incremental cost-effectiveness ratios (ICERs).</li>
-        <li><strong>PSA</strong> – Monte Carlo analysis of uncertainty.</li>
-        <li><strong>Saved</strong> – Store and export multiple scenarios.</li>
+        <li><strong>Attributes</strong> – Program features.</li>
+        <li><strong>Inputs</strong> – Build scenarios (hints flag unrealistic mixes).</li>
+        <li><strong>WTP</strong> – Marginal values per attribute.</li>
+        <li><strong>Endorsement rate</strong> – Predicted support probability.</li>
+        <li><strong>₹ Cost–Benefit</strong> – Benefit (total WTP) vs. PV costs.</li>
+        <li><strong>QALY</strong> – ICER vs. threshold.</li>
+        <li><strong>PSA</strong> – Monte Carlo uncertainty.</li>
+        <li><strong>Saved</strong> – Compare and export scenarios.</li>
       </ul>
     </div>
   </section>
@@ -128,10 +122,9 @@
   <section id="inputsTab" class="tabcontent" tabindex="0">
     <div class="input-card">
       <h2>Configure Scenario</h2>
-      <p>Select one level per categorical attribute. Sliders adjust continuous parameters. Hints highlight unrealistic combinations.</p>
+      <p>Select one level each. Sliders control continuous values. Unrealistic combos are flagged.</p>
       <form onsubmit="event.preventDefault();">
         <div class="input-cards">
-
           <div class="input-level-card">
             <h3>Program Type <span class="reference">(Frontline)</span></h3>
             <div class="options">
@@ -140,7 +133,6 @@
               <label><input type="radio" name="ptype" value="advanced" /> Advanced</label>
             </div>
           </div>
-
           <div class="input-level-card">
             <h3>Duration <span class="reference">(6 months)</span></h3>
             <div class="options">
@@ -149,7 +141,6 @@
               <label><input type="radio" name="duration" value="24" /> 24 months</label>
             </div>
           </div>
-
           <div class="input-level-card">
             <h3>Focus <span class="reference">(Human)</span></h3>
             <div class="options">
@@ -158,7 +149,6 @@
               <label><input type="radio" name="focus" value="onehealth" /> One Health</label>
             </div>
           </div>
-
           <div class="input-level-card">
             <h3>Delivery Mode <span class="reference">(In-person)</span></h3>
             <div class="options">
@@ -167,9 +157,8 @@
               <label><input type="radio" name="mode" value="online" /> Online</label>
             </div>
           </div>
-
           <div class="input-level-card">
-          <h3>Response Capacity <span class="reference">(14 days)</span></h3>
+            <h3>Response Capacity <span class="reference">(14 days)</span></h3>
             <div class="options">
               <label><input type="radio" name="resp" value="14" /> 14 days</label>
               <label><input type="radio" name="resp" value="7" /> 7 days</label>
@@ -177,7 +166,6 @@
               <label><input type="radio" name="resp" value="1" /> 24 hours</label>
             </div>
           </div>
-
           <div class="input-level-card">
             <h3>Trainees / Year</h3>
             <div class="options slider-option">
@@ -185,7 +173,6 @@
               <input type="range" id="capSlider" min="200" max="1500" step="50" value="200" oninput="updateCapDisplay(this.value)" />
             </div>
           </div>
-
           <div class="input-level-card">
             <h3>₹ / Trainee / Month (MoH)</h3>
             <div class="options slider-option">
@@ -193,7 +180,6 @@
               <input type="range" id="costSlider" min="30000" max="90000" step="1000" value="30000" oninput="updateCostDisplay(this.value)" />
             </div>
           </div>
-
           <div class="input-level-card">
             <h3>Stakeholders Represented
               <span class="info-container">
@@ -208,7 +194,6 @@
               <input type="range" id="stakeSlider" min="1" max="2000" step="1" value="500" oninput="updateStakeDisplay(this.value)" />
             </div>
           </div>
-
           <div class="input-level-card">
             <h3>Cohorts / Year & Horizon
               <span class="info-container">
@@ -216,8 +201,8 @@
                   <i class="fa-solid fa-circle-info"></i>
                 </button>
                 <span class="tooltip-text">
-                  Cohorts/year = training batches annually.<br>
-                  Years horizon = projection length.<br>
+                  Cohorts/year = batches trained each year.<br>
+                  Years horizon = projection years.<br>
                   Discount rate = present value adjustment.
                 </span>
               </span>
@@ -228,7 +213,6 @@
               <label>Discount rate (%) <input type="number" id="discRate" min="0" step="0.5" value="3"></label>
             </div>
           </div>
-
         </div>
 
         <div id="warnings" class="warning-box" style="display:none;"></div>
@@ -294,7 +278,7 @@
   <section id="qalyTab" class="tabcontent" tabindex="0">
     <div class="calculation-info">
       <h4>QALY-Based Cost-Effectiveness</h4>
-      <p>Present-value QALYs & ICERs over your chosen horizon and discount rate.</p>
+      <p>Present-value QALYs & ICERs over your selected horizon and discount rate.</p>
       <div class="form-grid">
         <div class="form-item">
           <label for="qalyPerTrainee">QALY Gain per Trainee</label>
@@ -324,7 +308,7 @@
   <section id="psaTab" class="tabcontent" tabindex="0">
     <div class="calculation-info">
       <h4>Probabilistic Sensitivity Analysis (PSA)</h4>
-      <p>Monte Carlo simulation capturing uncertainty (SE%) in costs, WTP, endorsement, QALYs.</p>
+      <p>Monte Carlo simulation (normal draws, truncated) of WTP, costs, endorsement, and QALYs.</p>
       <div class="form-grid">
         <div class="form-item"><label for="seCost">SE % Costs</label><input type="number" id="seCost" min="0" step="1" value="10"></div>
         <div class="form-item"><label for="seWTP">SE % WTP</label><input type="number" id="seWTP" min="0" step="1" value="10"></div>
@@ -352,7 +336,7 @@
       <h4>Methods</h4>
       <details open>
         <summary><strong>Costs</strong></summary>
-        <p>PV Cost = Σ<sub>t=0..T-1</sub> [(Σ fixed costs × attribute multipliers) + (per-trainee costs × endorsed trainees) + (MoH slider cost)] / (1+r)<sup>t</sup>.</p>
+        <p>PV Cost = Σ<sub>t=0..T-1</sub> [(fixed costs × multipliers) + (per-trainee costs × endorsed trainees) + (MoH slider cost)] / (1+r)<sup>t</sup>.</p>
       </details>
       <details>
         <summary><strong>Benefits (₹)</strong></summary>
@@ -364,7 +348,7 @@
       </details>
       <details>
         <summary><strong>PSA</strong></summary>
-        <p>Normal draws with sd = SE% × mean; truncated at plausible bounds (&gt;0). Compute BCR, net benefit, ICER each iteration; report mean & 95% CI.</p>
+        <p>Normal draws with sd = SE% × mean (truncated at bounds). Outputs: mean & 95% CI for BCR, ICER, net benefit.</p>
       </details>
     </div>
   </section>
@@ -393,8 +377,13 @@
   </section>
 
   <footer>
-    <p>&copy; 2025 FETP India Decision Aid Tool. University of Newcastle, Australia.</p>
+    <p>&copy; 2025 FETP India Decision Aid Tool. University of Newcastle & Partners.</p>
   </footer>
 </div>
+
+<!-- Scripts at end to ensure DOM is ready -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="script.js"></script>
 </body>
 </html>
