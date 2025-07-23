@@ -1,5 +1,5 @@
 /* ================================
-   FETP India Decision Aidd Tool JS
+   FETP India Decision Aidd Tosol JS
 ================================ */
 
 let wtpChart, endorseChart, combinedChart, qalyChart, psaBCRChart, psaICERChart;
