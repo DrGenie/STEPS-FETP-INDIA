@@ -2,7 +2,7 @@
 /**************************************************************************
  * FETP India Decision Aid Tool
  * - Removed specified cost components
- * - Remaining costs trimmed to align with benefits
+ * - Remaining costs to align with benefits
  * - Dynamic recommendations enriched
  * - Fixed-height charts to prevent excessive scrolling
  **************************************************************************/
