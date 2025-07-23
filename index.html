@@ -9,19 +9,21 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
         integrity="sha512-SnH5WK+bZxgPHs44uWIX+LLJAJ9/2PkXzk5bV+nTtDIv5R16vuMJ6MqqV9iQ9M/dGv+VY8Gq60YxYFz+4Ib4Hg=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
-
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<noscript style="color:#e74c3c;text-align:center;margin:20px;">This tool requires JavaScript.</noscript>
+<noscript style="color:#e74c3c;text-align:center;margin:20px;">Enable JavaScript to use this tool.</noscript>
+
 <div class="container">
   <header>
     <h1>FETP India Decision Aid Tool</h1>
-    <p>Explore programme configurations, stakeholder WTP, endorsement, costs, QALYs and PSA for India’s FETP scale‑up.</p>
+    <p>Simulate programme designs, stakeholder WTP, endorsement, realistic costs, QALYs and PSA for India’s FETP scale‑up.</p>
   </header>
 
+  <!-- GLOBAL ERROR BOX -->
+  <div id="globalError" style="display:none;background:#fdecea;color:#611a15;border:1px solid #f5c6cb;padding:10px;border-radius:6px;margin-bottom:10px;font-size:.9em;"></div>
+
   <nav class="tabs" role="tablist" id="tabs">
-    <!-- data-tab links (no inline JS) -->
     <button type="button" class="tablink active" data-tab="introTab" aria-selected="true">
       <i class="fa-solid fa-info-circle"></i><span> Introduction</span>
     </button>
@@ -57,15 +59,15 @@
   <!-- Introduction -->
   <section id="introTab" class="tabcontent" style="display:block;" tabindex="0">
     <div class="intro-box">
-      <p><strong>Overview:</strong> Field Epidemiology Training Programs (FETPs) strengthen surveillance and outbreak response. This tool lets decision‑makers:</p>
+      <p><strong>Overview:</strong> Field Epidemiology Training Programs (FETPs) build outbreak response capacity. This tool lets policy‑makers and donors:</p>
       <ul>
-        <li>Adjust programme attributes and capacity</li>
-        <li>See marginal WTP and total benefit</li>
-        <li>Estimate endorsement rate (support probability)</li>
-        <li>Compare present‑value costs vs. benefits (₹)</li>
-        <li>Compute QALYs and ICER vs. threshold</li>
-        <li>Run Monte Carlo PSA (BCR & ICER distributions)</li>
-        <li>Save/compare scenarios and export to PDF</li>
+        <li>Configure programme attributes & capacity</li>
+        <li>View marginal WTP and aggregate benefits</li>
+        <li>Predict endorsement (support) rate</li>
+        <li>Compare PV costs vs. PV benefits (₹)</li>
+        <li>Estimate QALYs & ICER vs. threshold</li>
+        <li>Run Monte Carlo PSA on BCR/ICER</li>
+        <li>Save and export scenarios to PDF</li>
       </ul>
     </div>
   </section>
@@ -123,7 +125,7 @@
   <section id="inputsTab" class="tabcontent" tabindex="0">
     <div class="input-card">
       <h2>Configure Scenario</h2>
-      <p>Select levels. Sliders adjust continuous values. Hints flag unrealistic mixes.</p>
+      <p>Select levels. Sliders are continuous. Hints flag unrealistic mixes.</p>
       <form onsubmit="return false;">
         <div class="input-cards">
 
@@ -288,7 +290,7 @@
   <section id="qalyTab" class="tabcontent" tabindex="0">
     <div class="calculation-info">
       <h4>QALY-Based Cost-Effectiveness</h4>
-      <p>Present-value QALYs & ICERs over your selected horizon and discount rate.</p>
+      <p>PV QALYs & ICERs over your selected horizon and discount rate.</p>
       <div class="form-grid">
         <div class="form-item">
           <label for="qalyPerTrainee">QALY Gain per Trainee</label>
@@ -358,7 +360,7 @@
       </details>
       <details>
         <summary><strong>PSA</strong></summary>
-        <p>Normal draws with sd = SE% × mean (truncated at bounds). Outputs: mean & 95% CI for BCR, ICER, net benefit.</p>
+        <p>Normal draws with sd = SE% × mean (truncated). Outputs: mean & 95% CI for BCR, ICER, net benefit.</p>
       </details>
     </div>
   </section>
@@ -387,13 +389,14 @@
   </section>
 
   <footer>
-    <p>&copy; 2025 FETP India Decision Aid Tool. University of Newcastle.</p>
+    <p>&copy; 2025 FETP India Decision Aid Tool. University of Newcastle & Partners.</p>
   </footer>
 </div>
 
-<!-- Libs then app -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="script.js"></script>
+<!-- Libs -->
+<script defer src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<!-- App -->
+<script defer src="script.js"></script>
 </body>
 </html>
