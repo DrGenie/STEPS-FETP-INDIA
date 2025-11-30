@@ -1,7 +1,4 @@
-// script.js
-/* STEPS – FETP Scale Up Tool
- * Uses final MXL, WTP and LC Class 2 estimates.
- */
+// script.js – STEPS – FETP Scale Up Tool (India) – Version 1.0
 
 /* ---------- DATA CONSTANTS ---------- */
 
@@ -34,7 +31,7 @@ const MXL_COEFS = {
     "15": 0.546,
     "7": 0.610
   },
-  costPerThousand: -0.005
+  costPerThousand: -0.005 // back-transformed
 };
 
 // WTP (thousand INR per trainee per month) from mixed logit
@@ -134,7 +131,7 @@ const DURATION_MONTHS = {
   advanced: 24
 };
 
-// Cost templates (shares of total per cohort)
+// Cost templates (per-cohort pattern)
 const COST_TEMPLATES = {
   frontline: {
     WHO: {
@@ -329,7 +326,12 @@ let toastTimeout = null;
 function formatINR(value) {
   if (isNaN(value)) return "INR 0";
   const rounded = Math.round(value);
-  return "INR " + rounded.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  return (
+    "INR " +
+    rounded
+      .toString()
+      .replace(/\B(?=(\d{3})+(?!\d))/g, ",")
+  );
 }
 
 function formatPercent(p) {
@@ -422,9 +424,10 @@ function updateConfigSummary(cfg) {
   const templateLabel = templateCfg ? templateCfg.label : "";
 
   document.getElementById("summaryTier").textContent = tierLabel;
-  document.getElementById("summaryIncentive").textContent = cfg.career === "certificate"
-    ? "Government and partner certificate"
-    : cfg.career === "university"
+  document.getElementById("summaryIncentive").textContent =
+    cfg.career === "certificate"
+      ? "Government and partner certificate"
+      : cfg.career === "university"
       ? "University qualification"
       : "Government career pathway";
   document.getElementById("summaryMentorship").textContent = mentorshipLabel;
@@ -446,7 +449,7 @@ function getWtpTable(modelKey) {
 }
 
 function computeNonCostUtility(cfg, coefs) {
-  const uAsc = coefs.ascProgram || 1; // ASC_A = 1 for any programme configuration
+  const uAsc = coefs.ascProgram || 0; // ASC_A = 1 for any programme configuration
   const uTier = coefs.tier[cfg.tier] || 0;
   const uCareer = coefs.career[cfg.career] || 0;
   const uMentor = coefs.mentorship[cfg.mentorship] || 0;
@@ -625,10 +628,15 @@ function updateMetrics() {
   updateConfigSummary(cfg);
   const res = computeCostsAndBenefits(cfg);
 
+  // Endorsement + sidebar endorsement rate
   document.getElementById("metricEndorse").textContent =
     formatPercent(res.endorse * 100);
   document.getElementById("metricOptout").textContent =
     formatPercent(res.optout * 100);
+  document.getElementById("summaryEndorsement").textContent =
+    formatPercent(res.endorse * 100);
+
+  // Core quantities
   document.getElementById("metricGraduates").textContent =
     res.totalGraduates.toFixed(0);
   document.getElementById("metricOutbreaks").textContent =
@@ -644,17 +652,14 @@ function updateMetrics() {
   document.getElementById("metricNetBenefit").textContent =
     formatINR(res.netBenefit);
 
-  // WTP metrics
+  // WTP
   const wtpText = formatINR(res.wtpPerTraineePerMonth);
   document.getElementById("metricWtp").textContent = wtpText;
   document.getElementById("metricWtpExplanation").textContent =
     "On average, stakeholders value this configuration at about " + wtpText +
     " per trainee per month relative to a basic, low-mentorship, certificate-only programme.";
 
-  // Summary endorsement for sidebar
-  document.getElementById("summaryEndorsement").textContent =
-    formatPercent(res.endorse * 100);
-
+  // Headline recommendation
   const headline = document.getElementById("headlineRecommendation");
   if (res.bcr > 1.1 && res.endorse > 0.6) {
     headline.textContent =
@@ -856,7 +861,7 @@ function updateSimulationCharts(cfg, res) {
   charts.sensitivity = new Chart(sensCtx, {
     type: "line",
     data: {
-      labels: ["−20 percent cost", "Current", "+20 percent cost"],
+      labels: ["−20% cost", "Current", "+20% cost"],
       datasets: [{
         data: [bcrLow, res.bcr, bcrHigh],
         tension: 0.2
@@ -921,7 +926,7 @@ function saveCurrentScenario() {
 function quickSaveScenarioFromConfig() {
   const cfg = getModelConfig();
   const res = computeCostsAndBenefits(cfg);
-  const name = "Config scenario " + (savedScenarios.length + 1);
+  const name = "Scenario " + (savedScenarios.length + 1);
   const scenario = {
     id: Date.now(),
     name,
@@ -970,6 +975,7 @@ function attachShortlistHandlers() {
       const currentlyShortlisted = savedScenarios.filter(s => s.shortlisted).length;
       if (box.checked && currentlyShortlisted >= 5) {
         box.checked = false;
+        showToast("You can shortlist up to 5 scenarios.");
         return;
       }
       savedScenarios = savedScenarios.map(s =>
@@ -1065,7 +1071,7 @@ async function downloadPolicyBriefPdf() {
   doc.setFont("Helvetica", "normal");
   doc.text("This brief summarises Field Epidemiology Training Program (FETP) configurations evaluated with STEPS.", marginLeft, y);
   y += 14;
-  doc.text("Results combine discrete choice experiment evidence on stakeholder preferences with costing assumptions.", marginLeft, y);
+  doc.text("Results combine discrete choice experiment evidence on preferences with costing assumptions.", marginLeft, y);
   y += 14;
   doc.text("Lead contact: Mesfin Genie, PhD, Newcastle Business School, The University of Newcastle, Australia.", marginLeft, y);
   y += 14;
@@ -1153,8 +1159,8 @@ async function downloadPolicyBriefPdf() {
 
   const methodsText = [
     "Endorsement probabilities are derived from a mixed logit model and a two class latent class model of stakeholder preferences for FETP design in India.",
-    "Cost per trainee per month enters utility through a lognormal cost coefficient that ensures negative marginal utility of cost.",
-    "Willingness to pay estimates (INR per trainee per month) are used to translate attribute levels into indicative benefits, combined with completion rates and endorsement.",
+    "Cost per trainee per month enters utility through a cost coefficient expressed in thousand INR. A lognormal specification was used in the original estimation to ensure negative marginal utility of cost.",
+    "Willingness to pay estimates (INR per trainee per month) translate attribute levels into indicative benefits, combined with completion rates and endorsement.",
     "Programme costs are built from cost per trainee per month, duration, number of trainees and the chosen cost template, with an optional opportunity cost for trainee salaries.",
     "All values are indicative and intended for scenario comparison. Detailed assumptions are documented in the STEPS Advanced settings and the technical appendix."
   ];
@@ -1289,20 +1295,26 @@ function closeResultsModal() {
   document.getElementById("resultsModal").classList.add("hidden");
 }
 
+/* ---------- TECHNICAL APPENDIX OPEN ---------- */
+
+function openTechnicalAppendix() {
+  window.open("technical-appendix.html", "_blank", "noopener");
+}
+
 /* ---------- TOUR HANDLING ---------- */
 
 const tourSteps = [
   {
     title: "Welcome to STEPS",
-    body: "STEPS combines discrete choice experiment results, cost templates and simple epidemiological multipliers to help you compare different FETP scale up options for India."
+    body: "STEPS combines discrete choice experiment results, cost templates and simple epidemiological multipliers to help compare different FETP scale up options for India."
   },
   {
     title: "Configuration tab",
-    body: "Use the Configuration tab to choose programme tier, mentorship, delivery mode, response time, number of cohorts and cost per trainee per month. Select the preference model and click Apply configuration, View results or Save scenario."
+    body: "Use the Configuration tab to choose programme tier, mentorship, delivery mode, response time, number of cohorts and cost per trainee per month. Then click Apply configuration."
   },
   {
     title: "Results and costing",
-    body: "The Results tab shows endorsement, WTP, graduates, outbreak responses, benefits, costs and net benefit for the current configuration. The Costing details tab explains how programme cost and opportunity cost are constructed from the templates."
+    body: "The Results tab shows endorsement, WTP, graduates, outbreak responses, benefits, costs and net benefit. The Costing details tab explains how programme cost and opportunity cost are constructed from the templates."
   },
   {
     title: "Simulation, scenarios and advanced settings",
@@ -1397,10 +1409,10 @@ document.addEventListener("DOMContentLoaded", () => {
     updateMetrics();
   });
 
-  // Apply, view results, quick save
+  // Apply, view results, save scenario
   document.getElementById("applyConfigBtn").addEventListener("click", () => {
     updateMetrics();
-    showToast("Configuration applied. Open View results or go to the Results tab.");
+    showToast("Configuration applied. See Results and Simulation tabs.");
   });
 
   document.getElementById("viewResultsBtn").addEventListener("click", () => {
@@ -1449,10 +1461,21 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // Technical appendix buttons
+  const appendixButtons = [
+    "openAppendixSidebarBtn",
+    "openAppendixAdvancedBtn",
+    "openAppendixMethodsBtn"
+  ];
+  appendixButtons.forEach(id => {
+    const btn = document.getElementById(id);
+    if (btn) btn.addEventListener("click", openTechnicalAppendix);
+  });
+
   // Initial metric calculation
   updateMetrics();
   switchTab("intro");
 
-  // Show tour on first load of page
+  // Show tour on first load
   openTourModal();
 });
