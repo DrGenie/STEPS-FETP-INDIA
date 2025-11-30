@@ -1159,7 +1159,7 @@ async function downloadPolicyBriefPdf() {
 
   const methodsText = [
     "Endorsement probabilities are derived from a mixed logit model and a two class latent class model of stakeholder preferences for FETP design in India.",
-    "Cost per trainee per month enters utility through a cost coefficient expressed in thousand INR. A lognormal specification was used in the original estimation to ensure negative marginal utility of cost.",
+    "Cost per trainee per month enters utility through a cost coefficient expressed in thousand INR.",
     "Willingness to pay estimates (INR per trainee per month) translate attribute levels into indicative benefits, combined with completion rates and endorsement.",
     "Programme costs are built from cost per trainee per month, duration, number of trainees and the chosen cost template, with an optional opportunity cost for trainee salaries.",
     "All values are indicative and intended for scenario comparison. Detailed assumptions are documented in the STEPS Advanced settings and the technical appendix."
@@ -1267,7 +1267,7 @@ function openResultsModal() {
         <p><strong>Mentorship:</strong> ${cfg.mentorship}</p>
         <p><strong>Delivery mode:</strong> ${cfg.delivery}</p>
         <p><strong>Response time:</strong> ${cfg.response} days</p>
-        <p><strong>Preference model:</strong> ${cfg.model === "mxl" ? "Average mixed logit" : "Supportive latent class group"}</p>
+        <p><strong>Preference model:</strong> ${cfg.model === "mxl" ? "mixed logit" : "Supportive latent class group"}</p>
         <p><strong>Trainees per cohort:</strong> ${cfg.trainees}</p>
         <p><strong>Cohorts:</strong> ${cfg.cohorts}</p>
         <p><strong>Cost per trainee per month:</strong> ${formatINR(cfg.costPerTrainee)}</p>
