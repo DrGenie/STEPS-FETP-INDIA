@@ -356,7 +356,7 @@ body {
 /* Buttons */
 
 .btn {
-  border-radius: 999px;
+  border-radius: 6px;   /* UPDATED — no more oval pills */
   border: none;
   padding: 7px 14px;
   font-size: 0.8rem;
