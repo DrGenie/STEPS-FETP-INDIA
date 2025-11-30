@@ -6,6 +6,7 @@
 
 // Mixed logit mean coefficients (preference space)
 const MXL_COEFS = {
+  ascProgram: 0.168,
   ascOptOut: -0.601,
   tier: {
     frontline: 0.0,
@@ -66,6 +67,7 @@ const MXL_WTP = {
 
 // Latent class Class 2 coefficients (training supporters)
 const LC2_COEFS = {
+  ascProgram: 0.098,
   ascOptOut: -2.543,
   tier: {
     frontline: 0.0,
@@ -443,12 +445,13 @@ function getWtpTable(modelKey) {
 }
 
 function computeNonCostUtility(cfg, coefs) {
+  const uAsc = coefs.ascProgram || 0; // ASC_A = 1 for any programme configuration
   const uTier = coefs.tier[cfg.tier] || 0;
   const uCareer = coefs.career[cfg.career] || 0;
   const uMentor = coefs.mentorship[cfg.mentorship] || 0;
   const uDelivery = coefs.delivery[cfg.delivery] || 0;
   const uResponse = coefs.response[cfg.response] || 0;
-  return uTier + uCareer + uMentor + uDelivery + uResponse;
+  return uAsc + uTier + uCareer + uMentor + uDelivery + uResponse;
 }
 
 function computeEndorsement(cfg) {
