@@ -1,6 +1,5 @@
 /* STEPS – FETP Scale Up Tool
- * Complete front end logic, using final MXL, WTP and LC Class 2 estimates.
- * All monetary calculations are in INR.
+ * Uses final MXL, WTP and LC Class 2 estimates.
  */
 
 /* ---------- DATA CONSTANTS ---------- */
@@ -33,15 +32,15 @@ const MXL_COEFS = {
     "15": 0.546,
     "7": 0.610
   },
-  costPerThousand: -0.005 // back transformed mean cost coefficient
+  costPerThousand: -0.005
 };
 
 // WTP (thousand INR per trainee per month) from mixed logit
 const MXL_WTP = {
   tier: {
+    frontline: 0,
     intermediate: 47.06,
-    advanced: 103.99,
-    frontline: 0
+    advanced: 103.99
   },
   career: {
     certificate: 0,
@@ -136,8 +135,7 @@ const DURATION_MONTHS = {
 const COST_TEMPLATES = {
   frontline: {
     WHO: {
-      label: "Frontline - WHO template",
-      // per cohort costs by component, from per cohort column
+      label: "Frontline - WHO template (6 cohorts)",
       components: {
         staffSalary: 1782451,
         otherSalary: 0,
@@ -168,7 +166,6 @@ const COST_TEMPLATES = {
   intermediate: {
     WHO: {
       label: "Intermediate - WHO template",
-      // Overall column from WHO rows only (interpreted as one cohort for shares)
       components: {
         staffSalary: 6571500,
         otherSalary: 0,
@@ -322,6 +319,7 @@ let charts = {
 };
 
 let savedScenarios = [];
+let toastTimeout = null;
 
 /* ---------- HELPERS ---------- */
 
@@ -349,15 +347,16 @@ function getCostTemplateOptions(tier) {
   return Object.entries(configs).map(([key, cfg]) => ({ key, label: cfg.label }));
 }
 
-function computeTemplateShares(tier, templateKey) {
-  const cfg = COST_TEMPLATES[tier][templateKey];
-  const comps = cfg.components;
-  const total = Object.values(comps).reduce((s, v) => s + v, 0);
-  const shares = {};
-  Object.entries(comps).forEach(([k, v]) => {
-    shares[k] = total > 0 ? v / total : 0;
-  });
-  return { label: cfg.label, shares };
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.classList.add("show");
+  toast.classList.remove("hidden");
+  if (toastTimeout) clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    toast.classList.remove("show");
+    toastTimeout = null;
+  }, 2600);
 }
 
 /* ---------- MODEL CALCULATIONS ---------- */
@@ -477,7 +476,7 @@ function computeIndicativeWtpPerTraineePerMonth(cfg) {
   const deliveryVal = wtp.delivery[cfg.delivery] || 0;
   const responseVal = wtp.response[cfg.response] || 0;
   const totalThousand = tierVal + careerVal + mentorVal + deliveryVal + responseVal;
-  return totalThousand * 1000; // rupees per trainee per month
+  return totalThousand * 1000;
 }
 
 function computeCostsAndBenefits(cfg) {
@@ -561,6 +560,59 @@ function updateCostSliderLabel() {
   label.textContent = formatINR(parseFloat(slider.value));
 }
 
+function generateBriefingText(cfg, res) {
+  const tierLabel = {
+    frontline: "frontline",
+    intermediate: "intermediate",
+    advanced: "advanced"
+  }[cfg.tier];
+
+  const mentorshipLabel = {
+    low: "low mentorship",
+    medium: "medium mentorship",
+    high: "high mentorship"
+  }[cfg.mentorship];
+
+  const deliveryLabel = {
+    blended: "blended delivery",
+    inperson: "fully in person delivery",
+    online: "fully online delivery"
+  }[cfg.delivery];
+
+  const responseLabel = {
+    "30": "within 30 days",
+    "15": "within 15 days",
+    "7": "within 7 days"
+  }[cfg.response];
+
+  const endorsePct = (res.endorse * 100).toFixed(1);
+  const bcrText = res.bcr.toFixed(2);
+  const totalCostText = formatINR(res.totalCostAllCohorts);
+  const totalBenefitText = formatINR(res.totalBenefitAllCohorts);
+  const netBText = formatINR(res.netBenefit);
+
+  const para1 =
+    "Under the current settings, STEPS evaluates an " + tierLabel +
+    " Field Epidemiology Training Program with " + mentorshipLabel +
+    ", " + deliveryLabel +
+    " and an outbreak response capacity of " + responseLabel +
+    ". The configuration assumes " + cfg.trainees +
+    " trainees per cohort, " + cfg.cohorts +
+    " cohorts in total and a cost of " +
+    formatINR(cfg.costPerTrainee) +
+    " per trainee per month.";
+
+  const para2 =
+    "The model predicts that around " + endorsePct +
+    " percent of stakeholders would endorse this option rather than opt out. Total economic cost across all cohorts is " +
+    totalCostText + " and the indicative total benefit is " + totalBenefitText +
+    ", giving a benefit cost ratio of " + bcrText +
+    " and a net benefit of " + netBText +
+    ". These values are indicative and should be interpreted as a structured comparison across scenarios rather than precise budget figures.";
+
+  return para1 + "\n\n" + para2;
+}
+
 function updateMetrics() {
   const cfg = getModelConfig();
   updateConfigSummary(cfg);
@@ -596,6 +648,10 @@ function updateMetrics() {
     headline.textContent =
       "At current cost and design, both net benefits and endorsement are modest. Consider moving towards Intermediate or Advanced with stronger mentorship or reducing costs before scaling up.";
   }
+
+  // Briefing text
+  document.getElementById("briefingText").value =
+    generateBriefingText(cfg, res);
 
   updateCharts(res);
   updateCostingDetails(cfg, res);
@@ -669,58 +725,69 @@ function updateCharts(res) {
 }
 
 function updateCostingDetails(cfg, res) {
-  const { label, shares } = computeTemplateShares(cfg.tier, cfg.templateKey);
-  const container = document.getElementById("costComponentCards");
-  container.innerHTML = "";
-  document.getElementById("costTemplateName").textContent = label;
-  document.getElementById("costPerCohortLabel").textContent =
+  const templateCfg = COST_TEMPLATES[cfg.tier][cfg.templateKey];
+  document.getElementById("costTemplateName").textContent =
+    templateCfg ? templateCfg.label : "";
+
+  document.getElementById("programmeCostLabel").textContent =
+    formatINR(res.programmeCostPerCohort);
+  document.getElementById("oppCostLabel").textContent =
+    formatINR(res.oppCostPerCohort);
+  document.getElementById("totalCostPerCohortLabel").textContent =
     formatINR(res.totalCostPerCohort);
 
-  const groups = [
-    {
-      title: "Staff salaries and benefits",
-      keys: ["staffSalary", "otherSalary", "inKindSalary"]
-    },
-    {
-      title: "Facilities and utilities",
-      keys: ["staffFacilities", "officeMaintenance", "facilityUpgrades", "equipmentDep", "sharedUtilities"]
-    },
-    {
-      title: "Equipment and software",
-      keys: ["staffEquipment", "staffSoftware", "traineeEquipment", "traineeSoftware"]
-    },
-    {
-      title: "Training and workshops",
-      keys: ["trainingMaterials", "workshops", "staffDev"]
-    },
-    {
-      title: "Travel",
-      keys: ["inCountryTravel", "intlTravel"]
-    },
-    {
-      title: "Trainee opportunity cost",
-      keys: ["opportunityCost"]
-    },
-    {
-      title: "Other direct and indirect",
-      keys: ["otherDirect", "otherIndirect", "professionalServices"]
-    }
+  const tbody = document.querySelector("#costComponentsTable tbody");
+  tbody.innerHTML = "";
+  if (!templateCfg) return;
+
+  const comps = templateCfg.components;
+  // Programme template total excluding opportunity cost
+  const totalProgTemplate = Object.entries(comps)
+    .filter(([k]) => k !== "opportunityCost")
+    .reduce((s, [, v]) => s + v, 0);
+
+  const share = key =>
+    totalProgTemplate > 0 ? (comps[key] || 0) / totalProgTemplate : 0;
+
+  const rows = [
+    ["In country programme staff (salary and benefits)", share("staffSalary") + share("otherSalary")],
+    ["Office equipment (staff and faculty)", share("staffEquipment")],
+    ["Office software (staff and faculty)", share("staffSoftware")],
+    ["Rent and utilities (staff and faculty)", share("staffFacilities")],
+    ["Training materials", share("trainingMaterials")],
+    ["Workshops and seminars", share("workshops")],
+    ["In country travel", share("inCountryTravel")],
+    ["International travel", share("intlTravel")],
+    ["Management and oversight", share("management")],
+    ["Office maintenance", share("officeMaintenance")],
+    ["In kind salary (trainers and support staff)", share("inKindSalary")],
+    ["Facility upgrades", share("facilityUpgrades")],
+    ["Equipment depreciation", share("equipmentDep")],
+    ["Shared utilities and services", share("sharedUtilities")],
+    ["Staff development (non trainees)", share("staffDev")],
+    ["Other direct costs", share("otherDirect")],
+    ["Other indirect costs", share("otherIndirect")]
   ];
 
-  groups.forEach(group => {
-    const share = group.keys.reduce((s, k) => s + (shares[k] || 0), 0);
-    if (share <= 0.0001) return;
-    const amount = res.totalCostPerCohort * share;
-    const card = document.createElement("div");
-    card.className = "cost-card";
-    const pct = (share * 100).toFixed(1);
-    card.innerHTML = `
-      <h4>${group.title}</h4>
-      <p><strong>${formatINR(amount)}</strong> per cohort</p>
-      <p class="small">${pct} percent of total cohort cost</p>
+  rows.forEach(([label, s]) => {
+    if (s <= 0.0001) return;
+    const tr = document.createElement("tr");
+    const amount = res.programmeCostPerCohort * s;
+    tr.innerHTML = `
+      <td>${label}</td>
+      <td>${formatINR(amount)}</td>
     `;
-    container.appendChild(card);
+    tbody.appendChild(tr);
   });
+
+  if (res.oppCostPerCohort > 0) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>Trainee opportunity cost (salary time)</td>
+      <td>${formatINR(res.oppCostPerCohort)}</td>
+    `;
+    tbody.appendChild(tr);
+  }
 }
 
 function updateSimulationCharts(cfg, res) {
@@ -833,6 +900,23 @@ function saveCurrentScenario() {
   renderSavedScenarios();
 }
 
+function quickSaveScenarioFromConfig() {
+  const cfg = getModelConfig();
+  const res = computeCostsAndBenefits(cfg);
+  const name = "Config scenario " + (savedScenarios.length + 1);
+  const scenario = {
+    id: Date.now(),
+    name,
+    tags: "",
+    notes: "",
+    cfg,
+    res,
+    shortlisted: false
+  };
+  savedScenarios.push(scenario);
+  renderSavedScenarios();
+}
+
 function renderSavedScenarios() {
   const tbody = document.querySelector("#savedScenariosTable tbody");
   tbody.innerHTML = "";
@@ -863,7 +947,6 @@ function attachShortlistHandlers() {
   boxes.forEach(box => {
     box.addEventListener("change", () => {
       const id = parseInt(box.getAttribute("data-scenario-id"), 10);
-      const selected = boxes;
       const currentlyShortlisted = savedScenarios.filter(s => s.shortlisted).length;
       if (box.checked && currentlyShortlisted >= 5) {
         box.checked = false;
@@ -903,7 +986,10 @@ function renderShortlistGrid() {
 /* ---------- EXCEL AND PDF EXPORT ---------- */
 
 function downloadScenariosExcel() {
-  if (savedScenarios.length === 0) return;
+  if (savedScenarios.length === 0) {
+    showToast("No scenarios to export yet.");
+    return;
+  }
   const rows = savedScenarios.map(sc => ({
     Name: sc.name,
     Tier: sc.cfg.tier,
@@ -925,10 +1011,14 @@ function downloadScenariosExcel() {
   const ws = XLSX.utils.json_to_sheet(rows);
   XLSX.utils.book_append_sheet(wb, ws, "STEPS scenarios");
   XLSX.writeFile(wb, "steps_fetp_scenarios.xlsx");
+  showToast("Excel file downloaded.");
 }
 
 async function downloadPolicyBriefPdf() {
-  if (savedScenarios.length === 0) return;
+  if (savedScenarios.length === 0) {
+    showToast("No scenarios to include in the policy brief.");
+    return;
+  }
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({
@@ -976,7 +1066,7 @@ async function downloadPolicyBriefPdf() {
     const bcr = sc.res.bcr.toFixed(2);
 
     const line1 = "Tier: " + sc.cfg.tier + ", mentorship: " + sc.cfg.mentorship +
-      ", delivery: " + sc.cfg.delivery + ", response: " + sc.cfg.response + ".";
+      ", delivery: " + sc.cfg.delivery + ", response: " + sc.cfg.response + " days.";
     const line2 = "Cohorts: " + sc.cfg.cohorts + ", trainees per cohort: " + sc.cfg.trainees +
       ", cost per trainee per month: INR " + sc.cfg.costPerTrainee.toLocaleString("en-IN") + ".";
     const line3 = "Endorsement is about " + endorsement + " percent, with a benefit cost ratio of " + bcr + ".";
@@ -1048,6 +1138,7 @@ async function downloadPolicyBriefPdf() {
   });
 
   doc.save("steps_fetp_policy_brief.pdf");
+  showToast("Policy brief PDF generated.");
 }
 
 /* ---------- WHAT WOULD IT TAKE SOLVER ---------- */
@@ -1078,6 +1169,7 @@ function solveForEndorsementTarget() {
   updateCostSliderLabel();
   updateMetrics();
   document.getElementById("whatItTakesNote").textContent = note;
+  showToast("Cost adjusted for target endorsement.");
 }
 
 function solveForBcrTarget() {
@@ -1101,7 +1193,6 @@ function solveForBcrTarget() {
     const resMid = evalAtCost(mid);
     best = resMid;
     if (resMid.bcr > targetBcr) {
-      // higher cost tends to reduce BCR, so we move towards lower cost
       high = mid;
     } else {
       low = mid;
@@ -1116,6 +1207,7 @@ function solveForBcrTarget() {
   updateCostSliderLabel();
   updateMetrics();
   document.getElementById("whatItTakesNote").textContent = note;
+  showToast("Cost adjusted for target benefit cost ratio.");
 }
 
 /* ---------- MODAL HANDLING ---------- */
@@ -1168,12 +1260,54 @@ function closeResultsModal() {
   document.getElementById("resultsModal").classList.add("hidden");
 }
 
+/* ---------- TOUR HANDLING ---------- */
+
+const tourSteps = [
+  {
+    title: "Welcome to STEPS",
+    body: "STEPS combines discrete choice experiment results, cost templates and simple epidemiological multipliers to help you compare different FETP scale up options for India."
+  },
+  {
+    title: "Configuration tab",
+    body: "Use the Configuration tab to choose programme tier, mentorship, delivery mode, response time, number of cohorts and cost per trainee per month. Select the preference model and click Apply configuration, View results or Save scenario."
+  },
+  {
+    title: "Results and costing",
+    body: "The Results tab shows endorsement, graduates, outbreak responses, benefits, costs and net benefit for the current configuration. The Costing details tab explains how programme cost and opportunity cost are constructed from the templates."
+  },
+  {
+    title: "Simulation, scenarios and advanced settings",
+    body: "The National simulation tab projects national totals and explores simple cost sensitivity. Saved scenarios lets you build a portfolio and export Excel and PDF reports. Advanced and methods contains adjustable multipliers, an assumption log and a detailed technical appendix."
+  }
+];
+
+let tourIndex = 0;
+
+function renderTourStep() {
+  const step = tourSteps[tourIndex];
+  document.getElementById("tourTitle").textContent = step.title;
+  document.getElementById("tourBody").innerHTML = `<p>${step.body}</p>`;
+  const nextBtn = document.getElementById("tourNextBtn");
+  nextBtn.textContent = tourIndex === tourSteps.length - 1 ? "Done" : "Next";
+}
+
 function openTourModal() {
+  tourIndex = 0;
+  renderTourStep();
   document.getElementById("tourModal").classList.remove("hidden");
 }
 
 function closeTourModal() {
   document.getElementById("tourModal").classList.add("hidden");
+}
+
+function nextTourStep() {
+  if (tourIndex < tourSteps.length - 1) {
+    tourIndex += 1;
+    renderTourStep();
+  } else {
+    closeTourModal();
+  }
 }
 
 /* ---------- TAB HANDLING ---------- */
@@ -1194,7 +1328,7 @@ document.addEventListener("DOMContentLoaded", () => {
   updateCostTemplateSelect();
   updateCostSliderLabel();
 
-  // Set default toggle state
+  // Toggle default
   const oppToggle = document.getElementById("oppCostToggle");
   oppToggle.classList.add("on");
 
@@ -1233,11 +1367,21 @@ document.addEventListener("DOMContentLoaded", () => {
     updateMetrics();
   });
 
-  // Apply and view results
-  document.getElementById("applyConfigBtn").addEventListener("click", updateMetrics);
+  // Apply, view results, quick save
+  document.getElementById("applyConfigBtn").addEventListener("click", () => {
+    updateMetrics();
+    showToast("Configuration applied. Open View results or go to the Results tab.");
+  });
+
   document.getElementById("viewResultsBtn").addEventListener("click", () => {
     updateMetrics();
     openResultsModal();
+    showToast("Scenario summary updated.");
+  });
+
+  document.getElementById("quickSaveScenarioBtn").addEventListener("click", () => {
+    quickSaveScenarioFromConfig();
+    showToast("Scenario saved. See Saved scenarios tab.");
   });
 
   // What would it take
@@ -1245,18 +1389,24 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("solveBcrBtn").addEventListener("click", solveForBcrTarget);
 
   // Saved scenarios
-  document.getElementById("saveScenarioBtn").addEventListener("click", saveCurrentScenario);
+  document.getElementById("saveScenarioBtn").addEventListener("click", () => {
+    saveCurrentScenario();
+    showToast("Scenario saved with name, tags and notes.");
+  });
   document.getElementById("downloadExcelBtn").addEventListener("click", downloadScenariosExcel);
   document.getElementById("downloadPdfBtn").addEventListener("click", downloadPolicyBriefPdf);
 
-  // Modals
+  // Results modal
   document.getElementById("closeResultsModal").addEventListener("click", closeResultsModal);
   document.getElementById("resultsModal").addEventListener("click", e => {
     if (e.target.id === "resultsModal") closeResultsModal();
   });
 
+  // Tour
   document.getElementById("startTourBtn").addEventListener("click", openTourModal);
   document.getElementById("closeTourModal").addEventListener("click", closeTourModal);
+  document.getElementById("tourSkipBtn").addEventListener("click", closeTourModal);
+  document.getElementById("tourNextBtn").addEventListener("click", nextTourStep);
   document.getElementById("tourModal").addEventListener("click", e => {
     if (e.target.id === "tourModal") closeTourModal();
   });
@@ -1272,4 +1422,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Initial metric calculation
   updateMetrics();
   switchTab("intro");
+
+  // Show tour on first load of page
+  openTourModal();
 });
