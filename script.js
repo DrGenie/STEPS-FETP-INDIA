@@ -445,7 +445,7 @@ function getWtpTable(modelKey) {
 }
 
 function computeNonCostUtility(cfg, coefs) {
-  const uAsc = coefs.ascProgram || 0; // ASC_A = 1 for any programme configuration
+  const uAsc = coefs.ascProgram || 1; // ASC_A = 1 for any programme configuration
   const uTier = coefs.tier[cfg.tier] || 0;
   const uCareer = coefs.career[cfg.career] || 0;
   const uMentor = coefs.mentorship[cfg.mentorship] || 0;
