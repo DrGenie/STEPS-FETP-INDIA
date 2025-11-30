@@ -353,54 +353,73 @@ body {
   color: var(--text-soft);
 }
 
-/* Buttons */
+/* ------------------------------ */
+/*  UPDATED BUTTON SYSTEM         */
+/* ------------------------------ */
 
-.btn {
-  border-radius: 6px;   /* UPDATED — no more oval pills */
-  border: none;
-  padding: 7px 14px;
-  font-size: 0.8rem;
+.btn-primary,
+.btn-secondary,
+.btn-ghost {
+  font-family: inherit;
+  font-size: 13px;
+  border-radius: 6px;
+  padding: 8px 14px;
+  border-width: 1px;
+  border-style: solid;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  transition: all 0.15s ease;
+  gap: 6px;
   white-space: nowrap;
 }
 
+/* Primary (Apply configuration, Save scenario, View results) */
 .btn-primary {
-  background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+  background-color: #1d4f91;
+  border-color: #1d4f91;
   color: #ffffff;
-  font-weight: 600;
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
 }
 
 .btn-primary:hover {
-  filter: brightness(1.05);
-  transform: translateY(-1px);
+  background-color: #1e3a8a;
+  border-color: #1e3a8a;
 }
 
-.btn-outline {
-  background: #ffffff;
-  border: 1px solid var(--accent);
-  color: var(--accent);
+/* Secondary / Inverse */
+.btn-secondary {
+  background-color: #ffffff;
+  border-color: #2563eb;
+  color: #1d4f91;
 }
 
-.btn-outline:hover {
-  background: var(--accent-soft);
+.btn-secondary:hover {
+  background-color: #eff6ff;
 }
 
-.btn-soft {
-  background: #ffffff;
-  border: 1px solid var(--border-subtle);
-  color: var(--text-main);
+/* Ghost / Neutral */
+.btn-ghost {
+  background-color: #ffffff;
+  border-color: #d1d5db;
+  color: #374151;
 }
 
-.btn-soft:hover {
-  border-color: var(--accent);
-  color: var(--accent);
+.btn-ghost:hover {
+  background-color: #f9fafb;
 }
+
+/* Button size variants */
+.btn-small {
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+.btn-mini {
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
+/* ------------------------------ */
 
 .btn-link {
   background: transparent;
@@ -409,17 +428,6 @@ body {
   padding: 0;
   font-size: 0.8rem;
   cursor: pointer;
-}
-
-.btn-small {
-  font-size: 0.75rem;
-  padding: 5px 10px;
-}
-
-.btn-mini {
-  align-self: flex-start;
-  margin-top: 2px;
-  font-size: 0.75rem;
 }
 
 /* Toggle */
