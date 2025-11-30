@@ -354,16 +354,16 @@ body {
 }
 
 /* ------------------------------ */
-/*  UPDATED BUTTON SYSTEM         */
+/*      UPDATED BUTTON SYSTEM     */
 /* ------------------------------ */
 
 .btn-primary,
 .btn-secondary,
 .btn-ghost {
   font-family: inherit;
-  font-size: 13px;
-  border-radius: 6px;
-  padding: 8px 14px;
+  font-size: 12px;
+  border-radius: 4px;
+  padding: 6px 12px;
   border-width: 1px;
   border-style: solid;
   cursor: pointer;
@@ -374,7 +374,7 @@ body {
   white-space: nowrap;
 }
 
-/* Primary (Apply configuration, Save scenario, View results) */
+/* Primary — main action buttons */
 .btn-primary {
   background-color: #1d4f91;
   border-color: #1d4f91;
@@ -386,7 +386,7 @@ body {
   border-color: #1e3a8a;
 }
 
-/* Secondary / Inverse */
+/* Secondary — inverse */
 .btn-secondary {
   background-color: #ffffff;
   border-color: #2563eb;
@@ -397,7 +397,7 @@ body {
   background-color: #eff6ff;
 }
 
-/* Ghost / Neutral */
+/* Ghost — neutral */
 .btn-ghost {
   background-color: #ffffff;
   border-color: #d1d5db;
@@ -408,15 +408,15 @@ body {
   background-color: #f9fafb;
 }
 
-/* Button size variants */
+/* Compact sizes */
 .btn-small {
-  font-size: 12px;
-  padding: 6px 10px;
+  font-size: 11px;
+  padding: 4px 10px;
 }
 
 .btn-mini {
-  font-size: 11px;
-  padding: 4px 8px;
+  font-size: 10px;
+  padding: 3px 8px;
 }
 
 /* ------------------------------ */
