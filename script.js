@@ -1,3 +1,4 @@
+// script.js
 /* STEPS – FETP Scale Up Tool
  * Uses final MXL, WTP and LC Class 2 estimates.
  */
@@ -593,6 +594,7 @@ function generateBriefingText(cfg, res) {
   const totalCostText = formatINR(res.totalCostAllCohorts);
   const totalBenefitText = formatINR(res.totalBenefitAllCohorts);
   const netBText = formatINR(res.netBenefit);
+  const wtpText = formatINR(res.wtpPerTraineePerMonth);
 
   const para1 =
     "Under the current settings, STEPS evaluates an " + tierLabel +
@@ -607,7 +609,9 @@ function generateBriefingText(cfg, res) {
 
   const para2 =
     "The model predicts that around " + endorsePct +
-    " percent of stakeholders would endorse this option rather than opt out. Total economic cost across all cohorts is " +
+    " percent of stakeholders would endorse this option rather than opt out. " +
+    "Stakeholders collectively value this configuration at about " + wtpText +
+    " per trainee per month, relative to a basic baseline. Total economic cost across all cohorts is " +
     totalCostText + " and the indicative total benefit is " + totalBenefitText +
     ", giving a benefit cost ratio of " + bcrText +
     " and a net benefit of " + netBText +
@@ -639,6 +643,17 @@ function updateMetrics() {
     res.bcr.toFixed(2);
   document.getElementById("metricNetBenefit").textContent =
     formatINR(res.netBenefit);
+
+  // WTP metrics
+  const wtpText = formatINR(res.wtpPerTraineePerMonth);
+  document.getElementById("metricWtp").textContent = wtpText;
+  document.getElementById("metricWtpExplanation").textContent =
+    "On average, stakeholders value this configuration at about " + wtpText +
+    " per trainee per month relative to a basic, low-mentorship, certificate-only programme.";
+
+  // Summary endorsement for sidebar
+  document.getElementById("summaryEndorsement").textContent =
+    formatPercent(res.endorse * 100);
 
   const headline = document.getElementById("headlineRecommendation");
   if (res.bcr > 1.1 && res.endorse > 0.6) {
@@ -932,6 +947,8 @@ function renderSavedScenarios() {
       <td>${sc.tags}</td>
       <td>${sc.cfg.tier}</td>
       <td>${sc.cfg.mentorship}</td>
+      <td>${sc.cfg.delivery}</td>
+      <td>${sc.cfg.response}</td>
       <td>${sc.cfg.cohorts}</td>
       <td>${endorsePct}</td>
       <td>${sc.res.bcr.toFixed(2)}</td>
@@ -973,13 +990,17 @@ function renderShortlistGrid() {
     const tagsHtml = sc.tags
       ? sc.tags.split(";").map(t => t.trim()).filter(Boolean).map(t => `<span class="tag-pill">${t}</span>`).join(" ")
       : "";
+    const endorsePct = formatPercent(sc.res.endorse * 100);
     div.innerHTML = `
       <h4>${sc.name}</h4>
       <p><strong>Tier:</strong> ${sc.cfg.tier}, <strong>Mentorship:</strong> ${sc.cfg.mentorship}</p>
-      <p><strong>Cohorts:</strong> ${sc.cfg.cohorts}, <strong>Endorsement:</strong> ${formatPercent(sc.res.endorse * 100)}</p>
+      <p><strong>Delivery:</strong> ${sc.cfg.delivery}, <strong>Response:</strong> ${sc.cfg.response} days</p>
+      <p><strong>Cohorts:</strong> ${sc.cfg.cohorts}, <strong>Trainees / cohort:</strong> ${sc.cfg.trainees}</p>
+      <p><strong>Endorsement:</strong> ${endorsePct}</p>
       <p><strong>BCR:</strong> ${sc.res.bcr.toFixed(2)}</p>
       <p><strong>Total cost:</strong> ${formatINR(sc.res.totalCostAllCohorts)}</p>
       <p><strong>Total benefit:</strong> ${formatINR(sc.res.totalBenefitAllCohorts)}</p>
+      <p><strong>Notes:</strong> ${sc.notes || "–"}</p>
       <p>${tagsHtml}</p>
     `;
     grid.appendChild(div);
@@ -994,20 +1015,22 @@ function downloadScenariosExcel() {
     return;
   }
   const rows = savedScenarios.map(sc => ({
+    Shortlisted: sc.shortlisted ? "Yes" : "No",
     Name: sc.name,
+    Tags: sc.tags,
     Tier: sc.cfg.tier,
     Mentorship: sc.cfg.mentorship,
     Delivery: sc.cfg.delivery,
-    Response: sc.cfg.response,
+    Response_days: sc.cfg.response,
     Trainees_per_cohort: sc.cfg.trainees,
     Cohorts: sc.cfg.cohorts,
     Cost_per_trainee_per_month_INR: sc.cfg.costPerTrainee,
     Endorsement_percent: (sc.res.endorse * 100).toFixed(1),
+    WTP_per_trainee_per_month_INR: sc.res.wtpPerTraineePerMonth,
     BCR: sc.res.bcr.toFixed(2),
     Total_cost_INR: sc.res.totalCostAllCohorts,
     Total_benefit_INR: sc.res.totalBenefitAllCohorts,
     Net_benefit_INR: sc.res.netBenefit,
-    Tags: sc.tags,
     Notes: sc.notes
   }));
   const wb = XLSX.utils.book_new();
@@ -1067,12 +1090,14 @@ async function downloadPolicyBriefPdf() {
     doc.setFont("Helvetica", "normal");
     const endorsement = (sc.res.endorse * 100).toFixed(1);
     const bcr = sc.res.bcr.toFixed(2);
+    const wtpText = "INR " + Math.round(sc.res.wtpPerTraineePerMonth).toLocaleString("en-IN");
 
     const line1 = "Tier: " + sc.cfg.tier + ", mentorship: " + sc.cfg.mentorship +
       ", delivery: " + sc.cfg.delivery + ", response: " + sc.cfg.response + " days.";
     const line2 = "Cohorts: " + sc.cfg.cohorts + ", trainees per cohort: " + sc.cfg.trainees +
       ", cost per trainee per month: INR " + sc.cfg.costPerTrainee.toLocaleString("en-IN") + ".";
-    const line3 = "Endorsement is about " + endorsement + " percent, with a benefit cost ratio of " + bcr + ".";
+    const line3 = "Endorsement is about " + endorsement + " percent, with a benefit cost ratio of " + bcr +
+      " and WTP of about " + wtpText + " per trainee per month.";
     const line4 = "Total cost is " + formatINR(sc.res.totalCostAllCohorts) +
       " and total indicative benefit is " + formatINR(sc.res.totalBenefitAllCohorts) + ".";
 
@@ -1129,9 +1154,9 @@ async function downloadPolicyBriefPdf() {
   const methodsText = [
     "Endorsement probabilities are derived from a mixed logit model and a two class latent class model of stakeholder preferences for FETP design in India.",
     "Cost per trainee per month enters utility through a lognormal cost coefficient that ensures negative marginal utility of cost.",
-    "Willingness to pay estimates in thousand rupees per trainee per month are used to translate attribute levels into indicative benefits.",
+    "Willingness to pay estimates (INR per trainee per month) are used to translate attribute levels into indicative benefits, combined with completion rates and endorsement.",
     "Programme costs are built from cost per trainee per month, duration, number of trainees and the chosen cost template, with an optional opportunity cost for trainee salaries.",
-    "All values are indicative and intended for scenario comparison. Detailed assumptions are documented in the STEPS Advanced and methods tab."
+    "All values are indicative and intended for scenario comparison. Detailed assumptions are documented in the STEPS Advanced settings and the technical appendix."
   ];
 
   methodsText.forEach(t => {
@@ -1248,6 +1273,7 @@ function openResultsModal() {
         <p><strong>Choose opt out:</strong> ${optoutText}</p>
         <p><strong>Graduates (all cohorts):</strong> ${res.totalGraduates.toFixed(0)}</p>
         <p><strong>Outbreak responses per year:</strong> ${res.outbreakResponsesPerYear.toFixed(1)}</p>
+        <p><strong>WTP per trainee per month:</strong> ${formatINR(res.wtpPerTraineePerMonth)}</p>
         <p><strong>Total cost:</strong> ${formatINR(res.totalCostAllCohorts)}</p>
         <p><strong>Total benefit:</strong> ${formatINR(res.totalBenefitAllCohorts)}</p>
         <p><strong>Benefit cost ratio:</strong> <span class="${bcrClass}">${res.bcr.toFixed(2)}</span></p>
@@ -1276,11 +1302,11 @@ const tourSteps = [
   },
   {
     title: "Results and costing",
-    body: "The Results tab shows endorsement, graduates, outbreak responses, benefits, costs and net benefit for the current configuration. The Costing details tab explains how programme cost and opportunity cost are constructed from the templates."
+    body: "The Results tab shows endorsement, WTP, graduates, outbreak responses, benefits, costs and net benefit for the current configuration. The Costing details tab explains how programme cost and opportunity cost are constructed from the templates."
   },
   {
     title: "Simulation, scenarios and advanced settings",
-    body: "The National simulation tab projects national totals and explores simple cost sensitivity. Saved scenarios lets you build a portfolio and export Excel and PDF reports. Advanced and methods contains adjustable multipliers, an assumption log and a detailed technical appendix."
+    body: "The National simulation tab projects national totals and explores simple cost sensitivity. Saved scenarios lets you build a portfolio and export Excel and PDF reports. Advanced settings and the Methods tab document key assumptions and formulas."
   }
 ];
 
@@ -1334,6 +1360,7 @@ document.addEventListener("DOMContentLoaded", () => {
   // Toggle default
   const oppToggle = document.getElementById("oppCostToggle");
   oppToggle.classList.add("on");
+  oppToggle.textContent = "On";
 
   // Tab clicks
   document.querySelectorAll(".tab-btn").forEach(btn => {
