@@ -800,7 +800,7 @@ function isSensitivityEpiIncluded() {
 
 /*
   Compute DCE-based WTP benefits and CBA profiles for:
-  - Overall (mixed logit)
+  - Overall (mixed logit or overall sample)
   - Supportive latent class (LC2)
   - Conservative / resister class (LC1; endorsement only)
 */
