@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -18,7 +17,6 @@
 
 </head>
 <body data-theme="worldbank-light">
-<div id="stepsAppRoot">
 <header class="app-header"
         data-tour-step="header"
         data-tour-title="STEPS header and branding"
@@ -62,26 +60,26 @@
     </div>
 </header>
 
-<main class="app-shell">
+<main id="stepsAppRoot" class="app-shell">
     <!-- TAB BAR -->
     <nav class="tab-bar"
          data-tour-step="tabs"
          data-tour-title="Navigation tabs"
          data-tour-content="Use these tabs to move between configuration, results, costing, national simulation, WTP-based benefits and sensitivity, Copilot briefing, saved scenarios and settings.">
-        <button class="tablink tab-link active" data-tab="introTab" type="button">Introduction</button>
-        <button class="tablink tab-link" data-tab="attributesTab" type="button">Attributes and levels</button>
-        <button class="tablink tab-link" data-tab="settingsTab" type="button">Settings</button>
-        <button class="tablink tab-link" data-tab="configTab" type="button">Configuration</button>
-        <button class="tablink tab-link" data-tab="resultsTab" type="button">Results</button>
-        <button class="tablink tab-link" data-tab="costingTab" type="button">Costing details</button>
-        <button class="tablink tab-link" data-tab="nationalSimulationTab" type="button">National simulation</button>
-        <button class="tablink tab-link" data-tab="sensitivityTab" type="button">WTP-based benefits / Sensitivity</button>
-        <button class="tablink tab-link" data-tab="copilotTab" type="button">Copilot briefing</button>
-        <button class="tablink tab-link" data-tab="scenariosTab" type="button">Saved scenarios</button>
+        <button class="tablink active" data-tab="introTab" type="button">Introduction</button>
+        <button class="tablink" data-tab="attributesTab" type="button">Attributes and levels</button>
+        <button class="tablink" data-tab="settingsTab" type="button">Settings</button>
+        <button class="tablink" data-tab="configTab" type="button">Configuration</button>
+        <button class="tablink" data-tab="resultsTab" type="button">Results</button>
+        <button class="tablink" data-tab="costingTab" type="button">Costing details</button>
+        <button class="tablink" data-tab="nationalSimulationTab" type="button">National simulation</button>
+        <button class="tablink" data-tab="sensitivityTab" type="button">WTP-based benefits / Sensitivity</button>
+        <button class="tablink" data-tab="copilotTab" type="button">Copilot briefing</button>
+        <button class="tablink" data-tab="scenariosTab" type="button">Saved scenarios</button>
     </nav>
 
 <!-- INTRO TAB -->
-<section id="introTab" class="tabcontent tab-panel active">
+<section id="introTab" class="tabcontent active">
     <div class="grid-two"
          data-tour-step="intro"
          data-tour-title="Welcome to STEPS"
@@ -132,7 +130,7 @@
 </section>
 
 <!-- ATTRIBUTES TAB -->
-<section id="attributesTab" class="tabcontent tab-panel">
+<section id="attributesTab" class="tabcontent">
     <div class="card"
          data-tour-step="attributes"
          data-tour-title="Attributes and levels"
@@ -358,7 +356,7 @@
 </section>
 
 <!-- SETTINGS TAB (combined About + Advanced) -->
-<section id="settingsTab" class="tabcontent tab-panel">
+<section id="settingsTab" class="tabcontent">
     <div class="grid-two-stretch"
          data-tour-step="settings"
          data-tour-title="Settings and assumptions"
@@ -560,7 +558,7 @@
 </section>
 
 <!-- CONFIG TAB -->
-<section id="configTab" class="tabcontent tab-panel">
+<section id="configTab" class="tabcontent">
     <div class="grid-two-stretch"
          data-tour-step="config"
          data-tour-title="Configure a scenario"
@@ -838,7 +836,7 @@
 </section>
 
 <!-- RESULTS TAB -->
-<section id="resultsTab" class="tabcontent tab-panel">
+<section id="resultsTab" class="tabcontent">
     <div class="results-grid"
          data-tour-step="results"
          data-tour-title="Results and interpretation"
@@ -870,7 +868,7 @@
                 </div>
                 <div class="metric-block">
                     <span class="metric-label results-indicator-label tooltip-trigger"
-                          data-tooltip-key="result_optout">
+                          data-tooltip-key="result_opt_out">
                         Choose opt out
                         <button type="button"
                                 class="info-icon"
@@ -916,7 +914,7 @@
                 </div>
                 <div class="metric-block">
                     <span class="metric-label results-indicator-label tooltip-trigger"
-                          data-tooltip-key="result_wtp_total">
+                          data-tooltip-key="result_wtp_total_cohort">
                         Total WTP per cohort
                         <button type="button"
                                 class="info-icon"
@@ -933,7 +931,7 @@
             <div class="metric-pair metric-pair-tight">
                 <div class="metric-block">
                     <span class="metric-label results-indicator-label tooltip-trigger"
-                          data-tooltip-key="result_cost_programme">
+                          data-tooltip-key="result_programme_cost_cohort">
                         Programme cost per cohort
                         <button type="button"
                                 class="info-icon"
@@ -964,7 +962,7 @@
             </div>
             <div class="metric-single">
                 <span class="metric-label results-indicator-label tooltip-trigger"
-                      data-tooltip-key="result_net_benefit">
+                      data-tooltip-key="result_net_benefit_epi">
                     Net benefit per cohort (epidemiological)
                     <button type="button"
                             class="info-icon"
@@ -1061,7 +1059,7 @@
 </section>
 
 <!-- COSTING TAB -->
-<section id="costingTab" class="tabcontent tab-panel">
+<section id="costingTab" class="tabcontent">
     <div class="grid-two-stretch costing-layout"
          data-tour-step="costing"
          data-tour-title="Costing details"
@@ -1132,7 +1130,7 @@
 </section>
 
 <!-- NATIONAL SIMULATION TAB -->
-<section id="nationalSimulationTab" class="tabcontent tab-panel">
+<section id="nationalSimulationTab" class="tabcontent">
     <div class="card"
          data-tour-step="natsim"
          data-tour-title="National simulation"
@@ -1281,8 +1279,9 @@
 </section>
 
 <!-- WTP-BASED BENEFITS / SENSITIVITY TAB -->
-<section id="sensitivityTab" class="tabcontent tab-panel">
-    <div id="sensitivitySection" class="card"
+<section id="sensitivityTab" class="tabcontent">
+    <div class="card"
+         id="sensitivitySection"
          data-tour-step="sensitivity"
          data-tour-title="WTP-based benefits and sensitivity"
          data-tour-content="This tab summarises programme costs, WTP-based benefits from the preference study and outbreak related epidemiological benefits for the current configuration and any saved scenarios, and reports cost benefit metrics including benefit cost ratios and net present values.">
@@ -1470,7 +1469,7 @@
             results and document alternative model specifications or stakeholder group assumptions.
         </p>
 
-        <div id="sensitivityTableContainer" class="table-wrapper">
+        <div class="table-wrapper" id="sensitivityTableContainer">
             <table class="data-table" id="sensitivity-table">
                 <thead>
                 <tr>
@@ -1507,7 +1506,7 @@
 </section>
 
 <!-- COPILOT TAB -->
-<section id="copilotTab" class="tabcontent tab-panel">
+<section id="copilotTab" class="tabcontent">
     <div class="card"
          data-tour-step="copilot"
          data-tour-title="Copilot briefing and interpretation package"
@@ -1609,7 +1608,7 @@ The Copilot interpretation text shown here is based on the most recent configura
 </section>
 
 <!-- SCENARIOS TAB -->
-<section id="scenariosTab" class="tabcontent tab-panel">
+<section id="scenariosTab" class="tabcontent">
     <div class="card"
          data-tour-step="scenarios"
          data-tour-title="Saved scenarios"
@@ -1671,6 +1670,13 @@ The Copilot interpretation text shown here is based on the most recent configura
 
 </main>
 
+<!-- Global tooltip container -->
+
+<div id="globalTooltip">
+    <div class="tooltip-title"></div>
+    <div class="tooltip-body"></div>
+</div>
+
 <!-- Toast container for bottom right pop up messages used across the tool -->
 
 <div id="toastContainer"
@@ -1678,14 +1684,7 @@ The Copilot interpretation text shown here is based on the most recent configura
      aria-live="polite"
      aria-atomic="true"></div>
 
-<!-- Global shared tooltip container -->
-
-<div id="globalTooltip">
-    <div class="tooltip-title"></div>
-    <div class="tooltip-body"></div>
-</div>
-
-</div>
 <script src="script.js"></script>
+
 </body>
 </html>
