@@ -102,7 +102,7 @@
     function generateScenarioId() {
         const ts = Date.now().toString(36);
         const rnd = Math.floor(Math.random() * 1e6).toString(36);
-        return `sc-${ts}-${rnd}`;
+        return "sc-" + ts + "-" + rnd;
     }
 
     function getNowIso() {
@@ -110,11 +110,31 @@
     }
 
     function safeQuerySelector(selector) {
-        return document.querySelector(selector);
+        try {
+            return document.querySelector(selector);
+        } catch (e) {
+            return null;
+        }
     }
 
     function safeQuerySelectorAll(selector) {
-        return Array.from(document.querySelectorAll(selector));
+        try {
+            return Array.from(document.querySelectorAll(selector));
+        } catch (e) {
+            return [];
+        }
+    }
+
+    // Helper that tries multiple selector variants for robustness
+    function setText(selectors, value) {
+        const list = Array.isArray(selectors) ? selectors : [selectors];
+        for (let i = 0; i < list.length; i++) {
+            const el = safeQuerySelector(list[i]);
+            if (el) {
+                el.textContent = value;
+                return;
+            }
+        }
     }
 
     /* ===========================
@@ -151,7 +171,9 @@
         closeBtn.innerHTML = "×";
 
         closeBtn.addEventListener("click", function () {
-            container.removeChild(toast);
+            if (toast.parentElement === container) {
+                container.removeChild(toast);
+            }
         });
 
         toast.appendChild(msgSpan);
@@ -192,8 +214,8 @@
         const titleEl = tooltip.querySelector(".tooltip-title");
         const bodyEl = tooltip.querySelector(".tooltip-body");
 
-        titleEl.textContent = title || "";
-        bodyEl.textContent = body || "";
+        if (titleEl) titleEl.textContent = title || "";
+        if (bodyEl) bodyEl.textContent = body || "";
 
         tooltip.classList.add("visible");
 
@@ -225,12 +247,12 @@
         const triggers = safeQuerySelectorAll(".tooltip-trigger");
         if (!triggers.length) return;
 
-        const handlerEnter = function () {
+        function handlerEnter() {
             showTooltipForTarget(this);
-        };
-        const handlerLeave = function () {
+        }
+        function handlerLeave() {
             hideTooltip();
-        };
+        }
 
         triggers.forEach(function (el) {
             el.addEventListener("mouseenter", handlerEnter);
@@ -246,12 +268,12 @@
 
     function applyTheme(themeName) {
         const body = document.body;
-        body.setAttribute("data-theme", themeName);
+        if (body) {
+            body.setAttribute("data-theme", themeName);
+        }
         try {
             localStorage.setItem(STORAGE_KEYS.THEME, themeName);
-        } catch (e) {
-            /* ignore */
-        }
+        } catch (e) { }
 
         const pills = safeQuerySelectorAll(".pill-toggle[data-theme-name]");
         pills.forEach(function (pill) {
@@ -272,7 +294,8 @@
         } catch (e) {
             storedTheme = null;
         }
-        const currentTheme = storedTheme || document.body.getAttribute("data-theme") || "worldbank-light";
+        const body = document.body;
+        const currentTheme = storedTheme || (body ? body.getAttribute("data-theme") : null) || "worldbank-light";
         applyTheme(currentTheme);
 
         const pills = safeQuerySelectorAll(".pill-toggle[data-theme-name]");
@@ -315,6 +338,31 @@
         });
     }
 
+    function handleTabKeydown(event, tabButtons) {
+        const key = event.key;
+        if (["ArrowLeft", "ArrowRight", "Home", "End"].indexOf(key) === -1) return;
+
+        event.preventDefault();
+        const currentIndex = tabButtons.indexOf(event.currentTarget);
+        let newIndex = currentIndex;
+
+        if (key === "ArrowLeft") {
+            newIndex = currentIndex > 0 ? currentIndex - 1 : tabButtons.length - 1;
+        } else if (key === "ArrowRight") {
+            newIndex = currentIndex < tabButtons.length - 1 ? currentIndex + 1 : 0;
+        } else if (key === "Home") {
+            newIndex = 0;
+        } else if (key === "End") {
+            newIndex = tabButtons.length - 1;
+        }
+
+        const newBtn = tabButtons[newIndex];
+        if (newBtn) {
+            newBtn.focus();
+            newBtn.click();
+        }
+    }
+
     function initTabs() {
         const tabButtons = safeQuerySelectorAll(".tablink");
         if (!tabButtons.length) return;
@@ -344,31 +392,6 @@
         }
     }
 
-    function handleTabKeydown(event, tabButtons) {
-        const key = event.key;
-        if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(key)) return;
-
-        event.preventDefault();
-        const currentIndex = tabButtons.indexOf(event.currentTarget);
-        let newIndex = currentIndex;
-
-        if (key === "ArrowLeft") {
-            newIndex = currentIndex > 0 ? currentIndex - 1 : tabButtons.length - 1;
-        } else if (key === "ArrowRight") {
-            newIndex = currentIndex < tabButtons.length - 1 ? currentIndex + 1 : 0;
-        } else if (key === "Home") {
-            newIndex = 0;
-        } else if (key === "End") {
-            newIndex = tabButtons.length - 1;
-        }
-
-        const newBtn = tabButtons[newIndex];
-        if (newBtn) {
-            newBtn.focus();
-            newBtn.click();
-        }
-    }
-
     /* ===========================
        Config and settings reading
        =========================== */
@@ -376,18 +399,18 @@
     function readConfigFromUI() {
         const cfg = { ...STATE.config };
         const map = [
-            { id: "#input-scenario-name", field: "scenarioName" },
-            { id: "#input-scenario-id", field: "scenarioId" },
-            { id: "#input-assumption-set-id", field: "assumptionSetId" },
-            { id: "#input-trainees-per-cohort", field: "traineesPerCohort", numeric: true, min: 1, max: 500 },
-            { id: "#input-number-of-cohorts", field: "numberOfCohorts", numeric: true, min: 1, max: 200 },
-            { id: "#input-planning-horizon", field: "planningHorizonYears", numeric: true, min: 1, max: 30 },
-            { id: "#input-endorsement-rate", field: "endorsementRate", numeric: true, min: 0, max: 1 },
-            { id: "#input-completion-rate", field: "completionRate", numeric: true, min: 0, max: 1 }
+            { id: "#input-scenario-name", alt: "#inputScenarioName", field: "scenarioName" },
+            { id: "#input-scenario-id", alt: "#inputScenarioId", field: "scenarioId" },
+            { id: "#input-assumption-set-id", alt: "#inputAssumptionSetId", field: "assumptionSetId" },
+            { id: "#input-trainees-per-cohort", alt: "#inputTraineesPerCohort", field: "traineesPerCohort", numeric: true, min: 1, max: 500 },
+            { id: "#input-number-of-cohorts", alt: "#inputNumberOfCohorts", field: "numberOfCohorts", numeric: true, min: 1, max: 200 },
+            { id: "#input-planning-horizon", alt: "#inputPlanningHorizon", field: "planningHorizonYears", numeric: true, min: 1, max: 30 },
+            { id: "#input-endorsement-rate", alt: "#inputEndorsementRate", field: "endorsementRate", numeric: true, min: 0, max: 1 },
+            { id: "#input-completion-rate", alt: "#inputCompletionRate", field: "completionRate", numeric: true, min: 0, max: 1 }
         ];
 
         map.forEach(function (m) {
-            const el = safeQuerySelector(m.id);
+            const el = safeQuerySelector(m.id) || safeQuerySelector(m.alt);
             if (!el) return;
             if (m.numeric) {
                 const v = clamp(el.value, m.min, m.max);
@@ -399,16 +422,19 @@
             }
         });
 
-        const responseSelect = safeQuerySelector("#input-response-days");
+        const responseSelect = safeQuerySelector("#input-response-days") || safeQuerySelector("#inputResponseDays");
         if (responseSelect) {
             const v = parseInt(responseSelect.value, 10);
             cfg.responseDays = Number.isFinite(v) ? v : 7;
+            // Always force fixed 7 days for decision logic if needed
             responseSelect.value = "7";
+        } else {
+            cfg.responseDays = cfg.responseDays || 7;
         }
 
         if (!cfg.scenarioId) {
             cfg.scenarioId = generateScenarioId();
-            const idEl = safeQuerySelector("#input-scenario-id");
+            const idEl = safeQuerySelector("#input-scenario-id") || safeQuerySelector("#inputScenarioId");
             if (idEl) idEl.value = cfg.scenarioId;
         }
 
@@ -419,17 +445,17 @@
     function writeConfigToUI(cfg) {
         const config = cfg || STATE.config;
         const map = [
-            { id: "#input-scenario-name", field: "scenarioName" },
-            { id: "#input-scenario-id", field: "scenarioId" },
-            { id: "#input-assumption-set-id", field: "assumptionSetId" },
-            { id: "#input-trainees-per-cohort", field: "traineesPerCohort" },
-            { id: "#input-number-of-cohorts", field: "numberOfCohorts" },
-            { id: "#input-planning-horizon", field: "planningHorizonYears" },
-            { id: "#input-endorsement-rate", field: "endorsementRate" },
-            { id: "#input-completion-rate", field: "completionRate" }
+            { id: "#input-scenario-name", alt: "#inputScenarioName", field: "scenarioName" },
+            { id: "#input-scenario-id", alt: "#inputScenarioId", field: "scenarioId" },
+            { id: "#input-assumption-set-id", alt: "#inputAssumptionSetId", field: "assumptionSetId" },
+            { id: "#input-trainees-per-cohort", alt: "#inputTraineesPerCohort", field: "traineesPerCohort" },
+            { id: "#input-number-of-cohorts", alt: "#inputNumberOfCohorts", field: "numberOfCohorts" },
+            { id: "#input-planning-horizon", alt: "#inputPlanningHorizon", field: "planningHorizonYears" },
+            { id: "#input-endorsement-rate", alt: "#inputEndorsementRate", field: "endorsementRate" },
+            { id: "#input-completion-rate", alt: "#inputCompletionRate", field: "completionRate" }
         ];
         map.forEach(function (m) {
-            const el = safeQuerySelector(m.id);
+            const el = safeQuerySelector(m.id) || safeQuerySelector(m.alt);
             if (!el) return;
             if (typeof config[m.field] === "number") {
                 el.value = config[m.field];
@@ -438,7 +464,7 @@
             }
         });
 
-        const responseSelect = safeQuerySelector("#input-response-days");
+        const responseSelect = safeQuerySelector("#input-response-days") || safeQuerySelector("#inputResponseDays");
         if (responseSelect) {
             responseSelect.value = String(config.responseDays || 7);
         }
@@ -449,9 +475,9 @@
         const base = STATE.assumptionSets[currentId] || DEFAULT_ASSUMPTION_SETS["mohfw-baseline"];
         const assumptions = { ...base };
 
-        const discountEl = safeQuerySelector("#settings-discount-rate");
-        const outbreakEl = safeQuerySelector("#settings-outbreak-value");
-        const oppEl = safeQuerySelector("#settings-opp-cost-share");
+        const discountEl = safeQuerySelector("#settings-discount-rate") || safeQuerySelector("#settingsDiscountRate");
+        const outbreakEl = safeQuerySelector("#settings-outbreak-value") || safeQuerySelector("#settingsOutbreakValue");
+        const oppEl = safeQuerySelector("#settings-opp-cost-share") || safeQuerySelector("#settingsOppCostShare");
 
         if (discountEl) {
             assumptions.discountRate = clamp(discountEl.value, 0, 0.2);
@@ -473,10 +499,10 @@
 
     function writeAssumptionsToUI(assumptions) {
         const a = assumptions || readAssumptionsFromUI();
-        const discountEl = safeQuerySelector("#settings-discount-rate");
-        const outbreakEl = safeQuerySelector("#settings-outbreak-value");
-        const oppEl = safeQuerySelector("#settings-opp-cost-share");
-        const presetSelect = safeQuerySelector("#settings-assumption-preset");
+        const discountEl = safeQuerySelector("#settings-discount-rate") || safeQuerySelector("#settingsDiscountRate");
+        const outbreakEl = safeQuerySelector("#settings-outbreak-value") || safeQuerySelector("#settingsOutbreakValue");
+        const oppEl = safeQuerySelector("#settings-opp-cost-share") || safeQuerySelector("#settingsOppCostShare");
+        const presetSelect = safeQuerySelector("#settings-assumption-preset") || safeQuerySelector("#settingsAssumptionPreset");
 
         if (discountEl) discountEl.value = a.discountRate;
         if (outbreakEl) outbreakEl.value = a.outbreakValue;
@@ -485,7 +511,7 @@
     }
 
     function initSettingsForm() {
-        const presetSelect = safeQuerySelector("#settings-assumption-preset");
+        const presetSelect = safeQuerySelector("#settings-assumption-preset") || safeQuerySelector("#settingsAssumptionPreset");
         if (presetSelect) {
             presetSelect.innerHTML = "";
             Object.values(STATE.assumptionSets).forEach(function (set) {
@@ -508,19 +534,19 @@
 
         writeAssumptionsToUI();
 
-        const applyBtn = safeQuerySelector("#btn-apply-settings");
+        const applyBtn = safeQuerySelector("#btn-apply-settings") || safeQuerySelector("#btnApplySettings");
         if (applyBtn) {
             applyBtn.addEventListener("click", function () {
                 const assumptions = readAssumptionsFromUI();
                 recalculateAndRender();
-                appendSettingsLog("Updated assumption values for set \"" + assumptions.label + "\".");
+                appendSettingsLog("Updated assumption values for set \"" + (assumptions.label || assumptions.id) + "\".");
                 showToast("Settings applied and log updated", "success");
             });
         }
     }
 
     function appendSettingsLog(message) {
-        const logArea = safeQuerySelector("#settings-log");
+        const logArea = safeQuerySelector("#settings-log") || safeQuerySelector("#settingsLog");
         const timestamp = new Date().toLocaleString();
         const line = "[" + timestamp + "] " + message;
         if (logArea) {
@@ -565,22 +591,22 @@
         const bcr = totalCostPV > 0 ? totalBenefitPV / totalCostPV : null;
 
         return {
-            traineesPerYear,
-            totalTrainees,
-            graduatesTotal,
-            graduatesEndorsed,
-            outbreakResponsesPerYear,
-            outbreakResponsesPerCohortPerYear,
-            totalCostPV,
-            directCostsPV,
-            opportunityCostPV,
-            totalBenefitPV,
-            npv,
-            bcr,
-            endorsementRate,
-            completionRate,
-            responseDays,
-            horizon,
+            traineesPerYear: traineesPerYear,
+            totalTrainees: totalTrainees,
+            graduatesTotal: graduatesTotal,
+            graduatesEndorsed: graduatesEndorsed,
+            outbreakResponsesPerYear: outbreakResponsesPerYear,
+            outbreakResponsesPerCohortPerYear: outbreakResponsesPerCohortPerYear,
+            totalCostPV: totalCostPV,
+            directCostsPV: directCostsPV,
+            opportunityCostPV: opportunityCostPV,
+            totalBenefitPV: totalBenefitPV,
+            npv: npv,
+            bcr: bcr,
+            endorsementRate: endorsementRate,
+            completionRate: completionRate,
+            responseDays: responseDays,
+            horizon: horizon,
             assumptionSetId: assumptions.id
         };
     }
@@ -598,21 +624,15 @@
        =========================== */
 
     function renderHeadlineIndicators(indicators) {
-        const map = [
-            { id: "#summary-endorsement", value: formatPercent(indicators.endorsementRate, 1) },
-            { id: "#summary-bcr", value: indicators.bcr != null ? formatNumber(indicators.bcr, 2) : "n/a" },
-            { id: "#summary-npv", value: formatNumber(indicators.npv, 0) },
-            { id: "#summary-trainees", value: formatNumber(indicators.totalTrainees, 0) },
-            { id: "#summary-graduates", value: formatNumber(indicators.graduatesTotal, 0) },
-            { id: "#summary-outbreaks-per-year", value: formatNumber(indicators.outbreakResponsesPerYear, 1) },
-            { id: "#summary-outbreaks-per-cohort", value: formatNumber(indicators.outbreakResponsesPerCohortPerYear, 2) }
-        ];
-        map.forEach(function (m) {
-            const el = safeQuerySelector(m.id);
-            if (el) el.textContent = m.value;
-        });
+        setText(["#summary-endorsement", "#summaryEndorsement"], formatPercent(indicators.endorsementRate, 1));
+        setText(["#summary-bcr", "#summaryBcr"], indicators.bcr != null ? formatNumber(indicators.bcr, 2) : "n/a");
+        setText(["#summary-npv", "#summaryNpv"], formatNumber(indicators.npv, 0));
+        setText(["#summary-trainees", "#summaryTrainees"], formatNumber(indicators.totalTrainees, 0));
+        setText(["#summary-graduates", "#summaryGraduates"], formatNumber(indicators.graduatesTotal, 0));
+        setText(["#summary-outbreaks-per-year", "#summaryOutbreaksPerYear"], formatNumber(indicators.outbreakResponsesPerYear, 1));
+        setText(["#summary-outbreaks-per-cohort", "#summaryOutbreaksPerCohort"], formatNumber(indicators.outbreakResponsesPerCohortPerYear, 2));
 
-        const hintBcr = safeQuerySelector("#hint-bcr");
+        const hintBcr = safeQuerySelector("#hint-bcr") || safeQuerySelector("#hintBcr");
         if (hintBcr) {
             if (indicators.bcr != null && indicators.bcr > 1) {
                 hintBcr.textContent = "Value above 1 suggests benefits exceed economic costs.";
@@ -623,7 +643,7 @@
             }
         }
 
-        const hintEndorsement = safeQuerySelector("#hint-endorsement");
+        const hintEndorsement = safeQuerySelector("#hint-endorsement") || safeQuerySelector("#hintEndorsement");
         if (hintEndorsement) {
             if (indicators.endorsementRate >= 0.7) {
                 hintEndorsement.textContent = "Above 70 percent typically indicates strong support in the preference study context.";
@@ -636,44 +656,31 @@
     }
 
     function renderConfigSummary(config, indicators, assumptions) {
-        const fields = [
-            { id: "#summary-config-trainees-per-cohort", value: formatNumber(config.traineesPerCohort, 0) },
-            { id: "#summary-config-number-of-cohorts", value: formatNumber(config.numberOfCohorts, 0) },
-            { id: "#summary-config-horizon-years", value: formatNumber(config.planningHorizonYears, 0) },
-            { id: "#summary-config-endorsement", value: formatPercent(config.endorsementRate, 1) },
-            { id: "#summary-config-completion", value: formatPercent(config.completionRate, 1) }
-        ];
-        fields.forEach(function (f) {
-            const el = safeQuerySelector(f.id);
-            if (el) el.textContent = f.value;
-        });
+        setText(["#summary-config-trainees-per-cohort", "#summaryConfigTraineesPerCohort"], formatNumber(config.traineesPerCohort, 0));
+        setText(["#summary-config-number-of-cohorts", "#summaryConfigNumberOfCohorts"], formatNumber(config.numberOfCohorts, 0));
+        setText(["#summary-config-horizon-years", "#summaryConfigHorizonYears"], formatNumber(config.planningHorizonYears, 0));
+        setText(["#summary-config-endorsement", "#summaryConfigEndorsement"], formatPercent(config.endorsementRate, 1));
+        setText(["#summary-config-completion", "#summaryConfigCompletion"], formatPercent(config.completionRate, 1));
 
-        const assumptionEl = safeQuerySelector("#summary-assumption-label");
-        if (assumptionEl && assumptions) assumptionEl.textContent = assumptions.label || assumptions.id;
+        const assumptionEl = safeQuerySelector("#summary-assumption-label") || safeQuerySelector("#summaryAssumptionLabel");
+        if (assumptionEl && assumptions) {
+            assumptionEl.textContent = assumptions.label || assumptions.id;
+        }
 
-        const costDirectEl = safeQuerySelector("#summary-cost-direct");
-        const costOppEl = safeQuerySelector("#summary-cost-opportunity");
-        const costTotalEl = safeQuerySelector("#summary-cost-total");
-        const benefitEl = safeQuerySelector("#summary-benefit-pv");
-
-        if (costDirectEl) costDirectEl.textContent = formatNumber(indicators.directCostsPV, 0);
-        if (costOppEl) costOppEl.textContent = formatNumber(indicators.opportunityCostPV, 0);
-        if (costTotalEl) costTotalEl.textContent = formatNumber(indicators.totalCostPV, 0);
-        if (benefitEl) benefitEl.textContent = formatNumber(indicators.totalBenefitPV, 0);
+        setText(["#summary-cost-direct", "#summaryCostDirect"], formatNumber(indicators.directCostsPV, 0));
+        setText(["#summary-cost-opportunity", "#summaryCostOpportunity"], formatNumber(indicators.opportunityCostPV, 0));
+        setText(["#summary-cost-total", "#summaryCostTotal"], formatNumber(indicators.totalCostPV, 0));
+        setText(["#summary-benefit-pv", "#summaryBenefitPv"], formatNumber(indicators.totalBenefitPV, 0));
     }
 
     function renderNationalSummary(config, indicators) {
-        const gradsNational = safeQuerySelector("#national-graduates");
-        const outbreaksNational = safeQuerySelector("#national-outbreaks");
-        const labelYears = safeQuerySelector("#national-label-horizon");
-
-        if (gradsNational) gradsNational.textContent = formatNumber(indicators.graduatesTotal, 0);
-        if (outbreaksNational) outbreaksNational.textContent = formatNumber(indicators.outbreakResponsesPerYear * config.planningHorizonYears, 0);
-        if (labelYears) labelYears.textContent = formatNumber(config.planningHorizonYears, 0);
+        setText(["#national-graduates", "#nationalGraduates"], formatNumber(indicators.graduatesTotal, 0));
+        setText(["#national-outbreaks", "#nationalOutbreaks"], formatNumber(indicators.outbreakResponsesPerYear * config.planningHorizonYears, 0));
+        setText(["#national-label-horizon", "#nationalLabelHorizon"], formatNumber(config.planningHorizonYears, 0));
     }
 
     function renderScenarioTable() {
-        const tableBody = safeQuerySelector("#scenario-table tbody");
+        const tableBody = safeQuerySelector("#scenario-table tbody") || safeQuerySelector("#scenarioTable tbody");
         if (!tableBody) return;
 
         tableBody.innerHTML = "";
@@ -711,7 +718,7 @@
                 STATE.config.assumptionSetId = sc.assumptionSetId;
                 writeAssumptionsToUI(STATE.assumptionSets[sc.assumptionSetId] || DEFAULT_ASSUMPTION_SETS["mohfw-baseline"]);
                 recalculateAndRender();
-                showToast("Scenario \"" + sc.name + "\" loaded into configuration", "success");
+                showToast('Scenario "' + sc.name + '" loaded into configuration', "success");
             });
             tdActions.appendChild(loadBtn);
 
@@ -728,7 +735,7 @@
     }
 
     function renderDiagnostics(config, assumptions, indicators) {
-        const diagnosticsEl = safeQuerySelector("#diagnosticsContent");
+        const diagnosticsEl = safeQuerySelector("#diagnosticsContent") || safeQuerySelector("#diagnostics-content");
         if (!diagnosticsEl) return;
 
         const payload = {
@@ -769,7 +776,9 @@
     }
 
     function renderSimpleCharts(config, indicators) {
-        if (!window.Chart) return;
+        if (typeof window === "undefined" || typeof window.Chart === "undefined") {
+            return;
+        }
 
         const chartMap = [
             { canvasId: "chart-costs", type: "bar" },
@@ -781,10 +790,11 @@
             const canvas = safeQuerySelector("#" + info.canvasId);
             if (!canvas) return;
 
-            let chart = STATE.charts[info.canvasId];
-            if (chart) {
-                chart.destroy();
+            if (STATE.charts[info.canvasId]) {
+                STATE.charts[info.canvasId].destroy();
             }
+
+            let chart = null;
 
             if (info.canvasId === "chart-costs") {
                 chart = new Chart(canvas.getContext("2d"), {
@@ -803,7 +813,9 @@
                         },
                         scales: {
                             y: {
-                                ticks: { callback: function (value) { return value / 1e6 + "m"; } }
+                                ticks: {
+                                    callback: function (value) { return value / 1e6 + "m"; }
+                                }
                             }
                         }
                     }
@@ -825,7 +837,9 @@
                         },
                         scales: {
                             y: {
-                                ticks: { callback: function (value) { return value / 1e6 + "m"; } }
+                                ticks: {
+                                    callback: function (value) { return value / 1e6 + "m"; }
+                                }
                             }
                         }
                     }
@@ -852,30 +866,23 @@
             STATE.charts[info.canvasId] = chart;
         });
 
-        const costSummaryEl = safeQuerySelector("#chart-costs-summary");
-        if (costSummaryEl) {
-            costSummaryEl.textContent =
-                "Direct training and opportunity costs sum to about " +
-                formatNumber(indicators.totalCostPV, 0) +
-                " in present value terms.";
-        }
-        const benefitSummaryEl = safeQuerySelector("#chart-benefits-summary");
-        if (benefitSummaryEl) {
-            benefitSummaryEl.textContent =
-                "Present value of outbreak response benefits is about " +
-                formatNumber(indicators.totalBenefitPV, 0) +
-                ", yielding a benefit cost ratio of " +
-                (indicators.bcr != null ? formatNumber(indicators.bcr, 2) : "n/a") + ".";
-        }
-        const outbreakSummaryEl = safeQuerySelector("#chart-outbreaks-summary");
-        if (outbreakSummaryEl) {
-            outbreakSummaryEl.textContent =
-                "Graduates deliver roughly " +
-                formatNumber(indicators.outbreakResponsesPerYear, 1) +
-                " outbreak responses per year, or " +
-                formatNumber(indicators.outbreakResponsesPerCohortPerYear, 2) +
-                " per cohort per year over the planning horizon.";
-        }
+        setText(["#chart-costs-summary", "#chartCostsSummary"],
+            "Direct training and opportunity costs sum to about " +
+            formatNumber(indicators.totalCostPV, 0) +
+            " in present value terms.");
+
+        setText(["#chart-benefits-summary", "#chartBenefitsSummary"],
+            "Present value of outbreak response benefits is about " +
+            formatNumber(indicators.totalBenefitPV, 0) +
+            ", yielding a benefit cost ratio of " +
+            (indicators.bcr != null ? formatNumber(indicators.bcr, 2) : "n/a") + ".");
+
+        setText(["#chart-outbreaks-summary", "#chartOutbreaksSummary"],
+            "Graduates deliver roughly " +
+            formatNumber(indicators.outbreakResponsesPerYear, 1) +
+            " outbreak responses per year, or " +
+            formatNumber(indicators.outbreakResponsesPerCohortPerYear, 2) +
+            " per cohort per year over the planning horizon.");
     }
 
     /* ===========================
@@ -908,8 +915,8 @@
     }
 
     function initScenarioControls() {
-        const saveBtn = safeQuerySelector("#btn-save-scenario");
-        const newBtn = safeQuerySelector("#btn-new-scenario");
+        const saveBtn = safeQuerySelector("#btn-save-scenario") || safeQuerySelector("#btnSaveScenario");
+        const newBtn = safeQuerySelector("#btn-new-scenario") || safeQuerySelector("#btnNewScenario");
 
         if (saveBtn) {
             saveBtn.addEventListener("click", function () {
@@ -1001,7 +1008,7 @@
     }
 
     function renderCopilotPrompt(config, assumptions, indicators) {
-        const outputEl = safeQuerySelector("#copilot-prompt-output");
+        const outputEl = safeQuerySelector("#copilot-prompt-output") || safeQuerySelector("#copilotPromptOutput");
         if (!outputEl) return;
 
         const prompt = buildCopilotPrompt(config, assumptions, indicators);
@@ -1009,8 +1016,8 @@
     }
 
     function initCopilotControls() {
-        const generateBtn = safeQuerySelector("#btn-generate-copilot");
-        const copyBtn = safeQuerySelector("#btn-copy-copilot");
+        const generateBtn = safeQuerySelector("#btn-generate-copilot") || safeQuerySelector("#btnGenerateCopilot");
+        const copyBtn = safeQuerySelector("#btn-copy-copilot") || safeQuerySelector("#btnCopyCopilot");
 
         if (generateBtn) {
             generateBtn.addEventListener("click", function () {
@@ -1024,7 +1031,7 @@
 
         if (copyBtn) {
             copyBtn.addEventListener("click", function () {
-                const outputEl = safeQuerySelector("#copilot-prompt-output");
+                const outputEl = safeQuerySelector("#copilot-prompt-output") || safeQuerySelector("#copilotPromptOutput");
                 if (!outputEl) return;
                 const text = outputEl.textContent || outputEl.value || "";
                 if (!text.trim()) {
@@ -1050,8 +1057,8 @@
 
     function initHelpPanel() {
         const helpPanel = safeQuerySelector("#helpPanel");
-        const openBtn = safeQuerySelector("#btn-open-help");
-        const closeBtn = safeQuerySelector("#btn-close-help");
+        const openBtn = safeQuerySelector("#btn-open-help") || safeQuerySelector("#btnOpenHelp");
+        const closeBtn = safeQuerySelector("#btn-close-help") || safeQuerySelector("#btnCloseHelp");
 
         if (!helpPanel) return;
 
@@ -1095,9 +1102,7 @@
             localStorage.setItem(STORAGE_KEYS.LAST_STATE, JSON.stringify({
                 config: STATE.config
             }));
-        } catch (e) {
-            /* ignore */
-        }
+        } catch (e) { }
     }
 
     function restoreState() {
@@ -1139,20 +1144,12 @@
     function initConfigForm() {
         writeConfigToUI(STATE.config);
 
-        const applyBtn = safeQuerySelector("#btn-apply-values");
-        const resetBtn = safeQuerySelector("#btn-reset-config");
+        const applyBtn = safeQuerySelector("#btn-apply-values") || safeQuerySelector("#btnApplyValues");
+        const resetBtn = safeQuerySelector("#btn-reset-config") || safeQuerySelector("#btnResetConfig");
 
         if (applyBtn) {
             applyBtn.addEventListener("click", function () {
-                const config = readConfigFromUI();
-                const assumptions = readAssumptionsFromUI();
-                const indicators = computeScenarioIndicators(config, assumptions);
-                renderHeadlineIndicators(indicators);
-                renderConfigSummary(config, indicators, assumptions);
-                renderNationalSummary(config, indicators);
-                renderSimpleCharts(config, indicators);
-                renderDiagnostics(config, assumptions, indicators);
-                persistState();
+                recalculateAndRender();
                 showToast("Configuration applied and indicators updated", "success");
             });
         }
@@ -1175,17 +1172,23 @@
     }
 
     function recalculateAndRender() {
-        const config = readConfigFromUI();
-        const assumptions = readAssumptionsFromUI();
-        const indicators = computeScenarioIndicators(config, assumptions);
-        renderHeadlineIndicators(indicators);
-        renderConfigSummary(config, indicators, assumptions);
-        renderNationalSummary(config, indicators);
-        renderSimpleCharts(config, indicators);
-        renderScenarioTable();
-        renderDiagnostics(config, assumptions, indicators);
-        renderCopilotPrompt(config, assumptions, indicators);
-        persistState();
+        try {
+            const config = readConfigFromUI();
+            const assumptions = readAssumptionsFromUI();
+            const indicators = computeScenarioIndicators(config, assumptions);
+            renderHeadlineIndicators(indicators);
+            renderConfigSummary(config, indicators, assumptions);
+            renderNationalSummary(config, indicators);
+            renderSimpleCharts(config, indicators);
+            renderScenarioTable();
+            renderDiagnostics(config, assumptions, indicators);
+            renderCopilotPrompt(config, assumptions, indicators);
+            persistState();
+        } catch (e) {
+            showToast("An error occurred while updating the scenario. Please check the console.", "error");
+            // eslint-disable-next-line no-console
+            console.error(e);
+        }
     }
 
     /* ===========================
@@ -1204,7 +1207,7 @@
        =========================== */
 
     document.addEventListener("DOMContentLoaded", function () {
-        const versionValueEl = safeQuerySelector(".version-value");
+        const versionValueEl = document.querySelector(".version-value");
         if (versionValueEl) {
             versionValueEl.textContent = "App " + APP_VERSION + " · Model " + MODEL_VERSION;
         }
