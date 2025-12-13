@@ -1,1670 +1,540 @@
+<!-- index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <title>STEPS FETP India Decision Aid</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="STEPS - Scalable Training Estimation and Planning System for FETP India. A decision aid for ministries and partners to assess FETP investment options.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="styles.css">
 </head>
-<body id="stepsAppRoot" data-theme="worldbank-light">
-<a href="#mainContent" class="skip-link">Skip to main content</a>
-
-<header class="app-header"
-        role="banner"
-        data-tour-step="header"
-        data-tour-title="STEPS header and branding"
-        data-tour-content="This header shows the STEPS decision aid branding, the focus on FETP India and the partnership context.">
-    <div class="app-header-left">
-        <div class="app-logo-circle" aria-hidden="true">
-            <span class="app-logo-mark">S</span>
+<body data-theme="worldbank-light">
+<div class="app-shell">
+    <header class="app-header card">
+        <div>
+            <h1>STEPS FETP India Decision Aid</h1>
+            <p class="subtitle">Scenario based training, outbreak response and cost benefit planner</p>
         </div>
-        <div class="app-title-block">
-            <h1 class="app-title">STEPS</h1>
-            <p class="app-subtitle">
-                Scalable Training Estimation and Planning System for FETP India
-            </p>
-        </div>
-    </div>
-    <div class="app-header-right">
-        <div class="app-version-meta" aria-label="Version information">
-            <span class="version-label">Build</span>
-            <span class="version-value" id="appVersion">STEPS web build v1.3.2</span>
-        </div>
-        <button type="button"
-                class="icon-button"
-                id="helpToggleBtn"
-                aria-label="Open help and frequently asked questions"
-                aria-controls="helpPanel"
-                aria-expanded="false">
-            <span aria-hidden="true">?</span>
-        </button>
-    </div>
-</header>
-
-<nav class="app-nav" role="navigation" aria-label="Main sections">
-    <button class="tablink active"
-            type="button"
-            data-tab="aboutTab"
-            aria-controls="aboutTab"
-            aria-selected="true"
-            role="tab">
-        About and quick start
-    </button>
-    <button class="tablink"
-            type="button"
-            data-tab="configTab"
-            aria-controls="configTab"
-            aria-selected="false"
-            role="tab">
-        Configure scenario
-    </button>
-    <button class="tablink"
-            type="button"
-            data-tab="resultsTab"
-            aria-controls="resultsTab"
-            aria-selected="false"
-            role="tab">
-        Results and indicators
-    </button>
-    <button class="tablink"
-            type="button"
-            data-tab="costingTab"
-            aria-controls="costingTab"
-            aria-selected="false"
-            role="tab">
-        Costing and components
-    </button>
-    <button class="tablink"
-            type="button"
-            data-tab="nationalSimulationTab"
-            aria-controls="nationalSimulationTab"
-            aria-selected="false"
-            role="tab">
-        National scale view
-    </button>
-    <button class="tablink"
-            type="button"
-            data-tab="sensitivityTab"
-            aria-controls="sensitivityTab"
-            aria-selected="false"
-            role="tab">
-        Sensitivity and stress tests
-    </button>
-    <button class="tablink"
-            type="button"
-            data-tab="scenariosTab"
-            aria-controls="scenariosTab"
-            aria-selected="false"
-            role="tab">
-        Scenario library and comparison
-    </button>
-    <button class="tablink"
-            type="button"
-            data-tab="copilotTab"
-            aria-controls="copilotTab"
-            aria-selected="false"
-            role="tab">
-        Copilot policy brief
-    </button>
-    <button class="tablink"
-            type="button"
-            data-tab="methodsTab"
-            aria-controls="methodsTab"
-            aria-selected="false"
-            role="tab">
-        Methods and documentation
-    </button>
-    <button class="tablink"
-            type="button"
-            data-tab="aboutMethodsTab"
-            aria-controls="aboutMethodsTab"
-            aria-selected="false"
-            role="tab">
-        About, privacy and disclaimer
-    </button>
-</nav>
-
-<main id="mainContent" class="app-main" role="main">
-    <!-- About and quick start -->
-    <section id="aboutTab"
-             class="tabcontent"
-             role="tabpanel"
-             aria-labelledby=""
-             aria-label="About STEPS and quick start guidance">
-        <div class="panel-grid">
-            <section class="card">
-                <header class="card-header">
-                    <h2>What STEPS does</h2>
-                </header>
-                <div class="card-body">
-                    <p>
-                        STEPS combines preference study results, cost templates and epidemiological assumptions to help ministries of health, finance and partners assess different Field Epidemiology Training Programme configurations.
-                    </p>
-                    <p>
-                        The tool runs locally in the browser. No personal data are collected and no scenario inputs are sent to external servers.
-                    </p>
-                </div>
-            </section>
-
-            <section class="card">
-                <header class="card-header">
-                    <h2>Quick start for senior officials</h2>
-                </header>
-                <div class="card-body">
-                    <ol class="numbered-steps" aria-label="Quick start steps">
-                        <li>Go to the Configure scenario tab and either choose a policy question preset or adjust the tier, career incentive, mentorship, delivery mode and cohort parameters.</li>
-                        <li>Select Apply configuration to update endorsement, costs, epidemiological benefits and national level indicators.</li>
-                        <li>Use the Results and National scale view tabs to review key numbers and charts, then export Excel or PDF summaries for meetings and reports.</li>
-                    </ol>
-                </div>
-            </section>
-
-            <section class="card">
-                <header class="card-header">
-                    <h2>Policy question presets</h2>
-                </header>
-                <div class="card-body">
-                    <p>
-                        These presets help frame the analysis around typical questions ministries ask. Each preset can pre-fill the configuration form and highlight relevant outputs.
-                    </p>
-                    <div class="preset-grid" aria-label="Policy question presets">
-                        <button type="button"
-                                class="btn-outline preset-button"
-                                id="presetAdvancedTierJustified"
-                                data-preset-key="advanced_justified">
-                            Is a new advanced tier justified?
-                        </button>
-                        <button type="button"
-                                class="btn-outline preset-button"
-                                id="presetFixedBudgetBestConfig"
-                                data-preset-key="fixed_budget_best">
-                            What is the best configuration under a fixed budget?
-                        </button>
-                        <button type="button"
-                                class="btn-outline preset-button"
-                                id="presetDoubleCohorts"
-                                data-preset-key="double_cohorts">
-                            What happens if we double the number of cohorts?
-                        </button>
-                    </div>
-                    <p class="text-muted small-text">
-                        After selecting a preset, move to the Configure scenario tab to review or adjust the details before applying the configuration.
-                    </p>
-                </div>
-            </section>
-
-            <section class="card">
-                <header class="card-header">
-                    <h2>Scenario templates</h2>
-                </header>
-                <div class="card-body">
-                    <p>
-                        STEPS can store template scenarios that illustrate typical policy options.
-                    </p>
-                    <ul class="simple-list">
-                        <li><strong>Conservative scale up</strong> - smaller cohort size and fewer cohorts with strong mentorship.</li>
-                        <li><strong>Aggressive scale up</strong> - larger cohort size and more cohorts with blended delivery.</li>
-                        <li><strong>Mentorship focused</strong> - emphasis on higher mentorship intensity within a given budget.</li>
-                        <li><strong>Budget constrained</strong> - configurations that respect a predefined total cost ceiling.</li>
-                    </ul>
-                    <p class="small-text text-muted">
-                        These templates are accessible in the Scenario library and comparison tab and can be adapted to country specific needs.
-                    </p>
-                </div>
-            </section>
-        </div>
-    </section>
-
-    <!-- Configure scenario -->
-    <section id="configTab"
-             class="tabcontent"
-             role="tabpanel"
-             aria-label="Configure FETP scenario">
-        <div class="quick-explainer" role="note">
-            <p>
-                Use this tab to configure one FETP scenario at a time. You can start from a policy question preset, adjust the inputs and then apply the configuration to see endorsement, costs and epidemiological effects.
-            </p>
-        </div>
-
-        <div class="panel-grid">
-            <section class="card" aria-label="Scenario identity and narrative">
-                <header class="card-header">
-                    <h2>Scenario identity</h2>
-                </header>
-                <div class="card-body">
-                    <div class="field-row">
-                        <label for="scenario-id" class="field-label">
-                            Scenario ID
-                        </label>
-                        <input id="scenario-id"
-                               name="scenario-id"
-                               type="text"
-                               class="text-input"
-                               aria-describedby="scenarioIdHelp"
-                               placeholder="Auto generated if left blank">
-                        <p id="scenarioIdHelp" class="field-help">
-                            Scenario IDs help track configurations in exports and reports.
-                        </p>
-                    </div>
-                    <div class="field-row">
-                        <label for="scenario-name" class="field-label">
-                            Scenario name
-                        </label>
-                        <input id="scenario-name"
-                               name="scenario-name"
-                               type="text"
-                               class="text-input"
-                               placeholder="For example Aggressive advanced tier with blended delivery">
-                    </div>
-                    <div class="field-row">
-                        <label for="scenario-notes" class="field-label">
-                            Scenario narrative
-                        </label>
-                        <textarea id="scenario-notes"
-                                  name="scenario-notes"
-                                  class="text-area"
-                                  rows="3"
-                                  aria-describedby="scenarioNotesHelp"
-                                  placeholder="Short narrative on when this configuration should be used or how it differs from alternatives."></textarea>
-                        <p id="scenarioNotesHelp" class="field-help">
-                            Narratives appear in exports and Copilot prompts so that discussion can refer to scenarios by name and description.
-                        </p>
-                    </div>
-                </div>
-            </section>
-
-            <section class="card" aria-label="Configuration inputs">
-                <header class="card-header">
-                    <h2>Programme design</h2>
-                </header>
-                <div class="card-body">
-                    <form id="config-form" novalidate aria-describedby="configValidationSummary">
-                        <div id="configValidationSummary"
-                             class="validation-summary"
-                             aria-live="assertive"
-                             aria-atomic="true"></div>
-
-                        <div class="field-grid">
-                            <div class="field-row">
-                                <label for="program-tier" class="field-label">
-                                    Programme tier
-                                </label>
-                                <select id="program-tier"
-                                        name="program-tier"
-                                        class="select-input">
-                                    <option value="frontline">Frontline</option>
-                                    <option value="intermediate">Intermediate</option>
-                                    <option value="advanced">Advanced</option>
-                                </select>
-                            </div>
-
-                            <div class="field-row">
-                                <label for="career-track" class="field-label">
-                                    Career incentive
-                                </label>
-                                <select id="career-track"
-                                        name="career-track"
-                                        class="select-input">
-                                    <option value="certificate">Government and partner certificate</option>
-                                    <option value="uniqual">University qualification</option>
-                                    <option value="career_path">Government career pathway</option>
-                                </select>
-                            </div>
-
-                            <div class="field-row">
-                                <label for="mentorship" class="field-label">
-                                    Mentorship intensity
-                                </label>
-                                <select id="mentorship"
-                                        name="mentorship"
-                                        class="select-input">
-                                    <option value="low">Low</option>
-                                    <option value="medium">Medium</option>
-                                    <option value="high">High</option>
-                                </select>
-                            </div>
-
-                            <div class="field-row">
-                                <label for="delivery" class="field-label">
-                                    Delivery mode
-                                </label>
-                                <select id="delivery"
-                                        name="delivery"
-                                        class="select-input">
-                                    <option value="blended">Blended</option>
-                                    <option value="inperson">Fully in person</option>
-                                    <option value="online">Fully online</option>
-                                </select>
-                            </div>
-
-                            <div class="field-row">
-                                <label for="response" class="field-label">
-                                    Outbreak response time (days)
-                                </label>
-                                <select id="response"
-                                        name="response"
-                                        class="select-input"
-                                        aria-describedby="responseHelp"
-                                        disabled>
-                                    <option value="7">Within 7 days (fixed)</option>
-                                    <option value="15" disabled>Within 15 days (not selectable)</option>
-                                    <option value="30" disabled>Within 30 days (not selectable)</option>
-                                </select>
-                                <p id="responseHelp" class="field-help">
-                                    Response time is fixed at 7 days in this version and reflects the outcome of strong FETP training rather than a policy choice.
-                                </p>
-                            </div>
-
-                            <div class="field-row">
-                                <label for="trainees" class="field-label">
-                                    Trainees per cohort
-                                </label>
-                                <input id="trainees"
-                                       name="trainees"
-                                       type="number"
-                                       class="number-input"
-                                       min="1"
-                                       max="500"
-                                       step="1"
-                                       aria-describedby="traineesError">
-                                <p id="traineesError" class="field-error" aria-live="polite"></p>
-                            </div>
-
-                            <div class="field-row">
-                                <label for="cohorts" class="field-label">
-                                    Number of cohorts
-                                </label>
-                                <input id="cohorts"
-                                       name="cohorts"
-                                       type="number"
-                                       class="number-input"
-                                       min="1"
-                                       max="200"
-                                       step="1"
-                                       aria-describedby="cohortsError">
-                                <p id="cohortsError" class="field-error" aria-live="polite"></p>
-                            </div>
-
-                            <div class="field-row">
-                                <label for="planning-horizon" class="field-label">
-                                    Planning horizon (years)
-                                </label>
-                                <input id="planning-horizon"
-                                       name="planning-horizon"
-                                       type="number"
-                                       class="number-input"
-                                       min="1"
-                                       max="30"
-                                       step="1"
-                                       aria-describedby="planningHorizonHelp planningHorizonError">
-                                <p id="planningHorizonHelp" class="field-help">
-                                    The planning horizon applies to epidemiological benefits and discounting.
-                                </p>
-                                <p id="planningHorizonError" class="field-error" aria-live="polite"></p>
-                            </div>
-
-                            <div class="field-row">
-                                <label for="cost-slider" class="field-label">
-                                    Cost per trainee per month
-                                </label>
-                                <input id="cost-slider"
-                                       name="cost-slider"
-                                       type="range"
-                                       class="range-input"
-                                       min="0"
-                                       max="200000"
-                                       step="1000"
-                                       aria-valuemin="0"
-                                       aria-valuemax="200000"
-                                       aria-valuenow="0"
-                                       aria-describedby="cost-display costSliderHelp">
-                                <p id="costSliderHelp" class="field-help">
-                                    Use this slider to explore different cost per trainee per month. The exact value appears next to the field.
-                                </p>
-                                <div class="range-value" aria-live="polite">
-                                    <span id="cost-display">INR 0</span>
-                                </div>
-                            </div>
-
-                            <div class="field-row">
-                                <span class="field-label">
-                                    Opportunity cost of trainee time
-                                </span>
-                                <button type="button"
-                                        id="opp-toggle"
-                                        class="switch"
-                                        role="switch"
-                                        aria-checked="false"
-                                        aria-describedby="oppToggleHelp">
-                                    <span class="switch-thumb" aria-hidden="true"></span>
-                                    <span class="switch-label">Opportunity cost excluded</span>
-                                </button>
-                                <p id="oppToggleHelp" class="field-help">
-                                    The opportunity cost of trainee time reflects the salary value of time in training. Including it gives an economic cost perspective.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div class="actions-row">
-                            <button type="button"
-                                    id="update-results"
-                                    class="btn-primary">
-                                Apply configuration
-                            </button>
-                            <button type="button"
-                                    id="save-scenario"
-                                    class="btn-secondary">
-                                Save scenario
-                            </button>
-                            <button type="button"
-                                    id="open-snapshot"
-                                    class="btn-ghost">
-                                View scenario summary
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </section>
-
-            <section class="card" aria-label="Assumption sets">
-                <header class="card-header">
-                    <h2>Assumption sets</h2>
-                </header>
-                <div class="card-body">
-                    <p>
-                        Assumption sets control global parameters such as discount rate, outbreak value and whether opportunity cost is included.
-                    </p>
-                    <div class="field-row">
-                        <label for="assumption-set-name" class="field-label">
-                            Assumption set name
-                        </label>
-                        <input id="assumption-set-name"
-                               name="assumption-set-name"
-                               type="text"
-                               class="text-input"
-                               placeholder="For example MoHFW baseline 3 percent discount rate">
-                    </div>
-                    <div class="field-row">
-                        <label for="assumption-set-id" class="field-label">
-                            Assumption set ID
-                        </label>
-                        <input id="assumption-set-id"
-                               name="assumption-set-id"
-                               type="text"
-                               class="text-input"
-                               aria-describedby="assumptionSetIdHelp"
-                               placeholder="Auto generated if left blank">
-                        <p id="assumptionSetIdHelp" class="field-help">
-                            Use assumption set IDs when referencing results in reports or minutes.
-                        </p>
-                    </div>
-                    <div class="actions-row">
-                        <button type="button"
-                                id="saveAssumptionSetBtn"
-                                class="btn-secondary">
-                            Save assumption set
-                        </button>
-                        <button type="button"
-                                id="loadAssumptionSetBtn"
-                                class="btn-ghost">
-                            Load assumption set
-                        </button>
-                    </div>
-                    <div id="assumptionSetList" class="assumption-list" aria-live="polite"></div>
-                </div>
-            </section>
-        </div>
-    </section>
-
-    <!-- Results and indicators -->
-    <section id="resultsTab"
-             class="tabcontent"
-             role="tabpanel"
-             aria-label="Key indicators and charts">
-        <div class="quick-explainer" role="note">
-            <p>
-                This tab summarises endorsement, costs and epidemiological outputs for the current scenario. Interpretation hints next to each indicator help non economists read the results.
-            </p>
-        </div>
-
-        <section class="card">
-            <header class="card-header">
-                <h2>Headline interpretation</h2>
-            </header>
-            <div class="card-body">
-                <div class="headline-layout">
-                    <div>
-                        <p class="status-label">Overall assessment</p>
-                        <span id="headline-status-tag" class="status-tag status-neutral">
-                            Scenario assessed
-                        </span>
-                    </div>
-                    <div class="headline-text-block">
-                        <p id="headline-recommendation">
-                            Apply a configuration to see a concise narrative summary of endorsement, cost per cohort and outbreak related benefits.
-                        </p>
-                        <p id="headline-briefing-text" class="small-text text-muted">
-                            This text provides a short national scale interpretation once a scenario has been applied.
-                        </p>
-                    </div>
-                </div>
+        <div class="header-meta">
+            <div class="version">
+                <span class="label">Version</span>
+                <span class="value version-value">App 1.3.2 · Model MXL-2025-12</span>
             </div>
-        </section>
-
-        <section class="card" aria-label="Configuration summary and endorsement">
-            <header class="card-header">
-                <h2>Configuration summary</h2>
-            </header>
-            <div class="card-body">
-                <div id="config-summary" class="config-summary" aria-live="polite"></div>
-                <div class="config-summary-footer">
-                    <div class="config-summary-metric">
-                        <span class="metric-label results-indicator-label tooltip-trigger"
-                              data-tooltip-key="result_endorsement">
-                            Endorsement rate
-                        </span>
-                        <span id="config-endorsement-value" class="metric-value">
-                            0.0%
-                        </span>
-                        <span class="metric-hint">
-                            Values above 70 percent typically indicate strong support in the preference study.
-                        </span>
-                    </div>
-                    <div class="config-summary-metric">
-                        <span class="metric-label results-indicator-label tooltip-trigger"
-                              data-tooltip-key="result_bcr">
-                            Benefit cost ratio (per cohort)
-                        </span>
-                        <span id="config-bcr-value" class="metric-value">
-                            -
-                        </span>
-                        <span class="metric-hint">
-                            Values above 1 suggest benefits exceed economic costs under the current assumptions.
-                        </span>
-                    </div>
-                </div>
+            <div class="theme-toggle">
+                <button class="pill-toggle active" type="button" data-theme-name="worldbank-light" aria-pressed="true">
+                    Light
+                </button>
+                <button class="pill-toggle" type="button" data-theme-name="worldbank-soft" aria-pressed="false">
+                    Soft
+                </button>
             </div>
-        </section>
+        </div>
+    </header>
 
-        <section class="card" aria-label="Detailed indicators">
-            <header class="card-header">
-                <h2>Key indicators</h2>
-            </header>
-            <div class="card-body indicators-grid">
-                <div class="indicator-block">
-                    <h3>Preference model outputs</h3>
-                    <dl class="indicator-list">
-                        <div>
-                            <dt class="results-indicator-label tooltip-trigger"
-                                data-tooltip-key="result_endorsement">
-                                Endorsement rate
-                            </dt>
-                            <dd id="endorsement-rate" class="indicator-value">0.0%</dd>
-                        </div>
-                        <div>
-                            <dt class="results-indicator-label tooltip-trigger"
-                                data-tooltip-key="result_optout">
-                                Opt out rate
-                            </dt>
-                            <dd id="optout-rate" class="indicator-value">0.0%</dd>
-                        </div>
-                        <div>
-                            <dt class="results-indicator-label tooltip-trigger"
-                                data-tooltip-key="result_wtp_trainee">
-                                WTP per trainee per month
-                            </dt>
-                            <dd id="wtp-per-trainee" class="indicator-value">INR 0</dd>
-                        </div>
-                        <div>
-                            <dt class="results-indicator-label tooltip-trigger"
-                                data-tooltip-key="result_wtp_cohort">
-                                Total WTP per cohort
-                            </dt>
-                            <dd id="wtp-total-cohort" class="indicator-value">INR 0</dd>
-                        </div>
-                    </dl>
-                </div>
+    <nav class="tabs card" role="tablist" aria-label="STEPS tabs">
+        <button class="tablink active" data-tab="aboutTab" role="tab" aria-selected="true">About</button>
+        <button class="tablink" data-tab="attributesTab" role="tab" aria-selected="false">Attributes and levels</button>
+        <button class="tablink" data-tab="configTab" role="tab" aria-selected="false">Configuration</button>
+        <button class="tablink" data-tab="resultsTab" role="tab" aria-selected="false">Results and charts</button>
+        <button class="tablink" data-tab="scenariosTab" role="tab" aria-selected="false">Scenario library</button>
+        <button class="tablink" data-tab="settingsTab" role="tab" aria-selected="false">Assumptions</button>
+        <button class="tablink" data-tab="copilotTab" role="tab" aria-selected="false">Copilot</button>
+        <button class="tablink" data-tab="diagnosticsTab" role="tab" aria-selected="false">Diagnostics</button>
+        <button class="tablink" data-tab="helpTab" role="tab" aria-selected="false">Help</button>
+    </nav>
 
-                <div class="indicator-block">
-                    <h3>Cost indicators</h3>
-                    <dl class="indicator-list">
-                        <div>
-                            <dt class="results-indicator-label tooltip-trigger"
-                                data-tooltip-key="result_cost_programme">
-                                Programme cost per cohort
-                            </dt>
-                            <dd id="prog-cost-per-cohort" class="indicator-value">INR 0</dd>
-                        </div>
-                        <div>
-                            <dt class="results-indicator-label tooltip-trigger"
-                                data-tooltip-key="result_cost_total">
-                                Total economic cost per cohort
-                            </dt>
-                            <dd id="total-cost" class="indicator-value">INR 0</dd>
-                        </div>
-                        <div>
-                            <dt class="results-indicator-label tooltip-trigger"
-                                data-tooltip-key="result_net_benefit">
-                                Net outbreak benefit per cohort
-                            </dt>
-                            <dd id="net-benefit" class="indicator-value">INR 0</dd>
-                        </div>
-                        <div>
-                            <dt class="results-indicator-label tooltip-trigger"
-                                data-tooltip-key="result_bcr">
-                                Benefit cost ratio per cohort
-                            </dt>
-                            <dd id="bcr" class="indicator-value">-</dd>
-                        </div>
-                    </dl>
-                </div>
-
-                <div class="indicator-block">
-                    <h3>Epidemiological indicators</h3>
-                    <dl class="indicator-list">
-                        <div>
-                            <dt class="results-indicator-label tooltip-trigger"
-                                data-tooltip-key="result_epi_graduates">
-                                Graduates across all cohorts
-                            </dt>
-                            <dd id="epi-graduates" class="indicator-value">0</dd>
-                        </div>
-                        <div>
-                            <dt class="results-indicator-label tooltip-trigger"
-                                data-tooltip-key="result_epi_outbreaks">
-                                Outbreak responses per year (national)
-                            </dt>
-                            <dd id="epi-outbreaks" class="indicator-value">0.0</dd>
-                        </div>
-                        <div>
-                            <dt class="results-indicator-label tooltip-trigger"
-                                data-tooltip-key="result_epi_benefit">
-                                Outbreak related epidemiological benefit per cohort
-                            </dt>
-                            <dd id="epi-benefit" class="indicator-value">INR 0</dd>
-                        </div>
-                    </dl>
-                </div>
-            </div>
-        </section>
-
-        <section class="card" aria-label="Charts">
-            <header class="card-header">
-                <h2>Charts</h2>
-            </header>
-            <div class="card-body chart-grid">
-                <section class="chart-block" aria-label="Endorsement and opt out chart">
-                    <h3 id="uptakeChartTitle">Endorsement and opt out shares</h3>
-                    <canvas id="chart-uptake"
-                            role="img"
-                            aria-label="Bar chart showing endorsement and opt out percentages for the current scenario"></canvas>
-                    <p id="uptakeChartSummary" class="chart-summary">
-                        Apply a configuration to see the share of stakeholders endorsing the FETP option versus opting out.
-                    </p>
-                    <button type="button"
-                            class="link-button view-data-btn"
-                            data-chart-table-target="uptakeChartTable">
-                        View data as table
+    <!-- About tab -->
+    <section id="aboutTab" class="tabcontent card active">
+        <h2>About this tool</h2>
+        <p>
+            This decision aid links a mixed logit model of preferences for FETP programmes to indicative
+            costs and benefits for different training scale up scenarios in India.
+        </p>
+        <p>
+            Use the Configuration tab to define a scenario, the Results and charts tab to see headline
+            indicators, the Scenario library to compare saved scenarios and the Assumptions tab to
+            adjust discounting and outbreak values.
+        </p>
+        <div class="about-grid">
+            <div class="about-card">
+                <h3>Policy question presets
+                    <button class="icon-help tooltip-trigger"
+                            data-tooltip-title="Policy question presets"
+                            data-tooltip-body="Select a preset to load a configuration that answers a typical policy question, such as baseline roll out or ambitious scale up.">
+                        i
                     </button>
-                    <div id="uptakeChartTable"
-                         class="chart-table-wrapper"
-                         hidden
-                         aria-hidden="true">
-                        <table class="data-table">
-                            <caption>Data for endorsement and opt out shares</caption>
-                            <thead>
-                            <tr>
-                                <th scope="col">Choice</th>
-                                <th scope="col">Percentage</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr>
-                                <td>Endorse FETP option</td>
-                                <td id="uptakeTableEndorse">0.0</td>
-                            </tr>
-                            <tr>
-                                <td>Choose opt out</td>
-                                <td id="uptakeTableOptout">0.0</td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <section class="chart-block" aria-label="Benefit and cost chart">
-                    <h3 id="bcrChartTitle">Indicative outbreak cost saving versus economic cost per cohort</h3>
-                    <canvas id="chart-bcr"
-                            role="img"
-                            aria-label="Bar chart comparing indicative outbreak cost saving and economic cost per cohort"></canvas>
-                    <p id="bcrChartSummary" class="chart-summary">
-                        Once a scenario is applied this chart compares outbreak related economic benefits per cohort with total economic cost per cohort and helps interpret the benefit cost ratio.
-                    </p>
-                    <button type="button"
-                            class="link-button view-data-btn"
-                            data-chart-table-target="bcrChartTable">
-                        View data as table
-                    </button>
-                    <div id="bcrChartTable"
-                         class="chart-table-wrapper"
-                         hidden
-                         aria-hidden="true">
-                        <table class="data-table">
-                            <caption>Data for outbreak cost saving and economic cost per cohort</caption>
-                            <thead>
-                            <tr>
-                                <th scope="col">Item</th>
-                                <th scope="col">Value (INR)</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr>
-                                <td>Indicative outbreak cost saving per cohort</td>
-                                <td id="bcrTableBenefit">0</td>
-                            </tr>
-                            <tr>
-                                <td>Total economic cost per cohort</td>
-                                <td id="bcrTableCost">0</td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <section class="chart-block" aria-label="Epidemiological outputs chart">
-                    <h3 id="epiChartTitle">Graduates and outbreak responses</h3>
-                    <canvas id="chart-epi"
-                            role="img"
-                            aria-label="Bar chart comparing graduates and outbreak responses per year"></canvas>
-                    <p id="epiChartSummary" class="chart-summary">
-                        After applying a configuration this chart summarises the number of graduates and the approximate number of outbreak responses per year once cohorts are complete.
-                    </p>
-                    <button type="button"
-                            class="link-button view-data-btn"
-                            data-chart-table-target="epiChartTable">
-                        View data as table
-                    </button>
-                    <div id="epiChartTable"
-                         class="chart-table-wrapper"
-                         hidden
-                         aria-hidden="true">
-                        <table class="data-table">
-                            <caption>Data for graduates and outbreak responses</caption>
-                            <thead>
-                            <tr>
-                                <th scope="col">Indicator</th>
-                                <th scope="col">Value</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr>
-                                <td>Total graduates across all cohorts</td>
-                                <td id="epiTableGraduates">0</td>
-                            </tr>
-                            <tr>
-                                <td>Outbreak responses per year (national)</td>
-                                <td id="epiTableOutbreaks">0.0</td>
-                            </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </section>
-            </div>
-        </section>
-    </section>
-
-    <!-- Costing and components -->
-    <section id="costingTab"
-             class="tabcontent"
-             role="tabpanel"
-             aria-label="Costing and cost components">
-        <div class="quick-explainer" role="note">
-            <p>
-                This tab explains how programme and economic costs are built up from cost components for each tier. It is useful when finance teams review assumptions.
-            </p>
-        </div>
-
-        <section class="card">
-            <header class="card-header">
-                <h2>Cost source and summary</h2>
-            </header>
-            <div class="card-body">
-                <div class="field-row">
-                    <label for="cost-source" class="field-label">
-                        Cost template
-                    </label>
-                    <select id="cost-source"
-                            name="cost-source"
-                            class="select-input"
-                            aria-describedby="costSourceHelp">
-                    </select>
-                    <p id="costSourceHelp" class="field-help">
-                        Cost templates summarise combined salary, travel, training and other components for each tier.
-                    </p>
-                </div>
-
-                <div id="cost-breakdown-summary" class="cost-summary-grid" aria-live="polite"></div>
-            </div>
-        </section>
-
-        <section class="card">
-            <header class="card-header">
-                <h2>Cost components</h2>
-            </header>
-            <div class="card-body">
-                <p>
-                    The table below shows how direct cost components contribute to the combined cost per cohort and per trainee per month.
+                </h3>
+                <label for="policy-question-select" class="field-label">Select policy focus</label>
+                <select id="policy-question-select" class="input">
+                    <option value="baseline">Baseline roll out</option>
+                    <option value="scale_up">Ambitious scale up</option>
+                    <option value="budget_cap">Budget constrained roll out</option>
+                </select>
+                <button type="button" id="btn-apply-policy" class="btn-primary small-btn">
+                    Apply preset
+                </button>
+                <p class="field-help">
+                    Presets update trainee numbers, cohorts and benefit assumptions for quick scenario tests.
                 </p>
-                <div class="table-wrapper">
-                    <table id="cost-components-table" class="data-table">
-                        <caption>Cost components for the selected template</caption>
-                        <thead>
-                        <tr>
-                            <th scope="col">Component</th>
-                            <th scope="col">Share of direct cost</th>
-                            <th scope="col">Cost per cohort</th>
-                            <th scope="col">Cost per trainee per month</th>
-                            <th scope="col">Notes</th>
-                        </tr>
-                        </thead>
-                        <tbody id="cost-components-list">
-                        </tbody>
-                    </table>
+            </div>
+            <div class="about-card">
+                <h3>Headline indicators</h3>
+                <div class="headline-grid">
+                    <div class="headline-metric">
+                        <div class="label">Programme endorsement</div>
+                        <div id="summary-endorsement" class="value">0 %</div>
+                        <div id="hint-endorsement" class="hint"></div>
+                    </div>
+                    <div class="headline-metric">
+                        <div class="label">Benefit cost ratio</div>
+                        <div id="summary-bcr" class="value">0.00</div>
+                        <div id="hint-bcr" class="hint"></div>
+                    </div>
+                    <div class="headline-metric">
+                        <div class="label">Net present value (INR)</div>
+                        <div id="summary-npv" class="value">0</div>
+                    </div>
+                    <div class="headline-metric">
+                        <div class="label">Total trainees over horizon</div>
+                        <div id="summary-trainees" class="value">0</div>
+                    </div>
                 </div>
             </div>
-        </section>
+        </div>
     </section>
 
-    <!-- National simulation -->
-    <section id="nationalSimulationTab"
-             class="tabcontent"
-             role="tabpanel"
-             aria-label="National scale indicators and charts">
-        <div class="quick-explainer" role="note">
-            <p>
-                This tab scales the selected configuration up across all planned cohorts and summarises national level costs, outbreak benefits and epidemiological outputs.
+    <!-- Attributes and levels -->
+    <section id="attributesTab" class="tabcontent card" hidden>
+        <h2>Attributes and levels in the mixed logit model</h2>
+        <p>
+            The model combines several attributes of FETP programmes. Coefficients are normalised relative
+            to a baseline of a frontline, certificate only, low mentorship, blended training with 30 day response time.
+        </p>
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                <tr>
+                    <th>Attribute</th>
+                    <th>Level</th>
+                    <th>Coefficient</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td>Tier</td>
+                    <td>Intermediate</td>
+                    <td data-mxl="tier.intermediate">0.220</td>
+                </tr>
+                <tr>
+                    <td>Tier</td>
+                    <td>Advanced</td>
+                    <td data-mxl="tier.advanced">0.487</td>
+                </tr>
+                <tr>
+                    <td>Career benefit</td>
+                    <td>University qualification</td>
+                    <td data-mxl="career.uniqual">0.017</td>
+                </tr>
+                <tr>
+                    <td>Career benefit</td>
+                    <td>Structured career path</td>
+                    <td data-mxl="career.career_path">-0.122</td>
+                </tr>
+                <tr>
+                    <td>Mentorship</td>
+                    <td>Medium</td>
+                    <td data-mxl="mentorship.medium">0.453</td>
+                </tr>
+                <tr>
+                    <td>Mentorship</td>
+                    <td>High</td>
+                    <td data-mxl="mentorship.high">0.640</td>
+                </tr>
+                <tr>
+                    <td>Delivery</td>
+                    <td>In person</td>
+                    <td data-mxl="delivery.inperson">-0.232</td>
+                </tr>
+                <tr>
+                    <td>Delivery</td>
+                    <td>Online</td>
+                    <td data-mxl="delivery.online">-1.073</td>
+                </tr>
+                <tr>
+                    <td>Response time</td>
+                    <td>15 days</td>
+                    <td data-mxl="response.15">0.546</td>
+                </tr>
+                <tr>
+                    <td>Response time</td>
+                    <td>7 days</td>
+                    <td data-mxl="response.7">0.900</td>
+                </tr>
+                </tbody>
+            </table>
+            <p class="table-note">
+                Note The table lists the main attribute level coefficients used in the mixed logit model.
+                Values are relative to the baseline category for each attribute. The opt out alternative has its
+                own constant so that endorsement and opt out rates can be inferred for each configuration.
             </p>
         </div>
+    </section>
 
-        <section class="card">
-            <header class="card-header">
-                <h2>National level indicators</h2>
-            </header>
-            <div class="card-body national-grid">
-                <dl class="indicator-list">
+    <!-- Configuration -->
+    <section id="configTab" class="tabcontent card" hidden>
+        <h2>Configure a scenario</h2>
+        <div class="config-layout">
+            <div class="config-form">
+                <div class="field-row">
+                    <div class="field">
+                        <label for="input-scenario-name" class="field-label">Scenario name</label>
+                        <input id="input-scenario-name" class="input" type="text"
+                               value="Baseline scale up">
+                    </div>
+                    <div class="field">
+                        <label for="input-scenario-id" class="field-label">
+                            Scenario id
+                            <button class="icon-help tooltip-trigger"
+                                    data-tooltip-title="Scenario id"
+                                    data-tooltip-body="A technical identifier used to track the scenario in the library. Auto generated if left blank.">
+                                i
+                            </button>
+                        </label>
+                        <input id="input-scenario-id" class="input" type="text" placeholder="Auto">
+                    </div>
+                </div>
+
+                <div class="field-row">
+                    <div class="field">
+                        <label for="input-assumption-set-id" class="field-label">
+                            Assumption set
+                        </label>
+                        <select id="input-assumption-set-id" class="input">
+                            <option value="mohfw-baseline">MoHFW baseline</option>
+                            <option value="wb-downside">World Bank conservative</option>
+                            <option value="wb-upside">World Bank optimistic</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label for="input-tier" class="field-label">
+                            Programme tier
+                            <button class="icon-help tooltip-trigger"
+                                    data-tooltip-title="Programme tier"
+                                    data-tooltip-body="Frontline, intermediate and advanced tiers differ in duration, mix of skills and implied outbreak response roles.">
+                                i
+                            </button>
+                        </label>
+                        <select id="input-tier" class="input">
+                            <option value="frontline">Frontline</option>
+                            <option value="intermediate">Intermediate</option>
+                            <option value="advanced">Advanced</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="field-row">
+                    <div class="field">
+                        <label for="input-trainees-per-cohort" class="field-label">
+                            Trainees per cohort
+                        </label>
+                        <input id="input-trainees-per-cohort" class="input" type="number"
+                               min="1" max="500" step="1" value="25">
+                    </div>
+                    <div class="field">
+                        <label for="input-number-of-cohorts" class="field-label">
+                            Number of cohorts over horizon
+                        </label>
+                        <input id="input-number-of-cohorts" class="input" type="number"
+                               min="1" max="200" step="1" value="4">
+                    </div>
+                </div>
+
+                <div class="field-row">
+                    <div class="field">
+                        <label for="input-planning-horizon" class="field-label">
+                            Planning horizon (years)
+                        </label>
+                        <input id="input-planning-horizon" class="input" type="number"
+                               min="1" max="30" step="1" value="5">
+                    </div>
+                    <div class="field">
+                        <label for="input-response-days" class="field-label">
+                            Outbreak response time (days)
+                            <button class="icon-help tooltip-trigger"
+                                    data-tooltip-title="Response time"
+                                    data-tooltip-body="Core configuration fixes outbreak response at 7 days. The 15 and 30 day options are retained for sensitivity analysis but are locked in the main view.">
+                                i
+                            </button>
+                        </label>
+                        <select id="input-response-days" class="input">
+                            <option value="30" disabled>30 days (locked)</option>
+                            <option value="15" disabled>15 days (locked)</option>
+                            <option value="7" selected>7 days</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="field-row">
+                    <div class="field">
+                        <label class="field-label">
+                            Programme cost per trainee (INR)
+                            <button class="icon-help tooltip-trigger"
+                                    data-tooltip-title="Programme cost per trainee"
+                                    data-tooltip-body="Average cost per trainee in INR including tuition, supervision and core delivery costs for the selected tier.">
+                                i
+                            </button>
+                        </label>
+                        <div class="slider-row">
+                            <input id="input-cost-per-trainee" type="range"
+                                   min="100000" max="800000" step="25000" value="400000">
+                            <span id="cost-per-trainee-label" class="slider-value">400,000</span>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label for="input-endorsement-rate" class="field-label">
+                            Endorsement rate (share)
+                            <button class="icon-help tooltip-trigger"
+                                    data-tooltip-title="Endorsement rate"
+                                    data-tooltip-body="Predicted share of eligible epidemiologists who would endorse and choose the programme instead of the opt out option based on the preference model.">
+                                i
+                            </button>
+                        </label>
+                        <input id="input-endorsement-rate" class="input" type="number"
+                               min="0" max="1" step="0.01" value="0.8">
+                    </div>
+                </div>
+
+                <div class="field-row">
+                    <div class="field">
+                        <label for="input-completion-rate" class="field-label">
+                            Completion rate (share)
+                        </label>
+                        <input id="input-completion-rate" class="input" type="number"
+                               min="0" max="1" step="0.01" value="0.9">
+                    </div>
+                </div>
+
+                <div class="button-row">
+                    <button type="button" id="btn-apply-values" class="btn-primary">
+                        Apply values
+                    </button>
+                    <button type="button" id="btn-reset-config" class="btn-ghost">
+                        Reset to baseline
+                    </button>
+                </div>
+            </div>
+
+            <div class="config-summary">
+                <h3>Configuration summary</h3>
+                <dl class="summary-list">
                     <div>
-                        <dt class="national-indicator-label tooltip-trigger"
-                            data-tooltip-key="national_total_cost">
-                            Total economic cost (all cohorts)
-                        </dt>
-                        <dd id="nat-total-cost" class="indicator-value">INR 0</dd>
+                        <dt>Trainees per cohort</dt>
+                        <dd id="summary-config-trainees-per-cohort">0</dd>
                     </div>
                     <div>
-                        <dt class="national-indicator-label tooltip-trigger"
-                            data-tooltip-key="national_total_benefit">
-                            Total outbreak related benefit (all cohorts)
-                        </dt>
-                        <dd id="nat-total-benefit" class="indicator-value">INR 0</dd>
+                        <dt>Number of cohorts</dt>
+                        <dd id="summary-config-number-of-cohorts">0</dd>
                     </div>
                     <div>
-                        <dt class="national-indicator-label tooltip-trigger"
-                            data-tooltip-key="national_net_benefit">
-                            Net outbreak related benefit (all cohorts)
-                        </dt>
-                        <dd id="nat-net-benefit" class="indicator-value">INR 0</dd>
+                        <dt>Planning horizon (years)</dt>
+                        <dd id="summary-config-horizon-years">0</dd>
                     </div>
                     <div>
-                        <dt class="national-indicator-label tooltip-trigger"
-                            data-tooltip-key="national_bcr">
-                            National benefit cost ratio
-                        </dt>
-                        <dd id="nat-bcr" class="indicator-value">-</dd>
-                        <span class="metric-hint">
-                            Values above 1 suggest that outbreak savings exceed economic costs in total.
-                        </span>
+                        <dt>Endorsement rate</dt>
+                        <dd id="summary-config-endorsement">0 %</dd>
                     </div>
                     <div>
-                        <dt class="national-indicator-label tooltip-trigger"
-                            data-tooltip-key="national_graduates">
-                            Graduates over planning horizon
-                        </dt>
-                        <dd id="nat-graduates" class="indicator-value">0</dd>
+                        <dt>Completion rate</dt>
+                        <dd id="summary-config-completion">0 %</dd>
                     </div>
                     <div>
-                        <dt class="national-indicator-label tooltip-trigger"
-                            data-tooltip-key="national_outbreaks">
-                            Outbreak responses per year (national)
-                        </dt>
-                        <dd id="nat-outbreaks" class="indicator-value">0.0</dd>
-                    </div>
-                    <div>
-                        <dt class="national-indicator-label tooltip-trigger"
-                            data-tooltip-key="national_total_wtp">
-                            Total willingness to pay (all cohorts)
-                        </dt>
-                        <dd id="nat-total-wtp" class="indicator-value">INR 0</dd>
+                        <dt>Assumption set</dt>
+                        <dd id="summary-assumption-label">MoHFW baseline</dd>
                     </div>
                 </dl>
-                <p id="natsim-summary-text" class="small-text">
-                    Apply a configuration to see cost, benefit and epidemiological outputs at national scale.
-                </p>
-            </div>
-        </section>
-
-        <section class="card">
-            <header class="card-header">
-                <h2>National charts</h2>
-            </header>
-            <div class="card-body chart-grid">
-                <section class="chart-block" aria-label="National cost and benefit chart">
-                    <h3 id="natCostBenefitChartTitle">Total cost and outbreak related benefit</h3>
-                    <canvas id="chart-nat-cost-benefit"
-                            role="img"
-                            aria-label="Bar chart comparing total economic cost and outbreak related benefit across all cohorts"></canvas>
-                    <p id="natCostBenefitChartSummary" class="chart-summary">
-                        Once a scenario is applied this chart summarises total economic cost and outbreak related benefits across all cohorts.
-                    </p>
-                    <button type="button"
-                            class="link-button view-data-btn"
-                            data-chart-table-target="natCostBenefitChartTable">
-                        View data as table
-                    </button>
-                    <div id="natCostBenefitChartTable"
-                         class="chart-table-wrapper"
-                         hidden
-                         aria-hidden="true">
-                        <table class="data-table">
-                            <caption>Data for national cost and outbreak related benefit</caption>
-                            <thead>
-                            <tr>
-                                <th scope="col">Item</th>
-                                <th scope="col">Value (INR)</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr>
-                                <td>Total economic cost (all cohorts)</td>
-                                <td id="natTableCost">0</td>
-                            </tr>
-                            <tr>
-                                <td>Total outbreak related benefit (all cohorts)</td>
-                                <td id="natTableBenefit">0</td>
-                            </tr>
-                            </tbody>
-                        </table>
+                <h3>Cost and benefit breakdown</h3>
+                <dl class="summary-list">
+                    <div>
+                        <dt>Direct training costs (PV)</dt>
+                        <dd id="summary-cost-direct">0</dd>
                     </div>
-                </section>
-
-                <section class="chart-block" aria-label="National epidemiological chart">
-                    <h3 id="natEpiChartTitle">National epidemiological outputs</h3>
-                    <canvas id="chart-nat-epi"
-                            role="img"
-                            aria-label="Bar chart showing total graduates and outbreak responses per year at national level"></canvas>
-                    <p id="natEpiChartSummary" class="chart-summary">
-                        After applying a scenario this chart shows the approximate number of graduates and outbreak responses per year at national level.
-                    </p>
-                    <button type="button"
-                            class="link-button view-data-btn"
-                            data-chart-table-target="natEpiChartTable">
-                        View data as table
-                    </button>
-                    <div id="natEpiChartTable"
-                         class="chart-table-wrapper"
-                         hidden
-                         aria-hidden="true">
-                        <table class="data-table">
-                            <caption>Data for national epidemiological outputs</caption>
-                            <thead>
-                            <tr>
-                                <th scope="col">Indicator</th>
-                                <th scope="col">Value</th>
-                            </tr>
-                            </thead>
-                            <tbody>
-                            <tr>
-                                <td>Total graduates over planning horizon</td>
-                                <td id="natEpiTableGraduates">0</td>
-                            </tr>
-                            <tr>
-                                <td>Outbreak responses per year</td>
-                                <td id="natEpiTableOutbreaks">0.0</td>
-                            </tr>
-                            </tbody>
-                        </table>
+                    <div>
+                        <dt>Opportunity cost (PV)</dt>
+                        <dd id="summary-cost-opportunity">0</dd>
                     </div>
-                </section>
+                    <div>
+                        <dt>Total costs (PV)</dt>
+                        <dd id="summary-cost-total">0</dd>
+                    </div>
+                    <div>
+                        <dt>Total benefits (PV)</dt>
+                        <dd id="summary-benefit-pv">0</dd>
+                    </div>
+                </dl>
             </div>
-        </section>
+        </div>
     </section>
 
-    <!-- Sensitivity and stress tests -->
-    <section id="sensitivityTab"
-             class="tabcontent"
-             role="tabpanel"
-             aria-label="Sensitivity analysis and stress tests">
-        <div class="quick-explainer" role="note">
-            <p>
-                This tab combines willingness to pay and outbreak related benefits and allows quick sensitivity checks under different benefit definitions and assumptions, including stress tests.
-            </p>
-        </div>
-
-        <section class="card" aria-label="Benefit definition and controls" id="sensitivitySection">
-            <header class="card-header">
-                <h2>Benefit definition and controls</h2>
-            </header>
-            <div class="card-body">
-                <div class="field-grid">
-                    <div class="field-row">
-                        <label for="benefit-definition-select" class="field-label">
-                            Benefit definition
-                        </label>
-                        <select id="benefit-definition-select"
-                                name="benefit-definition-select"
-                                class="select-input"
-                                aria-describedby="benefitDefinitionHelp">
-                            <option value="wtp_only">WTP only</option>
-                            <option value="endorsement_adjusted">WTP adjusted by endorsement</option>
-                            <option value="combined">WTP plus epidemiological benefits</option>
-                        </select>
-                        <p id="benefitDefinitionHelp" class="field-help">
-                            Choose whether to treat willingness to pay alone, endorsement adjusted WTP or WTP combined with outbreak related benefits as the main benefit measure.
-                        </p>
-                    </div>
-
-                    <div class="field-row">
-                        <label for="endorsement-override" class="field-label">
-                            Override endorsement rate (percent)
-                        </label>
-                        <input id="endorsement-override"
-                               name="endorsement-override"
-                               type="number"
-                               class="number-input"
-                               min="0"
-                               max="100"
-                               step="1"
-                               aria-describedby="endorsementOverrideHelp">
-                        <p id="endorsementOverrideHelp" class="field-help">
-                            Leave blank to use the model based endorsement rate, or enter a value between 0 and 100 to simulate higher or lower support.
-                        </p>
-                    </div>
-
-                    <div class="field-row">
-                        <span class="field-label">
-                            Outbreak benefits in summary
-                        </span>
-                        <button type="button"
-                                id="sensitivity-epi-toggle"
-                                class="switch"
-                                role="switch"
-                                aria-checked="true"
-                                aria-describedby="sensitivityEpiHelp">
-                            <span class="switch-thumb" aria-hidden="true"></span>
-                            <span class="switch-label">Outbreak benefits included</span>
-                        </button>
-                        <p id="sensitivityEpiHelp" class="field-help">
-                            Turn this off to focus on willingness to pay only. Turn it on to include outbreak related epidemiological benefits in combined results.
-                        </p>
-                    </div>
-
-                    <div class="field-row">
-                        <label for="sensitivityValueSelect" class="field-label">
-                            Value per outbreak preset (in billion INR)
-                        </label>
-                        <select id="sensitivityValueSelect"
-                                name="sensitivityValueSelect"
-                                class="select-input"
-                                aria-describedby="sensitivityValueHelp">
-                            <option value="">Select a preset</option>
-                            <option value="10">Conservative (10 billion)</option>
-                            <option value="20">Base (20 billion)</option>
-                            <option value="40">High (40 billion)</option>
-                        </select>
-                        <p id="sensitivityValueHelp" class="field-help">
-                            These presets control the monetary value used for each outbreak response across all tiers.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="actions-row">
-                    <button type="button"
-                            id="applySensitivityValueBtn"
-                            class="btn-primary">
-                        Apply value per outbreak
-                    </button>
-                    <button type="button"
-                            id="refresh-sensitivity-benefits"
-                            class="btn-secondary">
-                        Refresh sensitivity summary
-                    </button>
-                    <button type="button"
-                            id="stressTestBtn"
-                            class="btn-ghost">
-                        Run stress test (upside and downside)
-                    </button>
-                </div>
-                <p id="sensitivity-headline-info" class="small-text text-muted">
-                    The sensitivity tables summarise economic cost, WTP benefits, outbreak related benefits, combined benefits and benefit cost ratios for the current and saved scenarios.
-                </p>
-            </div>
-        </section>
-
-        <section class="card" aria-label="WTP based benefits summary">
-            <header class="card-header">
-                <h2>WTP based benefits summary</h2>
-            </header>
-            <div class="card-body">
-                <div class="table-wrapper" id="sensitivityTableContainer">
-                    <table id="dce-benefits-table" class="data-table">
-                        <caption>WTP based benefits and combined indicators for current and saved scenarios</caption>
-                        <thead>
-                        <tr>
-                            <th scope="col">Scenario</th>
-                            <th scope="col">Total economic cost (INR)</th>
-                            <th scope="col">Total economic cost (million INR)</th>
-                            <th scope="col">Net outbreak benefit (million INR)</th>
-                            <th scope="col">Total WTP (INR)</th>
-                            <th scope="col">WTP attributable to outbreak response (INR)</th>
-                            <th scope="col">Epidemiological outbreak benefit (INR)</th>
-                            <th scope="col">Endorsement rate used (percent)</th>
-                            <th scope="col">Effective WTP benefit (INR)</th>
-                            <th scope="col">Benefit cost ratio WTP only</th>
-                            <th scope="col">Net present value WTP only (INR)</th>
-                            <th scope="col">Benefit cost ratio combined</th>
-                            <th scope="col">Net present value combined (INR)</th>
-                        </tr>
-                        </thead>
-                        <tbody id="dce-benefits-table-body">
-                        </tbody>
-                    </table>
-                </div>
-
-                <div class="actions-row">
-                    <button type="button"
-                            id="export-sensitivity-benefits-excel"
-                            class="btn-secondary">
-                        Export sensitivity table to Excel
-                    </button>
-                    <button type="button"
-                            id="export-sensitivity-benefits-pdf"
-                            class="btn-secondary">
-                        Export sensitivity table to PDF
-                    </button>
-                    <button type="button"
-                            id="downloadSensitivityPDF"
-                            class="btn-ghost">
-                        Download WTP sensitivity PDF (briefing format)
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <section class="card" aria-label="Per cohort detail">
-            <header class="card-header">
-                <h2>Per cohort detail</h2>
-            </header>
-            <div class="card-body">
-                <div class="table-wrapper">
-                    <table id="sensitivity-detail-table" class="data-table">
-                        <caption>Per cohort WTP and outbreak benefits for current and saved scenarios</caption>
-                        <thead>
-                        <tr>
-                            <th scope="col">Scenario</th>
-                            <th scope="col">Preference model</th>
-                            <th scope="col">Endorsement rate (percent)</th>
-                            <th scope="col">Economic cost per cohort (INR)</th>
-                            <th scope="col">Total WTP per cohort (INR)</th>
-                            <th scope="col">WTP outbreak component per cohort (INR)</th>
-                            <th scope="col">Outbreak benefit per cohort (INR)</th>
-                            <th scope="col">BCR WTP only</th>
-                            <th scope="col">NPV WTP only per cohort (INR)</th>
-                            <th scope="col">BCR combined</th>
-                            <th scope="col">NPV combined per cohort (INR)</th>
-                            <th scope="col">Effective WTP per cohort (INR)</th>
-                            <th scope="col">Effective combined benefit per cohort (INR)</th>
-                        </tr>
-                        </thead>
-                        <tbody id="sensitivity-table-body">
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-    </section>
-
-    <!-- Scenario library and comparison -->
-    <section id="scenariosTab"
-             class="tabcontent"
-             role="tabpanel"
-             aria-label="Scenario library and comparison">
-        <div class="quick-explainer" role="note">
-            <p>
-                Use this tab to manage the scenario library, pin up to three scenarios for discussion and export comparison tables for meetings.
-            </p>
-        </div>
-
-        <section class="card">
-            <header class="card-header">
-                <h2>Scenario library</h2>
-            </header>
-            <div class="card-body">
-                <div class="actions-row">
-                    <button type="button"
-                            id="export-excel"
-                            class="btn-secondary">
-                        Export all scenarios to Excel
-                    </button>
-                    <button type="button"
-                            id="export-pdf"
-                            class="btn-secondary">
-                        Export scenario summary PDF
-                    </button>
-                </div>
-                <div class="table-wrapper">
-                    <table id="scenario-table" class="data-table">
-                        <caption>Saved scenarios</caption>
-                        <thead>
-                        <tr>
-                            <th scope="col">Pin</th>
-                            <th scope="col">Name</th>
-                            <th scope="col">Configuration overview</th>
-                            <th scope="col">Tier</th>
-                            <th scope="col">Career</th>
-                            <th scope="col">Mentorship</th>
-                            <th scope="col">Delivery</th>
-                            <th scope="col">Response time</th>
-                            <th scope="col">Cohorts</th>
-                            <th scope="col">Trainees per cohort</th>
-                            <th scope="col">Cost per trainee per month</th>
-                            <th scope="col">Preference model</th>
-                            <th scope="col">Endorsement (percent)</th>
-                            <th scope="col">WTP per trainee per month</th>
-                            <th scope="col">Total WTP all cohorts</th>
-                            <th scope="col">National BCR</th>
-                            <th scope="col">Total economic cost</th>
-                            <th scope="col">Outbreak benefit all cohorts</th>
-                            <th scope="col">Net outbreak benefit all cohorts</th>
-                            <th scope="col">Outbreak responses per year</th>
-                            <th scope="col">Scenario notes</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </section>
-
-        <section class="card">
-            <header class="card-header">
-                <h2>Pinned scenario comparison</h2>
-            </header>
-            <div class="card-body">
+    <!-- Results and charts -->
+    <section id="resultsTab" class="tabcontent card" hidden>
+        <h2>Results and charts</h2>
+        <div class="results-layout">
+            <div class="results-block">
+                <h3>National level summaries</h3>
                 <p>
-                    Pin up to three scenarios in the table above to summarise them side by side for discussion.
+                    Over a planning horizon of
+                    <span id="national-label-horizon">0</span> years the configured programme produces:
                 </p>
-                <div class="table-wrapper">
-                    <table id="pinned-scenarios-table" class="data-table">
-                        <caption>Comparison of pinned scenarios</caption>
-                        <thead>
-                        <tr>
-                            <th scope="col">Indicator</th>
-                            <th scope="col">Scenario A</th>
-                            <th scope="col">Scenario B</th>
-                            <th scope="col">Scenario C</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <tr>
-                            <th scope="row">Scenario name</th>
-                            <td id="pinned-name-a"></td>
-                            <td id="pinned-name-b"></td>
-                            <td id="pinned-name-c"></td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Tier</th>
-                            <td id="pinned-tier-a"></td>
-                            <td id="pinned-tier-b"></td>
-                            <td id="pinned-tier-c"></td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Economic cost all cohorts (INR)</th>
-                            <td id="pinned-cost-a"></td>
-                            <td id="pinned-cost-b"></td>
-                            <td id="pinned-cost-c"></td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Outbreak benefit all cohorts (INR)</th>
-                            <td id="pinned-benefit-a"></td>
-                            <td id="pinned-benefit-b"></td>
-                            <td id="pinned-benefit-c"></td>
-                        </tr>
-                        <tr>
-                            <th scope="row">National BCR</th>
-                            <td id="pinned-bcr-a"></td>
-                            <td id="pinned-bcr-b"></td>
-                            <td id="pinned-bcr-c"></td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Graduates</th>
-                            <td id="pinned-graduates-a"></td>
-                            <td id="pinned-graduates-b"></td>
-                            <td id="pinned-graduates-c"></td>
-                        </tr>
-                        <tr>
-                            <th scope="row">Outbreak responses per year</th>
-                            <td id="pinned-outbreaks-a"></td>
-                            <td id="pinned-outbreaks-b"></td>
-                            <td id="pinned-outbreaks-c"></td>
-                        </tr>
-                        </tbody>
-                    </table>
+                <ul class="plain-list">
+                    <li><strong id="national-graduates">0</strong> graduates in total</li>
+                    <li><strong id="national-outbreaks">0</strong> outbreak responses over the horizon</li>
+                </ul>
+            </div>
+            <div class="results-block">
+                <h3>Cost profile</h3>
+                <canvas id="chart-costs" height="160"></canvas>
+                <p id="chart-costs-summary" class="chart-summary"></p>
+            </div>
+            <div class="results-block">
+                <h3>Benefits and costs</h3>
+                <canvas id="chart-benefits" height="160"></canvas>
+                <p id="chart-benefits-summary" class="chart-summary"></p>
+            </div>
+            <div class="results-block">
+                <h3>Outbreak responses</h3>
+                <canvas id="chart-outbreaks" height="160"></canvas>
+                <p id="chart-outbreaks-summary" class="chart-summary"></p>
+            </div>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    </section>
+
+    <!-- Scenario library -->
+    <section id="scenariosTab" class="tabcontent card" hidden>
+        <h2>Scenario library</h2>
+        <p>
+            Save scenarios after configuring them so that you can reload and compare headline results later.
+        </p>
+        <div class="button-row">
+            <button type="button" id="btn-save-scenario" class="btn-primary">
+                Save or update scenario
+            </button>
+            <button type="button" id="btn-new-scenario" class="btn-ghost">
+                Start new scenario
+            </button>
+        </div>
+        <div class="table-wrapper">
+            <table id="scenario-table" class="table">
+                <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Id</th>
+                    <th>Assumptions</th>
+                    <th>BCR</th>
+                    <th>NPV (INR)</th>
+                    <th>Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <!-- filled by script -->
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Assumptions -->
+    <section id="settingsTab" class="tabcontent card" hidden>
+        <h2>Assumption sets and discounting</h2>
+        <div class="settings-layout">
+            <div class="settings-form">
+                <div class="field">
+                    <label for="settings-assumption-preset" class="field-label">
+                        Assumption preset
+                    </label>
+                    <select id="settings-assumption-preset" class="input">
+                        <!-- filled by script -->
+                    </select>
+                </div>
+
+                <div class="field-row">
+                    <div class="field">
+                        <label for="settings-discount-rate" class="field-label">
+                            Discount rate (annual)
+                        </label>
+                        <input id="settings-discount-rate" class="input" type="number"
+                               min="0" max="0.2" step="0.005">
+                    </div>
+                    <div class="field">
+                        <label for="settings-outbreak-value" class="field-label">
+                            Value per outbreak response (INR)
+                        </label>
+                        <input id="settings-outbreak-value" class="input" type="number"
+                               min="0" max="5000000000" step="500000">
+                    </div>
+                </div>
+
+                <div class="field-row">
+                    <div class="field">
+                        <label for="settings-opp-cost-share" class="field-label">
+                            Opportunity cost share
+                        </label>
+                        <input id="settings-opp-cost-share" class="input" type="number"
+                               min="0" max="1" step="0.05">
+                    </div>
+                </div>
+
+                <div class="button-row">
+                    <button type="button" id="btn-apply-settings" class="btn-primary">
+                        Apply settings
+                    </button>
                 </div>
             </div>
-        </section>
+            <div class="settings-log">
+                <label for="settings-log" class="field-label">
+                    Settings log
+                </label>
+                <textarea id="settings-log" rows="12" class="input monospace"></textarea>
+            </div>
+        </div>
     </section>
 
     <!-- Copilot tab -->
-    <section id="copilotTab"
-             class="tabcontent"
-             role="tabpanel"
-             aria-label="Copilot policy brief integration">
-        <div class="quick-explainer" role="note">
-            <p>
-                This tab prepares a structured prompt and scenario JSON that can be copied into Microsoft Copilot to produce a narrative policy brief.
-            </p>
-        </div>
-
-        <section class="card">
-            <header class="card-header">
-                <h2>How to use Copilot with STEPS</h2>
-            </header>
-            <div class="card-body">
-                <p id="copilot-howto-text">
-                    Define a scenario in the other tabs, then use this Copilot tab to generate a draft policy brief. Copy the prepared prompt into Microsoft Copilot and refine the brief there.
-                </p>
-                <p id="copilot-howto-info"
-                   class="small-text text-muted">
-                </p>
-            </div>
-        </section>
-
-        <section class="card">
-            <header class="card-header">
-                <h2>Prompt and JSON for Copilot</h2>
-            </header>
-            <div class="card-body">
-                <div class="copilot-status">
-                    <span id="copilot-status-pill" class="status-pill">Waiting for configuration</span>
-                    <span id="copilot-status-text" class="small-text text-muted">
-                        Apply a configuration in STEPS and then generate the Copilot prompt.
-                    </span>
-                </div>
-                <div class="actions-row">
-                    <button type="button"
-                            id="copilot-open-and-copy-btn"
-                            class="btn-primary">
-                        Open Copilot in new tab and copy prompt
-                    </button>
-                </div>
-                <label for="copilot-prompt-output" class="field-label">
-                    Copilot prompt and scenario JSON
-                </label>
-                <textarea id="copilot-prompt-output"
-                          class="text-area"
-                          rows="16"
-                          aria-label="Prepared Copilot prompt and scenario JSON"
-                          readonly></textarea>
-            </div>
-        </section>
-    </section>
-
-    <!-- Methods and documentation -->
-    <section id="methodsTab"
-             class="tabcontent"
-             role="tabpanel"
-             aria-label="Methods and technical documentation">
-        <div class="quick-explainer" role="note">
-            <p>
-                This tab summarises the main data sources, methods and limitations so that technical reviewers and economists can assess the approach.
-            </p>
-        </div>
-
-        <section class="card">
-            <header class="card-header">
-                <h2>Methods overview</h2>
-            </header>
-            <div class="card-body">
-                <h3>Preference model</h3>
-                <p>
-                    The preference model is a mixed logit estimated from a discrete choice experiment conducted with stakeholders involved in FETP planning. It predicts endorsement and opt out rates and generates willingness to pay values in Indian rupees.
-                </p>
-                <h3>Costing</h3>
-                <p>
-                    Cost templates combine salary and benefits, travel, training materials, trainee support and other direct and indirect items, including the opportunity cost of trainee time where this option is switched on.
-                </p>
-                <h3>Epidemiological module</h3>
-                <p>
-                    Epidemiological outputs are based on completion rates, outbreaks handled per graduate per year, the assumed value per outbreak response, the planning horizon and the epidemiological discount rate. Response time affects a multiplier applied to outbreak responses.
-                </p>
-                <h3>Limitations</h3>
-                <p>
-                    The model is designed as a structured decision aid. It uses simplified assumptions and indicative values, so results should be interpreted as order of magnitude estimates rather than exact forecasts.
-                </p>
-            </div>
-        </section>
-
-        <section class="card">
-            <header class="card-header">
-                <h2>Technical appendix and downloads</h2>
-            </header>
-            <div class="card-body">
-                <p>
-                    A separate technical note can be linked here that includes formal model equations, estimation details, and data sources.
-                </p>
-                <div class="actions-row">
-                    <a href="#" id="downloadMethodsPdf" class="btn-secondary" role="button">
-                        Download methods note (PDF)
-                    </a>
-                    <a href="#" id="downloadTechnicalAppendixPdf" class="btn-ghost" role="button">
-                        Download technical appendix (PDF)
-                    </a>
-                </div>
-            </div>
-        </section>
-
-        <section class="card" id="diagnosticsSection" hidden>
-            <header class="card-header">
-                <h2>Diagnostics (advanced)</h2>
-            </header>
-            <div class="card-body">
-                <p>
-                    This section shows selected internal inputs and outputs for one scenario to support quality assurance.
-                </p>
-                <pre id="diagnosticsContent" aria-label="Diagnostics content"></pre>
-            </div>
-        </section>
-    </section>
-
-    <!-- About, privacy and disclaimer -->
-    <section id="aboutMethodsTab"
-             class="tabcontent"
-             role="tabpanel"
-             aria-label="About STEPS, privacy and disclaimer">
-        <div class="quick-explainer" role="note">
-            <p>
-                This tab summarises who developed STEPS, how data are handled and how the tool should be used in decision processes.
-            </p>
-        </div>
-
-        <section class="card">
-            <header class="card-header">
-                <h2>About STEPS</h2>
-            </header>
-            <div class="card-body">
-                <p>
-                    STEPS is a decision aid for ministries of health and finance, partners and technical agencies that are planning investments in Field Epidemiology Training Programmes.
-                </p>
-                <p>
-                    The logo is the STEPS mark represented by the letter S in the header circle. It is used consistently across tabs for recognition.
-                </p>
-            </div>
-        </section>
-
-        <section class="card">
-            <header class="card-header">
-                <h2>Privacy and security</h2>
-            </header>
-            <div class="card-body">
-                <p>
-                    The tool runs in the browser and does not collect or transmit personal data. Scenario inputs and outputs remain on the device unless users explicitly export and share them.
-                </p>
-                <p>
-                    If the tool is later connected to a server for scenario storage, role based access and audit logs should be implemented so that users can be assigned viewer, analyst or administrator roles.
-                </p>
-            </div>
-        </section>
-
-        <section class="card">
-            <header class="card-header">
-                <h2>Branding and theming</h2>
-            </header>
-            <div class="card-body">
-                <p>
-                    Institutions can apply their own branding within a controlled theming layer while keeping the structure identical.
-                </p>
-                <div class="field-row">
-                    <label for="branding-logo-input" class="field-label">
-                        Upload institution logo (optional)
-                    </label>
-                    <input id="branding-logo-input"
-                           type="file"
-                           accept="image/*"
-                           class="file-input"
-                           aria-describedby="brandingLogoHelp">
-                    <p id="brandingLogoHelp" class="field-help">
-                        Logos are shown alongside the STEPS mark in exports where permitted.
-                    </p>
-                </div>
-                <div class="field-row">
-                    <span class="field-label">Colour theme</span>
-                    <div class="theme-pills" role="radiogroup" aria-label="Colour theme selection">
-                        <button type="button"
-                                class="pill-toggle theme-toggle active"
-                                data-theme="worldbank-light"
-                                role="radio"
-                                aria-checked="true">
-                            World Bank blue
-                        </button>
-                        <button type="button"
-                                class="pill-toggle theme-toggle"
-                                data-theme="who-teal"
-                                role="radio"
-                                aria-checked="false">
-                            WHO teal
-                        </button>
-                        <button type="button"
-                                class="pill-toggle theme-toggle"
-                                data-theme="moh-india"
-                                role="radio"
-                                aria-checked="false">
-                            MoH India palette
-                        </button>
-                    </div>
-                    <p class="field-help">
-                        The selected theme affects colours and some accents but not the underlying calculations.
-                    </p>
-                </div>
-            </div>
-        </section>
-
-        <section class="card">
-            <header class="card-header">
-                <h2>Disclaimer</h2>
-            </header>
-            <div class="card-body">
-                <p>
-                    STEPS is designed as a decision support tool. It does not replace professional judgement, detailed costing exercises or formal epidemiological modelling. Users remain responsible for the way results are interpreted and used in policy processes.
-                </p>
-            </div>
-        </section>
-    </section>
-</main>
-
-<!-- Help side panel -->
-<aside id="helpPanel"
-       class="help-panel"
-       aria-label="Help and frequently asked questions"
-       aria-hidden="true">
-    <header class="help-header">
-        <h2>Help and frequently asked questions</h2>
-        <button type="button"
-                id="helpCloseBtn"
-                class="icon-button"
-                aria-label="Close help panel">
-            <span aria-hidden="true">×</span>
-        </button>
-    </header>
-    <div class="help-body">
-        <section>
-            <h3>What is endorsement?</h3>
-            <p>
-                Endorsement is the predicted share of decision makers in the preference study who choose the FETP option rather than the opt out alternative for the current configuration.
-            </p>
-        </section>
-        <section>
-            <h3>How should I interpret the benefit cost ratio?</h3>
-            <p>
-                A benefit cost ratio above one indicates that estimated benefits exceed economic costs under the current assumptions. Values between one and one point two can be considered borderline and may warrant further sensitivity checks.
-            </p>
-        </section>
-        <section>
-            <h3>When should I include the opportunity cost of trainee time?</h3>
-            <p>
-                Include opportunity cost when comparing FETP investments with other uses of funds from an economic perspective. Excluding it may be appropriate for some financial budgeting exercises where only direct programme costs are considered.
-            </p>
-        </section>
-        <section>
-            <h3>How do I use STEPS in meetings?</h3>
-            <p>
-                Use scenario templates and the scenario library to prepare a small set of options in advance. During meetings, show the comparison tables, headline indicators and charts, and export the results to Excel or PDF for circulation afterwards.
-            </p>
-        </section>
-    </div>
-</aside>
-
-<!-- Global tooltip container -->
-<div id="globalTooltip" class="global-tooltip" role="tooltip" aria-hidden="true">
-    <div class="tooltip-title"></div>
-    <div class="tooltip-body"></div>
-</div>
-
-<!-- Toast container for notifications -->
-<div id="toastContainer"
-     class="toast-container"
-     aria-live="polite"
-     aria-atomic="true"></div>
-
-<!-- Snapshot modal -->
-<div id="snapshot-modal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="snapshot-modal-title">
-    <div class="modal-content">
-        <header class="modal-header">
-            <h2 id="snapshot-modal-title">Scenario summary</h2>
-            <button type="button"
-                    class="icon-button modal-close"
-                    aria-label="Close scenario summary">
-                <span aria-hidden="true">×</span>
+    <section id="copilotTab" class="tabcontent card" hidden>
+        <h2>Microsoft Copilot briefing prompt</h2>
+        <p>
+            The Copilot tab prepares a complete text package that you can copy into Microsoft Copilot
+            within the University of Newcastle environment. No data are sent automatically to external services.
+        </p>
+        <div class="button-row">
+            <button type="button" id="btn-generate-copilot" class="btn-primary">
+                Generate prompt
             </button>
-        </header>
-        <div id="snapshot-body" class="modal-body"></div>
-    </div>
+            <button type="button" id="btn-copy-copilot" class="btn-ghost">
+                Copy to clipboard
+            </button>
+        </div>
+        <textarea id="copilot-prompt-output" class="input monospace" rows="20"></textarea>
+    </section>
+
+    <!-- Diagnostics -->
+    <section id="diagnosticsTab" class="tabcontent card" hidden>
+        <h2>Diagnostics</h2>
+        <pre id="diagnosticsContent" class="diagnostics"></pre>
+    </section>
+
+    <!-- Help -->
+    <section id="helpTab" class="tabcontent card" hidden>
+        <h2>How to use the STEPS decision aid</h2>
+        <p>
+            1. Start on the Configuration tab and adjust trainee numbers, cohorts and cost assumptions.<br>
+            2. Apply the configuration to update endorsement, costs, benefits and outbreak responses.<br>
+            3. Save scenarios of interest into the Scenario library for comparison.<br>
+            4. Use the Assumptions tab for structured sensitivity analysis on discount rates and outbreak values.<br>
+            5. When ready, generate a Copilot prompt for a policy briefing.
+        </p>
+    </section>
 </div>
 
-<!-- Scripts -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.1/jspdf.plugin.autotable.min.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js" defer></script>
-<script src="script.js" defer></script>
+<script src="script.js"></script>
 </body>
 </html>
