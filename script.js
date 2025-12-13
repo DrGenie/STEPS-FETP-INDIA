@@ -1,4 +1,3 @@
-// script.js
 /* ===================================================
    STEPS FETP India Decision Aid
    Accessible, policy ready, scenario focused script
@@ -14,14 +13,7 @@
     const APP_VERSION = "1.3.2";
     const MODEL_VERSION = "MXL-2025-12";
 
-    const STORAGE_KEYS = {
-        THEME: "steps_theme",
-        SCENARIOS: "steps_scenarios",
-        ASSUMPTIONS: "steps_assumptions",
-        LAST_STATE: "steps_last_state"
-    };
-
-    // Mixed logit coefficients from the preference study
+    // Mixed logit coefficients (kept for WTP / endorsement extensions)
     const MXL_COEFS = {
         ascProgram: 0.168,
         ascOptOut: -0.601,
@@ -48,10 +40,15 @@
         response: {
             30: 0.0,
             15: 0.546,
-            7: 0.900
-        },
-        // simple cost coefficient for illustrative WTP scaling
-        costPerLakh: -0.15
+            7: 0.900 // positive preference for faster response
+        }
+    };
+
+    const STORAGE_KEYS = {
+        THEME: "steps_theme",
+        SCENARIOS: "steps_scenarios",
+        ASSUMPTIONS: "steps_assumptions",
+        LAST_STATE: "steps_last_state"
     };
 
     const DEFAULT_ASSUMPTION_SETS = {
@@ -59,7 +56,7 @@
             id: "mohfw-baseline",
             label: "MoHFW baseline assumptions",
             discountRate: 0.03,
-            outbreakValue: 30000000000,
+            outbreakValue: 300000,
             opportunityCostShare: 0.2,
             note: "Reference set aligned with indicative MoHFW style baselines."
         },
@@ -67,7 +64,7 @@
             id: "wb-downside",
             label: "World Bank conservative downside",
             discountRate: 0.05,
-            outbreakValue: 20000000000,
+            outbreakValue: 200000,
             opportunityCostShare: 0.25,
             note: "For cautious tests of benefit cost robustness."
         },
@@ -75,9 +72,52 @@
             id: "wb-upside",
             label: "World Bank optimistic upside",
             discountRate: 0.03,
-            outbreakValue: 50000000000,
+            outbreakValue: 500000,
             opportunityCostShare: 0.15,
             note: "For ambitious planning scenarios with higher value per response."
+        }
+    };
+
+    // Simple policy question presets that push config into typical use cases
+    const POLICY_PRESETS = {
+        "national-scale": {
+            id: "national-scale",
+            label: "National scale up over 5 years",
+            description: "Higher cohorts and strong endorsement for a national five year scale up.",
+            config: {
+                traineesPerCohort: 30,
+                numberOfCohorts: 6,
+                planningHorizonYears: 5,
+                endorsementRate: 0.8,
+                completionRate: 0.9,
+                responseDays: 7
+            }
+        },
+        "pilot-two-states": {
+            id: "pilot-two-states",
+            label: "Pilot in two states over 3 years",
+            description: "Moderate cohort numbers to explore feasibility in two states.",
+            config: {
+                traineesPerCohort: 25,
+                numberOfCohorts: 3,
+                planningHorizonYears: 3,
+                endorsementRate: 0.7,
+                completionRate: 0.85,
+                responseDays: 7
+            }
+        },
+        "maintenance-mode": {
+            id: "maintenance-mode",
+            label: "Maintenance mode after initial roll out",
+            description: "Lower training volume to maintain core epidemiology capacity.",
+            config: {
+                traineesPerCohort: 20,
+                numberOfCohorts: 2,
+                planningHorizonYears: 5,
+                endorsementRate: 0.75,
+                completionRate: 0.9,
+                responseDays: 7
+            }
         }
     };
 
@@ -91,47 +131,11 @@
         endorsementRate: 0.8,
         completionRate: 0.9,
         responseDays: 7,
+        // Preference attributes (for clarity and diagnostics)
         tier: "frontline",
-        costPerTraineeInr: 400000
-    };
-
-    const POLICY_PRESETS = {
-        baseline: {
-            label: "Baseline roll out",
-            description: "Programme similar to current expectations with moderate scale up.",
-            configOverrides: {
-                traineesPerCohort: 25,
-                numberOfCohorts: 4,
-                planningHorizonYears: 5,
-                tier: "frontline",
-                costPerTraineeInr: 400000
-            },
-            assumptionSetId: "mohfw-baseline"
-        },
-        scale_up: {
-            label: "Ambitious scale up",
-            description: "Larger cohorts and more cohorts over the horizon to expand capacity quickly.",
-            configOverrides: {
-                traineesPerCohort: 35,
-                numberOfCohorts: 6,
-                planningHorizonYears: 5,
-                tier: "intermediate",
-                costPerTraineeInr: 500000
-            },
-            assumptionSetId: "wb-upside"
-        },
-        budget_cap: {
-            label: "Budget constrained roll out",
-            description: "Restricts total trainees while preserving advanced tier benefits.",
-            configOverrides: {
-                traineesPerCohort: 20,
-                numberOfCohorts: 3,
-                planningHorizonYears: 5,
-                tier: "advanced",
-                costPerTraineeInr: 450000
-            },
-            assumptionSetId: "wb-downside"
-        }
+        mentorship: "low",
+        career: "certificate",
+        delivery: "blended"
     };
 
     const STATE = {
@@ -175,6 +179,12 @@
         }) + " %";
     }
 
+    function generateScenarioId() {
+        const ts = Date.now().toString(36);
+        const rnd = Math.floor(Math.random() * 1e6).toString(36);
+        return "sc-" + ts + "-" + rnd;
+    }
+
     function getNowIso() {
         return new Date().toISOString();
     }
@@ -195,6 +205,7 @@
         }
     }
 
+    // Helper that tries multiple selector variants for robustness
     function setText(selectors, value) {
         const list = Array.isArray(selectors) ? selectors : [selectors];
         for (let i = 0; i < list.length; i++) {
@@ -467,66 +478,47 @@
 
     function readConfigFromUI() {
         const cfg = { ...STATE.config };
+        const map = [
+            { id: "#input-scenario-name", alt: "#inputScenarioName", field: "scenarioName" },
+            { id: "#input-scenario-id", alt: "#inputScenarioId", field: "scenarioId" },
+            { id: "#input-assumption-set-id", alt: "#inputAssumptionSetId", field: "assumptionSetId" },
+            { id: "#input-trainees-per-cohort", alt: "#inputTraineesPerCohort", field: "traineesPerCohort", numeric: true, min: 1, max: 500 },
+            { id: "#input-number-of-cohorts", alt: "#inputNumberOfCohorts", field: "numberOfCohorts", numeric: true, min: 1, max: 200 },
+            { id: "#input-planning-horizon", alt: "#inputPlanningHorizon", field: "planningHorizonYears", numeric: true, min: 1, max: 30 },
+            { id: "#input-endorsement-rate", alt: "#inputEndorsementRate", field: "endorsementRate", numeric: true, min: 0, max: 1 },
+            { id: "#input-completion-rate", alt: "#inputCompletionRate", field: "completionRate", numeric: true, min: 0, max: 1 },
+            { id: "#input-tier", alt: "#inputTier", field: "tier" },
+            { id: "#input-mentorship", alt: "#inputMentorship", field: "mentorship" },
+            { id: "#input-career", alt: "#inputCareer", field: "career" },
+            { id: "#input-delivery", alt: "#inputDelivery", field: "delivery" }
+        ];
 
-        const nameEl = safeQuerySelector("#input-scenario-name");
-        const idEl = safeQuerySelector("#input-scenario-id");
-        const asEl = safeQuerySelector("#input-assumption-set-id");
-        const tierEl = safeQuerySelector("#input-tier");
-        const traineesEl = safeQuerySelector("#input-trainees-per-cohort");
-        const cohortsEl = safeQuerySelector("#input-number-of-cohorts");
-        const horizonEl = safeQuerySelector("#input-planning-horizon");
-        const endEl = safeQuerySelector("#input-endorsement-rate");
-        const compEl = safeQuerySelector("#input-completion-rate");
-        const costSliderEl = safeQuerySelector("#input-cost-per-trainee");
-        const respEl = safeQuerySelector("#input-response-days");
+        map.forEach(function (m) {
+            const el = safeQuerySelector(m.id) || safeQuerySelector(m.alt);
+            if (!el) return;
+            if (m.numeric) {
+                const v = clamp(el.value, m.min, m.max);
+                cfg[m.field] = v;
+                el.value = v;
+            } else {
+                const v = el.value && String(el.value).trim();
+                if (v) cfg[m.field] = v;
+            }
+        });
 
-        if (nameEl && nameEl.value.trim()) cfg.scenarioName = nameEl.value.trim();
-        if (idEl && idEl.value.trim()) cfg.scenarioId = idEl.value.trim();
-        if (asEl && asEl.value) cfg.assumptionSetId = asEl.value;
-        if (tierEl && tierEl.value) cfg.tier = tierEl.value;
-
-        if (traineesEl) {
-            const v = clamp(traineesEl.value, 1, 500);
-            cfg.traineesPerCohort = v;
-            traineesEl.value = v;
-        }
-        if (cohortsEl) {
-            const v = clamp(cohortsEl.value, 1, 200);
-            cfg.numberOfCohorts = v;
-            cohortsEl.value = v;
-        }
-        if (horizonEl) {
-            const v = clamp(horizonEl.value, 1, 30);
-            cfg.planningHorizonYears = v;
-            horizonEl.value = v;
-        }
-        if (endEl) {
-            const v = clamp(endEl.value, 0, 1);
-            cfg.endorsementRate = v;
-            endEl.value = v;
-        }
-        if (compEl) {
-            const v = clamp(compEl.value, 0, 1);
-            cfg.completionRate = v;
-            compEl.value = v;
-        }
-        if (costSliderEl) {
-            const v = clamp(costSliderEl.value, 100000, 800000);
-            cfg.costPerTraineeInr = v;
-            costSliderEl.value = v;
-            updateCostSliderLabel(v);
-        }
-
-        if (respEl) {
-            const v = parseInt(respEl.value, 10);
+        const responseSelect = safeQuerySelector("#input-response-days") || safeQuerySelector("#inputResponseDays");
+        if (responseSelect) {
+            const v = parseInt(responseSelect.value, 10);
             cfg.responseDays = Number.isFinite(v) ? v : 7;
-            respEl.value = "7";
+            // Decision logic fixed at 7 days in UI
+            responseSelect.value = "7";
         } else {
             cfg.responseDays = cfg.responseDays || 7;
         }
 
         if (!cfg.scenarioId) {
-            cfg.scenarioId = "sc-" + Date.now().toString(36);
+            cfg.scenarioId = generateScenarioId();
+            const idEl = safeQuerySelector("#input-scenario-id") || safeQuerySelector("#inputScenarioId");
             if (idEl) idEl.value = cfg.scenarioId;
         }
 
@@ -536,33 +528,34 @@
 
     function writeConfigToUI(cfg) {
         const config = cfg || STATE.config;
+        const map = [
+            { id: "#input-scenario-name", alt: "#inputScenarioName", field: "scenarioName" },
+            { id: "#input-scenario-id", alt: "#inputScenarioId", field: "scenarioId" },
+            { id: "#input-assumption-set-id", alt: "#inputAssumptionSetId", field: "assumptionSetId" },
+            { id: "#input-trainees-per-cohort", alt: "#inputTraineesPerCohort", field: "traineesPerCohort" },
+            { id: "#input-number-of-cohorts", alt: "#inputNumberOfCohorts", field: "numberOfCohorts" },
+            { id: "#input-planning-horizon", alt: "#inputPlanningHorizon", field: "planningHorizonYears" },
+            { id: "#input-endorsement-rate", alt: "#inputEndorsementRate", field: "endorsementRate" },
+            { id: "#input-completion-rate", alt: "#inputCompletionRate", field: "completionRate" },
+            { id: "#input-tier", alt: "#inputTier", field: "tier" },
+            { id: "#input-mentorship", alt: "#inputMentorship", field: "mentorship" },
+            { id: "#input-career", alt: "#inputCareer", field: "career" },
+            { id: "#input-delivery", alt: "#inputDelivery", field: "delivery" }
+        ];
+        map.forEach(function (m) {
+            const el = safeQuerySelector(m.id) || safeQuerySelector(m.alt);
+            if (!el) return;
+            if (typeof config[m.field] === "number") {
+                el.value = config[m.field];
+            } else if (config[m.field]) {
+                el.value = config[m.field];
+            }
+        });
 
-        const nameEl = safeQuerySelector("#input-scenario-name");
-        const idEl = safeQuerySelector("#input-scenario-id");
-        const asEl = safeQuerySelector("#input-assumption-set-id");
-        const tierEl = safeQuerySelector("#input-tier");
-        const traineesEl = safeQuerySelector("#input-trainees-per-cohort");
-        const cohortsEl = safeQuerySelector("#input-number-of-cohorts");
-        const horizonEl = safeQuerySelector("#input-planning-horizon");
-        const endEl = safeQuerySelector("#input-endorsement-rate");
-        const compEl = safeQuerySelector("#input-completion-rate");
-        const costSliderEl = safeQuerySelector("#input-cost-per-trainee");
-        const respEl = safeQuerySelector("#input-response-days");
-
-        if (nameEl) nameEl.value = config.scenarioName || "";
-        if (idEl) idEl.value = config.scenarioId || "";
-        if (asEl) asEl.value = config.assumptionSetId || "mohfw-baseline";
-        if (tierEl) tierEl.value = config.tier || "frontline";
-        if (traineesEl) traineesEl.value = config.traineesPerCohort;
-        if (cohortsEl) cohortsEl.value = config.numberOfCohorts;
-        if (horizonEl) horizonEl.value = config.planningHorizonYears;
-        if (endEl) endEl.value = config.endorsementRate;
-        if (compEl) compEl.value = config.completionRate;
-        if (costSliderEl) {
-            costSliderEl.value = config.costPerTraineeInr;
-            updateCostSliderLabel(config.costPerTraineeInr);
+        const responseSelect = safeQuerySelector("#input-response-days") || safeQuerySelector("#inputResponseDays");
+        if (responseSelect) {
+            responseSelect.value = String(config.responseDays || 7);
         }
-        if (respEl) respEl.value = String(config.responseDays || 7);
     }
 
     function readAssumptionsFromUI() {
@@ -570,16 +563,16 @@
         const base = STATE.assumptionSets[currentId] || DEFAULT_ASSUMPTION_SETS["mohfw-baseline"];
         const assumptions = { ...base };
 
-        const discountEl = safeQuerySelector("#settings-discount-rate");
-        const outbreakEl = safeQuerySelector("#settings-outbreak-value");
-        const oppEl = safeQuerySelector("#settings-opp-cost-share");
+        const discountEl = safeQuerySelector("#settings-discount-rate") || safeQuerySelector("#settingsDiscountRate");
+        const outbreakEl = safeQuerySelector("#settings-outbreak-value") || safeQuerySelector("#settingsOutbreakValue");
+        const oppEl = safeQuerySelector("#settings-opp-cost-share") || safeQuerySelector("#settingsOppCostShare");
 
         if (discountEl) {
             assumptions.discountRate = clamp(discountEl.value, 0, 0.2);
             discountEl.value = assumptions.discountRate;
         }
         if (outbreakEl) {
-            assumptions.outbreakValue = clamp(outbreakEl.value, 0, 100000000000);
+            assumptions.outbreakValue = clamp(outbreakEl.value, 0, 5000000);
             outbreakEl.value = assumptions.outbreakValue;
         }
         if (oppEl) {
@@ -594,10 +587,10 @@
 
     function writeAssumptionsToUI(assumptions) {
         const a = assumptions || readAssumptionsFromUI();
-        const discountEl = safeQuerySelector("#settings-discount-rate");
-        const outbreakEl = safeQuerySelector("#settings-outbreak-value");
-        const oppEl = safeQuerySelector("#settings-opp-cost-share");
-        const presetSelect = safeQuerySelector("#settings-assumption-preset");
+        const discountEl = safeQuerySelector("#settings-discount-rate") || safeQuerySelector("#settingsDiscountRate");
+        const outbreakEl = safeQuerySelector("#settings-outbreak-value") || safeQuerySelector("#settingsOutbreakValue");
+        const oppEl = safeQuerySelector("#settings-opp-cost-share") || safeQuerySelector("#settingsOppCostShare");
+        const presetSelect = safeQuerySelector("#settings-assumption-preset") || safeQuerySelector("#settingsAssumptionPreset");
 
         if (discountEl) discountEl.value = a.discountRate;
         if (outbreakEl) outbreakEl.value = a.outbreakValue;
@@ -606,7 +599,7 @@
     }
 
     function initSettingsForm() {
-        const presetSelect = safeQuerySelector("#settings-assumption-preset");
+        const presetSelect = safeQuerySelector("#settings-assumption-preset") || safeQuerySelector("#settingsAssumptionPreset");
         if (presetSelect) {
             presetSelect.innerHTML = "";
             Object.values(STATE.assumptionSets).forEach(function (set) {
@@ -629,7 +622,7 @@
 
         writeAssumptionsToUI();
 
-        const applyBtn = safeQuerySelector("#btn-apply-settings");
+        const applyBtn = safeQuerySelector("#btn-apply-settings") || safeQuerySelector("#btnApplySettings");
         if (applyBtn) {
             applyBtn.addEventListener("click", function () {
                 const assumptions = readAssumptionsFromUI();
@@ -641,7 +634,7 @@
     }
 
     function appendSettingsLog(message) {
-        const logArea = safeQuerySelector("#settings-log");
+        const logArea = safeQuerySelector("#settings-log") || safeQuerySelector("#settingsLog");
         const timestamp = new Date().toLocaleString();
         const line = "[" + timestamp + "] " + message;
         if (logArea) {
@@ -651,53 +644,82 @@
     }
 
     /* ===========================
-       MXL utility and endorsement
+       Policy question presets
        =========================== */
 
-    function computeProgrammeUtility(config) {
-        const tier = config.tier || "frontline";
+    function initPolicyPresets() {
+        const select = safeQuerySelector("#policy-question-preset") || safeQuerySelector("#policyQuestionPreset");
+        const applyBtn = safeQuerySelector("#btn-apply-policy-preset") || safeQuerySelector("#btnApplyPolicyPreset");
+        const noteEl = safeQuerySelector("#policy-preset-note") || safeQuerySelector("#policyPresetNote");
 
-        const uTier = MXL_COEFS.tier[tier] || 0;
-        const uCareer = MXL_COEFS.career.uniqual;
-        const uMentor = MXL_COEFS.mentorship.high;
-        const uDelivery = MXL_COEFS.delivery.blended;
-        const uResponse = MXL_COEFS.response[config.responseDays] || 0;
+        if (!select) return;
 
-        const costLakh = (config.costPerTraineeInr || 0) / 100000;
-        const uCost = (MXL_COEFS.costPerLakh || 0) * costLakh;
+        select.innerHTML = "";
+        Object.values(POLICY_PRESETS).forEach(function (preset) {
+            const opt = document.createElement("option");
+            opt.value = preset.id;
+            opt.textContent = preset.label;
+            select.appendChild(opt);
+        });
 
-        const uProgramme = MXL_COEFS.ascProgram + uTier + uCareer + uMentor + uDelivery + uResponse + uCost;
-        const uOptOut = MXL_COEFS.ascOptOut;
+        if (noteEl) {
+            const first = POLICY_PRESETS[select.value] || Object.values(POLICY_PRESETS)[0];
+            if (first) noteEl.textContent = first.description;
+        }
 
-        const maxU = Math.max(uProgramme, uOptOut, 0);
-        const eProg = Math.exp(uProgramme - maxU);
-        const eOpt = Math.exp(uOptOut - maxU);
-        const eNone = Math.exp(0 - maxU);
+        select.addEventListener("change", function () {
+            const preset = POLICY_PRESETS[select.value];
+            if (preset && noteEl) {
+                noteEl.textContent = preset.description;
+            }
+        });
 
-        const denom = eProg + eOpt + eNone;
-        const pProgramme = denom > 0 ? eProg / denom : 0.5;
-        const pOptOut = denom > 0 ? eOpt / denom : 0.25;
-        const pNone = denom > 0 ? eNone / denom : 0.25;
+        if (applyBtn) {
+            applyBtn.addEventListener("click", function () {
+                const preset = POLICY_PRESETS[select.value];
+                if (!preset) return;
 
-        return {
-            pProgramme: pProgramme,
-            pOptOut: pOptOut,
-            pNone: pNone,
-            utilityProgramme: uProgramme,
-            utilityOptOut: uOptOut
-        };
+                STATE.config = {
+                    ...STATE.config,
+                    ...preset.config
+                };
+                writeConfigToUI(STATE.config);
+                recalculateAndRender();
+                showToast("Policy question preset applied to configuration", "success");
+            });
+        }
     }
 
     /* ===========================
        Calculation logic
        =========================== */
 
-    function presentValueAnnuity(flow, rate, years) {
-        const r = Math.max(0, parseNumber(rate, 0));
-        const n = Math.max(1, parseInt(years, 10) || 1);
-        if (r === 0) return flow * n;
-        const factor = (1 - Math.pow(1 + r, -n)) / r;
-        return flow * factor;
+    // Optional helper: predicted endorsement from preference attributes
+    function predictEndorsementFromAttributes(config) {
+        try {
+            const tierCoef = MXL_COEFS.tier[config.tier] || 0;
+            const mentorCoef = MXL_COEFS.mentorship[config.mentorship] || 0;
+            const careerCoef = MXL_COEFS.career[config.career] || 0;
+            const deliveryCoef = MXL_COEFS.delivery[config.delivery] || 0;
+            const responseCoef = MXL_COEFS.response[config.responseDays] || 0;
+
+            const utilProgram =
+                MXL_COEFS.ascProgram +
+                tierCoef +
+                mentorCoef +
+                careerCoef +
+                deliveryCoef +
+                responseCoef;
+
+            const utilOptOut = MXL_COEFS.ascOptOut;
+
+            const expProg = Math.exp(utilProgram);
+            const expOpt = Math.exp(utilOptOut);
+
+            return expProg / (expProg + expOpt);
+        } catch (e) {
+            return config.endorsementRate || DEFAULT_CONFIG.endorsementRate;
+        }
     }
 
     function computeScenarioIndicators(config, assumptions) {
@@ -706,8 +728,11 @@
         const horizon = clamp(config.planningHorizonYears, 1, 30);
         const completionRate = clamp(config.completionRate, 0, 1);
 
-        const mxl = computeProgrammeUtility(config);
-        const endorsementRate = mxl.pProgramme;
+        // Use the slider / input as the main endorsement rate,
+        // but show in diagnostics how it compares to preference prediction.
+        const enteredEndorsementRate = clamp(config.endorsementRate, 0, 1);
+        const modelEndorsementRate = predictEndorsementFromAttributes(config);
+        const endorsementRate = enteredEndorsementRate || modelEndorsementRate;
 
         const traineesPerYear = traineesPerCohort * numberOfCohorts;
         const totalTrainees = traineesPerYear * horizon;
@@ -721,13 +746,14 @@
         const outbreakResponsesPerYear = graduatesEndorsed * baseOutbreakResponsesPerGraduatePerYear * scaleResponse;
         const outbreakResponsesPerCohortPerYear = outbreakResponsesPerYear / Math.max(1, numberOfCohorts);
 
-        const costPerTrainee = config.costPerTraineeInr || 400000;
+        const costPerTrainee = 400000;
         const oppShare = assumptions.opportunityCostShare;
         const directCostsPV = presentValueAnnuity(costPerTrainee * traineesPerYear, assumptions.discountRate, horizon);
         const opportunityCostPV = directCostsPV * oppShare;
         const totalCostPV = directCostsPV + opportunityCostPV;
 
-        const benefitFlow = outbreakResponsesPerYear * assumptions.outbreakValue;
+        const outbreakValue = assumptions.outbreakValue;
+        const benefitFlow = outbreakResponsesPerYear * outbreakValue;
         const totalBenefitPV = presentValueAnnuity(benefitFlow, assumptions.discountRate, horizon);
         const npv = totalBenefitPV - totalCostPV;
         const bcr = totalCostPV > 0 ? totalBenefitPV / totalCostPV : null;
@@ -746,6 +772,8 @@
             npv: npv,
             bcr: bcr,
             endorsementRate: endorsementRate,
+            endorsementRateEntered: enteredEndorsementRate,
+            endorsementRatePredicted: modelEndorsementRate,
             completionRate: completionRate,
             responseDays: responseDays,
             horizon: horizon,
@@ -753,17 +781,28 @@
         };
     }
 
+    function presentValueAnnuity(flow, rate, years) {
+        const r = Math.max(0, parseNumber(rate, 0));
+        const n = Math.max(1, parseInt(years, 10) || 1);
+        if (r === 0) return flow * n;
+        const factor = (1 - Math.pow(1 + r, -n)) / r;
+        return flow * factor;
+    }
+
     /* ===========================
        Rendering functions
        =========================== */
 
     function renderHeadlineIndicators(indicators) {
-        setText(["#summary-endorsement"], formatPercent(indicators.endorsementRate, 1));
-        setText(["#summary-bcr"], indicators.bcr != null ? formatNumber(indicators.bcr, 2) : "n/a");
-        setText(["#summary-npv"], formatNumber(indicators.npv, 0));
-        setText(["#summary-trainees"], formatNumber(indicators.totalTrainees, 0));
+        setText(["#summary-endorsement", "#summaryEndorsement"], formatPercent(indicators.endorsementRate, 1));
+        setText(["#summary-bcr", "#summaryBcr"], indicators.bcr != null ? formatNumber(indicators.bcr, 2) : "n/a");
+        setText(["#summary-npv", "#summaryNpv"], formatNumber(indicators.npv, 0));
+        setText(["#summary-trainees", "#summaryTrainees"], formatNumber(indicators.totalTrainees, 0));
+        setText(["#summary-graduates", "#summaryGraduates"], formatNumber(indicators.graduatesTotal, 0));
+        setText(["#summary-outbreaks-per-year", "#summaryOutbreaksPerYear"], formatNumber(indicators.outbreakResponsesPerYear, 1));
+        setText(["#summary-outbreaks-per-cohort", "#summaryOutbreaksPerCohort"], formatNumber(indicators.outbreakResponsesPerCohortPerYear, 2));
 
-        const hintBcr = safeQuerySelector("#hint-bcr");
+        const hintBcr = safeQuerySelector("#hint-bcr") || safeQuerySelector("#hintBcr");
         if (hintBcr) {
             if (indicators.bcr != null && indicators.bcr > 1) {
                 hintBcr.textContent = "Value above 1 suggests benefits exceed economic costs.";
@@ -774,7 +813,7 @@
             }
         }
 
-        const hintEndorsement = safeQuerySelector("#hint-endorsement");
+        const hintEndorsement = safeQuerySelector("#hint-endorsement") || safeQuerySelector("#hintEndorsement");
         if (hintEndorsement) {
             if (indicators.endorsementRate >= 0.7) {
                 hintEndorsement.textContent = "Above 70 percent typically indicates strong support in the preference study context.";
@@ -784,35 +823,53 @@
                 hintEndorsement.textContent = "Below 50 percent suggests limited endorsement and potential acceptability concerns.";
             }
         }
+
+        const hintEndorsementSplit = safeQuerySelector("#hint-endorsement-split") || safeQuerySelector("#hintEndorsementSplit");
+        if (hintEndorsementSplit) {
+            hintEndorsementSplit.textContent =
+                "Entered endorsement rate and model predicted endorsement can differ. The slider reflects the rate used in the cost benefit analysis.";
+        }
     }
 
     function renderConfigSummary(config, indicators, assumptions) {
-        setText(["#summary-config-trainees-per-cohort"], formatNumber(config.traineesPerCohort, 0));
-        setText(["#summary-config-number-of-cohorts"], formatNumber(config.numberOfCohorts, 0));
-        setText(["#summary-config-horizon-years"], formatNumber(config.planningHorizonYears, 0));
-        setText(["#summary-config-endorsement"], formatPercent(indicators.endorsementRate, 1));
-        setText(["#summary-config-completion"], formatPercent(indicators.completionRate, 1));
+        setText(["#summary-config-trainees-per-cohort", "#summaryConfigTraineesPerCohort"], formatNumber(config.traineesPerCohort, 0));
+        setText(["#summary-config-number-of-cohorts", "#summaryConfigNumberOfCohorts"], formatNumber(config.numberOfCohorts, 0));
+        setText(["#summary-config-horizon-years", "#summaryConfigHorizonYears"], formatNumber(config.planningHorizonYears, 0));
+        setText(["#summary-config-endorsement", "#summaryConfigEndorsement"], formatPercent(indicators.endorsementRate, 1));
+        setText(["#summary-config-completion", "#summaryConfigCompletion"], formatPercent(config.completionRate, 1));
 
-        const assumptionEl = safeQuerySelector("#summary-assumption-label");
+        // Preference attributes so users see what each scenario represents
+        setText(["#summary-config-tier", "#summaryConfigTier"], config.tier || "n/a");
+        setText(["#summary-config-mentorship", "#summaryConfigMentorship"], config.mentorship || "n/a");
+        setText(["#summary-config-career", "#summaryConfigCareer"], config.career || "n/a");
+        setText(["#summary-config-delivery", "#summaryConfigDelivery"], config.delivery || "n/a");
+
+        const assumptionEl = safeQuerySelector("#summary-assumption-label") || safeQuerySelector("#summaryAssumptionLabel");
         if (assumptionEl && assumptions) {
             assumptionEl.textContent = assumptions.label || assumptions.id;
         }
 
-        setText(["#summary-cost-direct"], formatNumber(indicators.directCostsPV, 0));
-        setText(["#summary-cost-opportunity"], formatNumber(indicators.opportunityCostPV, 0));
-        setText(["#summary-cost-total"], formatNumber(indicators.totalCostPV, 0));
-        setText(["#summary-benefit-pv"], formatNumber(indicators.totalBenefitPV, 0));
+        setText(["#summary-cost-direct", "#summaryCostDirect"], formatNumber(indicators.directCostsPV, 0));
+        setText(["#summary-cost-opportunity", "#summaryCostOpportunity"], formatNumber(indicators.opportunityCostPV, 0));
+        setText(["#summary-cost-total", "#summaryCostTotal"], formatNumber(indicators.totalCostPV, 0));
+        setText(["#summary-benefit-pv", "#summaryBenefitPv"], formatNumber(indicators.totalBenefitPV, 0));
+
+        const descEl = safeQuerySelector("#summary-config-description") || safeQuerySelector("#summaryConfigDescription");
+        if (descEl) {
+            descEl.textContent =
+                "This scenario combines the selected training volume with the chosen tier, mentorship, career incentive, and delivery mode. " +
+                "Endorsement and completion rates together determine how many graduates actively contribute to outbreak response.";
+        }
     }
 
     function renderNationalSummary(config, indicators) {
-        setText(["#national-graduates"], formatNumber(indicators.graduatesTotal, 0));
-        const totalOutbreaks = indicators.outbreakResponsesPerYear * config.planningHorizonYears;
-        setText(["#national-outbreaks"], formatNumber(totalOutbreaks, 0));
-        setText(["#national-label-horizon"], formatNumber(config.planningHorizonYears, 0));
+        setText(["#national-graduates", "#nationalGraduates"], formatNumber(indicators.graduatesTotal, 0));
+        setText(["#national-outbreaks", "#nationalOutbreaks"], formatNumber(indicators.outbreakResponsesPerYear * config.planningHorizonYears, 0));
+        setText(["#national-label-horizon", "#nationalLabelHorizon"], formatNumber(config.planningHorizonYears, 0));
     }
 
     function renderScenarioTable() {
-        const tableBody = safeQuerySelector("#scenario-table tbody");
+        const tableBody = safeQuerySelector("#scenario-table tbody") || safeQuerySelector("#scenarioTable tbody");
         if (!tableBody) return;
 
         tableBody.innerHTML = "";
@@ -821,33 +878,49 @@
         STATE.scenarios.forEach(function (sc, index) {
             const tr = document.createElement("tr");
 
-            function td(text) {
-                const el = document.createElement("td");
-                el.textContent = text;
-                return el;
-            }
+            const tdIdx = document.createElement("td");
+            tdIdx.textContent = String(index + 1);
 
-            tr.appendChild(td(String(index + 1)));
-            tr.appendChild(td(sc.name));
-            tr.appendChild(td(sc.id));
-            tr.appendChild(td(sc.assumptionLabel || sc.assumptionSetId));
-            tr.appendChild(td(sc.indicators.bcr != null ? formatNumber(sc.indicators.bcr, 2) : "n/a"));
-            tr.appendChild(td(formatNumber(sc.indicators.npv, 0)));
+            const tdName = document.createElement("td");
+            tdName.textContent = sc.name || sc.scenarioName || "Scenario";
+
+            const tdId = document.createElement("td");
+            tdId.textContent = sc.id || sc.scenarioId || "";
+
+            const tdAssumption = document.createElement("td");
+            tdAssumption.textContent = sc.assumptionLabel || sc.assumptionSetId || "";
+
+            const ind = sc.indicators || {};
+            const bcr = typeof ind.bcr === "number" ? ind.bcr : null;
+            const npv = typeof ind.npv === "number" ? ind.npv : 0;
+
+            const tdBcr = document.createElement("td");
+            tdBcr.textContent = bcr != null ? formatNumber(bcr, 2) : "n/a";
+
+            const tdNpv = document.createElement("td");
+            tdNpv.textContent = formatNumber(npv, 0);
 
             const tdActions = document.createElement("td");
             const loadBtn = document.createElement("button");
             loadBtn.type = "button";
-            loadBtn.className = "btn-ghost small-btn";
+            loadBtn.className = "btn-ghost";
             loadBtn.textContent = "Load";
             loadBtn.addEventListener("click", function () {
-                STATE.config = { ...sc.config };
+                STATE.config = { ...(sc.config || STATE.config) };
+                STATE.config.assumptionSetId = sc.assumptionSetId || STATE.config.assumptionSetId || "mohfw-baseline";
                 writeConfigToUI(STATE.config);
-                STATE.config.assumptionSetId = sc.assumptionSetId;
-                writeAssumptionsToUI(STATE.assumptionSets[sc.assumptionSetId] || DEFAULT_ASSUMPTION_SETS["mohfw-baseline"]);
+                writeAssumptionsToUI(STATE.assumptionSets[STATE.config.assumptionSetId] || DEFAULT_ASSUMPTION_SETS["mohfw-baseline"]);
                 recalculateAndRender();
-                showToast('Scenario "' + sc.name + '" loaded into configuration', "success");
+                showToast('Scenario "' + (sc.name || "Scenario") + '" loaded into configuration', "success");
             });
             tdActions.appendChild(loadBtn);
+
+            tr.appendChild(tdIdx);
+            tr.appendChild(tdName);
+            tr.appendChild(tdId);
+            tr.appendChild(tdAssumption);
+            tr.appendChild(tdBcr);
+            tr.appendChild(tdNpv);
             tr.appendChild(tdActions);
 
             tableBody.appendChild(tr);
@@ -855,7 +928,7 @@
     }
 
     function renderDiagnostics(config, assumptions, indicators) {
-        const diagnosticsEl = safeQuerySelector("#diagnosticsContent");
+        const diagnosticsEl = safeQuerySelector("#diagnosticsContent") || safeQuerySelector("#diagnostics-content");
         if (!diagnosticsEl) return;
 
         const payload = {
@@ -871,8 +944,29 @@
     }
 
     /* ===========================
-       Charts
+       Charts and data views
        =========================== */
+
+    function initChartDataToggle() {
+        const toggles = safeQuerySelectorAll("[data-chart-table-target]");
+        toggles.forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                const targetId = btn.getAttribute("data-chart-table-target");
+                if (!targetId) return;
+                const wrapper = safeQuerySelector("#" + targetId);
+                if (!wrapper) return;
+
+                const hidden = wrapper.hasAttribute("hidden");
+                if (hidden) {
+                    wrapper.removeAttribute("hidden");
+                    btn.textContent = "Hide data table";
+                } else {
+                    wrapper.setAttribute("hidden", "true");
+                    btn.textContent = "View data as table";
+                }
+            });
+        });
+    }
 
     function renderSimpleCharts(config, indicators) {
         if (typeof window === "undefined" || typeof window.Chart === "undefined") {
@@ -887,7 +981,7 @@
 
         chartMap.forEach(function (info) {
             const canvas = safeQuerySelector("#" + info.canvasId);
-            if (!canvas || !canvas.getContext) return;
+            if (!canvas) return;
 
             if (STATE.charts[info.canvasId]) {
                 STATE.charts[info.canvasId].destroy();
@@ -965,18 +1059,18 @@
             STATE.charts[info.canvasId] = chart;
         });
 
-        setText("#chart-costs-summary",
+        setText(["#chart-costs-summary", "#chartCostsSummary"],
             "Direct training and opportunity costs sum to about " +
             formatNumber(indicators.totalCostPV, 0) +
             " in present value terms.");
 
-        setText("#chart-benefits-summary",
+        setText(["#chart-benefits-summary", "#chartBenefitsSummary"],
             "Present value of outbreak response benefits is about " +
             formatNumber(indicators.totalBenefitPV, 0) +
             ", yielding a benefit cost ratio of " +
             (indicators.bcr != null ? formatNumber(indicators.bcr, 2) : "n/a") + ".");
 
-        setText("#chart-outbreaks-summary",
+        setText(["#chart-outbreaks-summary", "#chartOutbreaksSummary"],
             "Graduates deliver roughly " +
             formatNumber(indicators.outbreakResponsesPerYear, 1) +
             " outbreak responses per year, or " +
@@ -994,8 +1088,8 @@
         const indicators = computeScenarioIndicators(config, assumptions);
 
         const scenario = {
-            id: config.scenarioId || ("sc-" + Date.now().toString(36)),
-            name: config.scenarioName || ("Scenario " + (STATE.scenarios.length + 1)),
+            id: config.scenarioId || generateScenarioId(),
+            name: config.scenarioName || "Scenario " + (STATE.scenarios.length + 1),
             createdAt: getNowIso(),
             assumptionSetId: assumptions.id,
             assumptionLabel: assumptions.label,
@@ -1014,8 +1108,8 @@
     }
 
     function initScenarioControls() {
-        const saveBtn = safeQuerySelector("#btn-save-scenario");
-        const newBtn = safeQuerySelector("#btn-new-scenario");
+        const saveBtn = safeQuerySelector("#btn-save-scenario") || safeQuerySelector("#btnSaveScenario");
+        const newBtn = safeQuerySelector("#btn-new-scenario") || safeQuerySelector("#btnNewScenario");
 
         if (saveBtn) {
             saveBtn.addEventListener("click", function () {
@@ -1027,39 +1121,13 @@
 
         if (newBtn) {
             newBtn.addEventListener("click", function () {
-                const newId = "sc-" + Date.now().toString(36);
-                STATE.config = { ...DEFAULT_CONFIG, scenarioId: newId, scenarioName: "New scenario" };
+                const newId = generateScenarioId();
+                STATE.config.scenarioId = newId;
+                STATE.config.scenarioName = "New scenario";
                 writeConfigToUI(STATE.config);
-                recalculateAndRender();
                 showToast("New blank scenario created. Adjust inputs and save when ready.", "success");
             });
         }
-    }
-
-    /* ===========================
-       Policy question presets
-       =========================== */
-
-    function initPolicyPresets() {
-        const select = safeQuerySelector("#policy-question-select");
-        const applyBtn = safeQuerySelector("#btn-apply-policy");
-        if (!select || !applyBtn) return;
-
-        applyBtn.addEventListener("click", function () {
-            const key = select.value;
-            const preset = POLICY_PRESETS[key];
-            if (!preset) {
-                showToast("Preset not found for selection", "warning");
-                return;
-            }
-            const cfg = { ...STATE.config, ...preset.configOverrides };
-            cfg.assumptionSetId = preset.assumptionSetId;
-            STATE.config = cfg;
-            writeConfigToUI(cfg);
-            writeAssumptionsToUI(STATE.assumptionSets[cfg.assumptionSetId] || DEFAULT_ASSUMPTION_SETS["mohfw-baseline"]);
-            recalculateAndRender();
-            showToast("Policy preset applied: " + preset.label, "success");
-        });
     }
 
     /* ===========================
@@ -1085,7 +1153,9 @@
             completionRate: indicators.completionRate,
             responseDays: config.responseDays,
             tier: config.tier,
-            costPerTraineeInr: config.costPerTraineeInr
+            mentorship: config.mentorship,
+            career: config.career,
+            delivery: config.delivery
         };
 
         const scenarioOutputs = {
@@ -1135,7 +1205,7 @@
     }
 
     function renderCopilotPrompt(config, assumptions, indicators) {
-        const outputEl = safeQuerySelector("#copilot-prompt-output");
+        const outputEl = safeQuerySelector("#copilot-prompt-output") || safeQuerySelector("#copilotPromptOutput");
         if (!outputEl) return;
 
         const prompt = buildCopilotPrompt(config, assumptions, indicators);
@@ -1143,8 +1213,8 @@
     }
 
     function initCopilotControls() {
-        const generateBtn = safeQuerySelector("#btn-generate-copilot");
-        const copyBtn = safeQuerySelector("#btn-copy-copilot");
+        const generateBtn = safeQuerySelector("#btn-generate-copilot") || safeQuerySelector("#btnGenerateCopilot");
+        const copyBtn = safeQuerySelector("#btn-copy-copilot") || safeQuerySelector("#btnCopyCopilot");
 
         if (generateBtn) {
             generateBtn.addEventListener("click", function () {
@@ -1158,7 +1228,7 @@
 
         if (copyBtn) {
             copyBtn.addEventListener("click", function () {
-                const outputEl = safeQuerySelector("#copilot-prompt-output");
+                const outputEl = safeQuerySelector("#copilot-prompt-output") || safeQuerySelector("#copilotPromptOutput");
                 if (!outputEl) return;
                 const text = outputEl.textContent || outputEl.value || "";
                 if (!text.trim()) {
@@ -1176,6 +1246,46 @@
                 }
             });
         }
+    }
+
+    /* ===========================
+       Help panel
+       =========================== */
+
+    function initHelpPanel() {
+        const helpPanel = safeQuerySelector("#helpPanel");
+        const openBtn = safeQuerySelector("#btn-open-help") || safeQuerySelector("#btnOpenHelp");
+        const closeBtn = safeQuerySelector("#btn-close-help") || safeQuerySelector("#btnCloseHelp");
+
+        if (!helpPanel) return;
+
+        function openPanel() {
+            helpPanel.setAttribute("aria-hidden", "false");
+            helpPanel.focus();
+        }
+
+        function closePanel() {
+            helpPanel.setAttribute("aria-hidden", "true");
+            if (openBtn) openBtn.focus();
+        }
+
+        if (openBtn) {
+            openBtn.addEventListener("click", function () {
+                openPanel();
+            });
+        }
+
+        if (closeBtn) {
+            closeBtn.addEventListener("click", function () {
+                closePanel();
+            });
+        }
+
+        document.addEventListener("keydown", function (event) {
+            if (event.key === "Escape" && helpPanel.getAttribute("aria-hidden") === "false") {
+                closePanel();
+            }
+        });
     }
 
     /* ===========================
@@ -1198,7 +1308,19 @@
             if (scenariosRaw) {
                 const parsed = JSON.parse(scenariosRaw);
                 if (Array.isArray(parsed)) {
-                    STATE.scenarios = parsed;
+                    // Normalise any legacy entries that might be missing indicators
+                    STATE.scenarios = parsed.map(function (s) {
+                        if (!s.indicators || typeof s.indicators !== "object") {
+                            return {
+                                ...s,
+                                indicators: {
+                                    bcr: null,
+                                    npv: 0
+                                }
+                            };
+                        }
+                        return s;
+                    });
                 }
             }
 
@@ -1228,21 +1350,11 @@
        Config events and validation
        =========================== */
 
-    function updateCostSliderLabel(value) {
-        const label = safeQuerySelector("#cost-per-trainee-label");
-        if (!label) return;
-        const v = parseNumber(value, 0);
-        label.textContent = v.toLocaleString(undefined, {
-            maximumFractionDigits: 0
-        });
-    }
-
     function initConfigForm() {
         writeConfigToUI(STATE.config);
 
-        const applyBtn = safeQuerySelector("#btn-apply-values");
-        const resetBtn = safeQuerySelector("#btn-reset-config");
-        const costSliderEl = safeQuerySelector("#input-cost-per-trainee");
+        const applyBtn = safeQuerySelector("#btn-apply-values") || safeQuerySelector("#btnApplyValues");
+        const resetBtn = safeQuerySelector("#btn-reset-config") || safeQuerySelector("#btnResetConfig");
 
         if (applyBtn) {
             applyBtn.addEventListener("click", function () {
@@ -1257,12 +1369,6 @@
                 writeConfigToUI(STATE.config);
                 recalculateAndRender();
                 showToast("Configuration reset to baseline", "success");
-            });
-        }
-
-        if (costSliderEl) {
-            costSliderEl.addEventListener("input", function () {
-                updateCostSliderLabel(costSliderEl.value);
             });
         }
 
@@ -1289,8 +1395,20 @@
             persistState();
         } catch (e) {
             showToast("An error occurred while updating the scenario. Please check the console.", "error");
+            // eslint-disable-next-line no-console
             console.error(e);
         }
+    }
+
+    /* ===========================
+       Keyboard focus helpers
+       =========================== */
+
+    function initKeyboardHelpers() {
+        const panels = safeQuerySelectorAll(".card");
+        panels.forEach(function (panel) {
+            panel.setAttribute("tabindex", "-1");
+        });
     }
 
     /* ===========================
@@ -1309,9 +1427,12 @@
         initTooltips();
         initConfigForm();
         initSettingsForm();
-        initScenarioControls();
         initPolicyPresets();
+        initScenarioControls();
+        initChartDataToggle();
         initCopilotControls();
+        initHelpPanel();
+        initKeyboardHelpers();
         recalculateAndRender();
     });
 })();
