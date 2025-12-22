@@ -142,6 +142,57 @@ const DEFAULT_EPI_SETTINGS = {
   }
 };
 
+/* ===========================
+   Monitoring & Evaluation indicator library
+   =========================== */
+
+const ME_INDICATORS = [
+  {
+    id: "input_budget",
+    level: "Input",
+    name: "Annual FETP budget for this configuration",
+    formula: "Total economic cost across all cohorts divided by planning horizon (INR per year)",
+    dataSource: "STEPS costing plus country budget data",
+    scenarioMapping: (scenario) => {
+      const years = scenario.planningYears || appState.epiSettings.general.planningHorizonYears;
+      const annual = years > 0 ? scenario.natTotalCost / years : scenario.natTotalCost;
+      return annual;
+    }
+  },
+  {
+    id: "output_graduates",
+    level: "Output",
+    name: "Total FETP graduates produced",
+    formula: "Graduates across all cohorts (completion × endorsement × trainees × cohorts)",
+    dataSource: "STEPS epidemiological outputs + FETP registry",
+    scenarioMapping: (scenario) => scenario.graduatesAllCohorts
+  },
+  {
+    id: "outcome_outbreaks",
+    level: "Outcome",
+    name: "Outbreak responses per year (national)",
+    formula: "Graduates × outbreaks per graduate per year × response time multiplier",
+    dataSource: "STEPS epidemiological outputs + national surveillance data",
+    scenarioMapping: (scenario) => scenario.outbreaksPerYearNational
+  },
+  {
+    id: "impact_outbreak_benefit",
+    level: "Impact",
+    name: "Total outbreak-related economic benefit",
+    formula: "Discounted outbreak benefits across all cohorts (INR)",
+    dataSource: "STEPS epidemiological module",
+    scenarioMapping: (scenario) => scenario.epiBenefitAllCohorts
+  },
+  {
+    id: "impact_bcr",
+    level: "Impact",
+    name: "National benefit–cost ratio (outbreak benefits vs economic costs)",
+    formula: "Total outbreak benefit divided by total economic cost",
+    dataSource: "STEPS benefit–cost calculations",
+    scenarioMapping: (scenario) => scenario.natBcr
+  }
+];
+
 /* Response time multipliers for outbreak benefits */
 
 const RESPONSE_TIME_MULTIPLIERS = {
@@ -157,67 +208,6 @@ const TIER_MONTHS = {
   intermediate: 12,
   advanced: 24
 };
-
-/* ===========================
-   Monitoring and evaluation indicators
-   =========================== */
-
-const ME_INDICATORS = [
-  {
-    id: "input_budget_annual",
-    level: "Input",
-    name: "Indicative annual economic cost for this configuration",
-    formula: "Total economic cost across all cohorts divided by the planning horizon (INR per year)",
-    dataSource: "STEPS economic cost outputs and planning horizon setting",
-    format: "currency",
-    decimals: 0,
-    scenarioMapping: (scenario) => {
-      const years = scenario.planningYears || (appState.epiSettings && appState.epiSettings.general.planningHorizonYears) || 1;
-      const totalCost = scenario.natTotalCost || 0;
-      return years > 0 ? totalCost / years : totalCost;
-    }
-  },
-  {
-    id: "output_graduates_all",
-    level: "Output",
-    name: "Total FETP graduates produced",
-    formula: "Graduates across all configured cohorts after applying completion and endorsement",
-    dataSource: "STEPS epidemiological outputs and endorsement rate",
-    format: "number",
-    decimals: 0,
-    scenarioMapping: (scenario) => scenario.graduatesAllCohorts
-  },
-  {
-    id: "outcome_outbreak_responses",
-    level: "Outcome",
-    name: "Outbreak responses per year (national)",
-    formula: "Graduates multiplied by outbreaks per graduate per year and the response time multiplier",
-    dataSource: "STEPS epidemiological outputs and outbreak deployment data",
-    format: "number",
-    decimals: 1,
-    scenarioMapping: (scenario) => scenario.outbreaksPerYearNational
-  },
-  {
-    id: "impact_outbreak_benefit_total",
-    level: "Impact",
-    name: "Total outbreak related economic benefit",
-    formula: "Discounted outbreak related benefit across all cohorts (INR)",
-    dataSource: "STEPS epidemiological benefit calculations",
-    format: "currency",
-    decimals: 0,
-    scenarioMapping: (scenario) => scenario.epiBenefitAllCohorts
-  },
-  {
-    id: "impact_bcr_national",
-    level: "Impact",
-    name: "National benefit cost ratio (outbreak related benefits vs economic costs)",
-    formula: "Total outbreak related benefit divided by total economic cost",
-    dataSource: "STEPS benefit cost calculations",
-    format: "bcr",
-    decimals: 2,
-    scenarioMapping: (scenario) => scenario.natBcr
-  }
-];
 
 /* ===========================
    Copilot interpretation prompt
@@ -1832,7 +1822,145 @@ function initApplySettingsButton() {
 }
 
 /* ===========================
-   Results, national tabs and M&E updates
+   Monitoring & Evaluation tab
+   =========================== */
+
+function updateMETab(scenario) {
+  const logicDiv = document.getElementById("me-logic-model");
+  const tableDiv = document.getElementById("me-indicators-table");
+  const notesDiv = document.getElementById("me-notes");
+  if (!logicDiv || !tableDiv || !notesDiv || !scenario) return;
+
+  const c = scenario.config;
+  const planningYears = scenario.planningYears || appState.epiSettings.general.planningHorizonYears;
+
+  logicDiv.innerHTML = `
+    <p>This monitoring and evaluation framework links the STEPS configuration
+    (tier ${safeText(c.tier)}, ${formatNumber(c.cohorts, 0)} cohorts of ${formatNumber(
+      c.traineesPerCohort,
+      0
+    )} trainees,
+    response within ${safeText(c.response)} days) to indicators that track inputs, outputs,
+    capacity and impact over the ${formatNumber(planningYears, 0)} year planning horizon.</p>
+  `;
+
+  const rows = ME_INDICATORS.map((ind) => {
+    const val = ind.scenarioMapping ? ind.scenarioMapping(scenario) : null;
+    const formatted =
+      ind.id === "impact_bcr"
+        ? (val != null ? formatNumber(val, 2) : "-")
+        : formatCurrencyDisplay(val, 0);
+    return `
+      <tr>
+        <td>${safeText(ind.level)}</td>
+        <td>${safeText(ind.name)}</td>
+        <td>${safeText(ind.formula)}</td>
+        <td>${safeText(ind.dataSource)}</td>
+        <td class="numeric-cell">${formatted}</td>
+      </tr>
+    `;
+  }).join("");
+
+  tableDiv.innerHTML = `
+    <table class="data-table" aria-label="Monitoring and evaluation indicators">
+      <thead>
+        <tr>
+          <th>Level</th>
+          <th>Indicator</th>
+          <th>Definition / formula</th>
+          <th>Main data source</th>
+          <th>Planned value under this scenario</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+
+  notesDiv.textContent =
+    "These planned values can be used as targets in FETP monitoring and evaluation plans. " +
+    "Routine programme and surveillance data should be used to track actual values over time " +
+    "and compare against the targets implied by STEPS scenarios.";
+}
+
+function exportMELogframeToExcel() {
+  if (!window.XLSX) {
+    showToast("Excel export is not available in this browser.", "error");
+    return;
+  }
+  const table = document.querySelector("#me-indicators-table table");
+  if (!table) {
+    showToast("M&E indicators table is not available. Apply a configuration first.", "warning");
+    return;
+  }
+  const wb = XLSX.utils.book_new();
+  const sheet = XLSX.utils.table_to_sheet(table);
+  XLSX.utils.book_append_sheet(wb, sheet, "STEPS M&E logframe");
+  XLSX.writeFile(wb, "steps_me_logframe.xlsx");
+  showToast("M&E logframe Excel file downloaded.", "success");
+}
+
+function exportMELogframeToPdf() {
+  if (!window.jspdf || !window.jspdf.jsPDF) {
+    showToast("PDF export is not available in this browser.", "error");
+    return;
+  }
+  const table = document.querySelector("#me-indicators-table table");
+  if (!table) {
+    showToast("M&E indicators table is not available. Apply a configuration first.", "warning");
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: "landscape" });
+
+  let y = 10;
+  doc.setFontSize(14);
+  doc.text("STEPS FETP India Decision Aid - Monitoring and evaluation logframe", 10, y);
+  y += 10;
+
+  const headRow = table.querySelector("thead tr");
+  const head = [];
+  if (headRow) {
+    head.push(Array.from(headRow.children).map((th) => th.textContent.trim()));
+  }
+
+  const body = [];
+  const bodyRows = table.querySelectorAll("tbody tr");
+  bodyRows.forEach((tr) => {
+    const row = Array.from(tr.children).map((td) => td.textContent.trim());
+    body.push(row);
+  });
+
+  if (doc.autoTable && head.length && body.length) {
+    doc.setFontSize(8);
+    doc.autoTable({
+      head,
+      body,
+      startY: y,
+      styles: { fontSize: 7, cellPadding: 2 },
+      headStyles: { fontSize: 7 },
+      theme: "grid"
+    });
+  } else {
+    doc.setFontSize(9);
+    const text = table.innerText || "";
+    const lines = doc.splitTextToSize(text, doc.internal.pageSize.getWidth() - 20);
+    lines.forEach((line) => {
+      if (y > doc.internal.pageSize.getHeight() - 10) {
+        doc.addPage();
+        y = 10;
+      }
+      doc.text(line, 10, y);
+      y += 10;
+    });
+  }
+
+  doc.save("steps_me_logframe.pdf");
+  showToast("M&E logframe PDF downloaded.", "success");
+}
+
+/* ===========================
+   Results and national tabs updates
    =========================== */
 
 function updateConfigSummary(scenario) {
@@ -2079,85 +2207,6 @@ function updateNationalSimulationTab(scenario) {
 
   updateNatCostBenefitChart(scenario);
   updateNatEpiChart(scenario);
-}
-
-/* Monitoring and evaluation tab */
-
-function updateMETab(scenario) {
-  const logicDiv = document.getElementById("me-logic-model");
-  const tableDiv = document.getElementById("me-indicators-table");
-  const notesDiv = document.getElementById("me-notes");
-
-  if (!logicDiv || !tableDiv || !notesDiv || !scenario) return;
-
-  const c = scenario.config || {};
-  const planningYears = scenario.planningYears || appState.epiSettings.general.planningHorizonYears;
-
-  logicDiv.innerHTML = `
-    <p>This monitoring and evaluation view links the current STEPS configuration (tier ${safeText(
-      c.tier || ""
-    )}, ${formatNumber(c.cohorts || 0, 0)} cohorts of ${formatNumber(
-      c.traineesPerCohort || 0,
-      0
-    )} trainees, response within ${safeText(
-      c.response || "7"
-    )} days) to a small set of indicators that track inputs, outputs, capacity and impact over ${formatNumber(
-      planningYears || 0,
-      0
-    )} years.</p>
-  `;
-
-  const rowsHtml = ME_INDICATORS.map((ind) => {
-    let val = null;
-    try {
-      val = ind.scenarioMapping ? ind.scenarioMapping(scenario) : null;
-    } catch (e) {
-      val = null;
-    }
-
-    let formatted = "-";
-    if (val !== null && val !== undefined && !isNaN(val)) {
-      if (ind.format === "number") {
-        formatted = formatNumber(val, ind.decimals != null ? ind.decimals : 2);
-      } else if (ind.format === "percent") {
-        formatted = formatNumber(val * 100, ind.decimals != null ? ind.decimals : 1) + "%";
-      } else if (ind.format === "plain") {
-        formatted = safeText(val);
-      } else if (ind.format === "bcr") {
-        formatted = formatNumber(val, ind.decimals != null ? ind.decimals : 2);
-      } else {
-        formatted = formatCurrencyDisplay(val, ind.decimals != null ? ind.decimals : 0);
-      }
-    }
-
-    return `
-      <tr>
-        <td>${safeText(ind.level)}</td>
-        <td>${safeText(ind.name)}</td>
-        <td>${safeText(ind.formula)}</td>
-        <td>${safeText(ind.dataSource)}</td>
-        <td class="numeric-cell">${formatted}</td>
-      </tr>
-    `;
-  }).join("");
-
-  tableDiv.innerHTML = `
-    <table class="data-table" aria-label="Monitoring and evaluation indicators">
-      <thead>
-        <tr>
-          <th>Level</th>
-          <th>Indicator</th>
-          <th>Definition and calculation</th>
-          <th>Main data source</th>
-          <th>Planned value under this scenario</th>
-        </tr>
-      </thead>
-      <tbody>${rowsHtml}</tbody>
-    </table>
-  `;
-
-  notesDiv.textContent =
-    "These planned values can be used as targets in FETP monitoring and evaluation plans. Routine programme and surveillance data can be compared against them over time to track whether the configuration is delivering the expected capacity and outbreak benefits.";
 }
 
 /* ===========================
@@ -2487,7 +2536,7 @@ function exportSensitivityContainerToPdf() {
         body.push(row);
       });
 
-      if (!head.length || !body.length) return;
+     	if (!head.length || !body.length) return;
 
       if (y > pageH - margin - 80) {
         doc.addPage();
@@ -2575,95 +2624,6 @@ function initSensitivityContractControls() {
       exportSensitivityContainerToPdf();
     });
   }
-}
-
-/* ===========================
-   M&E exports (Excel and PDF)
-   =========================== */
-
-function exportMETableToExcel() {
-  if (!window.XLSX) {
-    showToast("Excel export is not available in this browser.", "error");
-    return;
-  }
-  const container = document.getElementById("me-indicators-table");
-  if (!container) {
-    showToast("Monitoring and evaluation indicators are not available on this page.", "error");
-    return;
-  }
-  const table = container.querySelector("table");
-  if (!table) {
-    showToast("Monitoring and evaluation table has not been generated yet. Apply a configuration first.", "warning");
-    return;
-  }
-
-  const wb = XLSX.utils.book_new();
-  const sheet = XLSX.utils.table_to_sheet(table);
-  XLSX.utils.book_append_sheet(wb, sheet, "M&E logframe");
-  XLSX.writeFile(wb, "steps_me_logframe.xlsx");
-  showToast("M&E logframe Excel file downloaded.", "success");
-}
-
-function exportMETableToPdf() {
-  const container = document.getElementById("me-indicators-table");
-  if (!container) {
-    showToast("Monitoring and evaluation indicators are not available on this page.", "error");
-    return;
-  }
-  const table = container.querySelector("table");
-  if (!table) {
-    showToast("Monitoring and evaluation table has not been generated yet. Apply a configuration first.", "warning");
-    return;
-  }
-
-  if (!window.jspdf || !window.jspdf.jsPDF) {
-    showToast("PDF export is not available in this browser.", "error");
-    return;
-  }
-
-  const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: "landscape" });
-  const pageW = doc.internal.pageSize.getWidth();
-  const margin = 14;
-  let y = margin;
-
-  doc.setFontSize(14);
-  doc.text("STEPS FETP India Decision Aid - Monitoring and evaluation indicators", margin, y);
-  y += 10;
-
-  if (doc.autoTable) {
-    doc.setFontSize(8);
-    doc.autoTable({
-      html: table,
-      startY: y,
-      margin: { left: margin, right: margin },
-      tableWidth: pageW - margin * 2,
-      styles: {
-        fontSize: 7.5,
-        cellPadding: 2,
-        overflow: "linebreak",
-        valign: "middle"
-      },
-      headStyles: { fontSize: 7.5 },
-      theme: "grid",
-      pageBreak: "auto"
-    });
-  } else {
-    const text = container.innerText || "";
-    doc.setFontSize(9);
-    const lines = doc.splitTextToSize(text, pageW - margin * 2);
-    lines.forEach((line) => {
-      if (y > doc.internal.pageSize.getHeight() - margin) {
-        doc.addPage();
-        y = margin;
-      }
-      doc.text(line, margin, y);
-      y += 10;
-    });
-  }
-
-  doc.save("steps_me_logframe.pdf");
-  showToast("M&E logframe PDF downloaded.", "success");
 }
 
 /* ===========================
@@ -2790,4 +2750,397 @@ function applyOutbreakPreset(valueInINR, options = {}) {
   });
 
   const valueOutbreakInput = document.getElementById("adv-value-per-outbreak");
-  if (valueOutbreakInput) valueOutbreakInput.value = String(valueInR
+  if (valueOutbreakInput) valueOutbreakInput.value = String(valueInINR);
+
+  syncOutbreakValueDropdownsFromState();
+
+  if (appState.currentScenario) {
+    const newScenario = computeScenario(appState.currentScenario.config);
+    appState.currentScenario = newScenario;
+    refreshAllOutputs(newScenario);
+  }
+
+  if (!silentLog) {
+    logSettingsMessage(`Value per outbreak updated to ₹${formatNumber(valueInINR, 0)} per outbreak for all tiers from sensitivity controls.`);
+  }
+
+  if (!silentToast) {
+    showToast(`Value per outbreak set to ₹${formatNumber(valueInINR, 0)} for all tiers.`, "success");
+  }
+}
+
+/* ===========================
+   Copilot integration
+   =========================== */
+
+function buildScenarioJsonForCopilot(scenario) {
+  const c = scenario.config;
+  return {
+    metadata: {
+      generatedAt: new Date().toISOString(),
+      tool: "STEPS FETP India Decision Aid",
+      country: "India",
+      planningHorizonYears: scenario.planningYears,
+      discountRateForBenefits: scenario.discountRate
+    },
+    configuration: {
+      name: c.name,
+      notes: c.notes,
+      tier: c.tier,
+      careerIncentive: c.career,
+      mentorshipIntensity: c.mentorship,
+      deliveryMode: c.delivery,
+      responseTimeDays: Number(c.response),
+      costPerTraineePerMonthINR: c.costPerTraineePerMonth,
+      traineesPerCohort: c.traineesPerCohort,
+      cohorts: c.cohorts,
+      opportunityCostIncluded: c.opportunityCostIncluded
+    },
+    preferenceModel: {
+      type: scenario.preferenceModel,
+      endorsementRatePercent: scenario.endorseRate,
+      optOutRatePercent: scenario.optOutRate,
+      wtpPerTraineePerMonthINR: scenario.wtpPerTraineePerMonth,
+      wtpPerCohortINR: scenario.wtpPerCohort,
+      wtpAllCohortsINR: scenario.wtpAllCohorts
+    },
+    costResults: {
+      programmeCostPerCohortINR: scenario.costs.programmeCostPerCohort,
+      opportunityCostPerCohortINR: scenario.costs.opportunityCostPerCohort,
+      economicCostPerCohortINR: scenario.costs.totalEconomicCostPerCohort,
+      totalEconomicCostAllCohortsINR: scenario.natTotalCost
+    },
+    epidemiologicalResults: {
+      graduatesPerCohort: scenario.graduatesPerCohort,
+      graduatesAllCohorts: scenario.graduatesAllCohorts,
+      outbreakResponsesPerYearPerCohort: scenario.outbreaksPerYearPerCohort,
+      outbreakResponsesPerYearNational: scenario.outbreaksPerYearNational,
+      epiBenefitPerCohortINR: scenario.epiBenefitPerCohort,
+      epiBenefitAllCohortsINR: scenario.epiBenefitAllCohorts
+    },
+    benefitCostResults: {
+      bcrPerCohortEpidemiological: scenario.bcrPerCohort,
+      bcrNationalEpidemiological: scenario.natBcr,
+      netBenefitPerCohortINR: scenario.netBenefitPerCohort,
+      netBenefitAllCohortsINR: scenario.netBenefitAllCohorts,
+      wtpOutbreakComponentAllCohortsINR: scenario.wtpOutbreakComponent,
+      totalWtpAllCohortsINR: scenario.wtpAllCohorts
+    }
+  };
+}
+
+function initCopilot() {
+  const btn = document.getElementById("copilot-open-and-copy-btn");
+  const textarea = document.getElementById("copilot-prompt-output");
+  const statusPill = document.getElementById("copilot-status-pill");
+  const statusText = document.getElementById("copilot-status-text");
+
+  function setStatus(text) {
+    if (statusPill) statusPill.textContent = text;
+  }
+
+  if (!btn || !textarea) return;
+
+  btn.addEventListener("click", async () => {
+    if (!appState.currentScenario) {
+      showToast("Apply a configuration before preparing the Copilot prompt.", "warning");
+      setStatus("Waiting for configuration");
+      textarea.value =
+        'Apply a configuration in STEPS and click "Open in Copilot and copy prompt" to generate the full interpretation prompt and scenario JSON. When the Copilot window opens, paste the copied text into the chat box.';
+      return;
+    }
+
+    const scenarioJson = buildScenarioJsonForCopilot(appState.currentScenario);
+    const jsonText = JSON.stringify(scenarioJson, null, 2);
+
+    const fullText =
+      COPILOT_INTERPRETATION_PROMPT.trim() +
+      "\n\nThe STEPS scenario JSON is provided below between the markers <SCENARIO_JSON> and </SCENARIO_JSON>. Use it as the quantitative evidence base for your policy brief.\n\n<SCENARIO_JSON>\n" +
+      jsonText +
+      "\n</SCENARIO_JSON>\n";
+
+    textarea.value = fullText;
+    setStatus("Prompt ready");
+    if (statusText) {
+      statusText.textContent =
+        "The Copilot prompt is ready. When the Copilot window opens in a new tab, paste this text into the Copilot chat box and run it.";
+    }
+
+    let copied = false;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      try {
+        await navigator.clipboard.writeText(fullText);
+        copied = true;
+        showToast("Prompt copied. When Copilot opens, paste the text into the new window.", "success");
+      } catch (e) {
+        copied = false;
+      }
+    }
+
+    if (!copied) {
+      showToast("Prompt prepared. Copy it from the panel and paste into the Copilot window that opens.", "warning");
+    }
+
+    window.open("https://copilot.microsoft.com/", "_blank");
+  });
+}
+
+/* ===========================
+   Snapshot modal
+   =========================== */
+
+let snapshotModal = null;
+
+function ensureSnapshotModal() {
+  if (snapshotModal) return;
+  snapshotModal = document.createElement("div");
+  snapshotModal.className = "modal hidden";
+  snapshotModal.innerHTML = `
+    <div class="modal-content">
+      <button class="modal-close" type="button" aria-label="Close">×</button>
+      <h2>Scenario summary</h2>
+      <div id="snapshot-body"></div>
+    </div>
+  `;
+  document.body.appendChild(snapshotModal);
+
+  const closeBtn = snapshotModal.querySelector(".modal-close");
+  closeBtn.addEventListener("click", () => {
+    snapshotModal.classList.add("hidden");
+  });
+  snapshotModal.addEventListener("click", (e) => {
+    if (e.target === snapshotModal) snapshotModal.classList.add("hidden");
+  });
+}
+
+function openSnapshotModal(scenario) {
+  ensureSnapshotModal();
+  const body = snapshotModal.querySelector("#snapshot-body");
+  if (body) {
+    const c = scenario.config;
+    body.innerHTML = `
+      <p><strong>Scenario name:</strong> ${c.name || ""}</p>
+      <p><strong>Tier:</strong> ${c.tier}</p>
+      <p><strong>Career incentive:</strong> ${c.career}</p>
+      <p><strong>Mentorship:</strong> ${c.mentorship}</p>
+      <p><strong>Delivery mode:</strong> ${c.delivery}</p>
+      <p><strong>Response time:</strong> ${c.response} days</p>
+      <p><strong>Cohorts and trainees:</strong> ${formatNumber(c.cohorts, 0)} cohorts of ${formatNumber(c.traineesPerCohort, 0)} trainees</p>
+      <p><strong>Cost per trainee per month:</strong> ${formatCurrencyDisplay(c.costPerTraineePerMonth, 0)}</p>
+      <p><strong>Endorsement:</strong> ${formatNumber(scenario.endorseRate, 1)}%</p>
+      <p><strong>Economic cost per cohort:</strong> ${formatCurrencyDisplay(scenario.costs.totalEconomicCostPerCohort, 0)}</p>
+      <p><strong>Indicative outbreak cost saving per cohort:</strong> ${formatCurrencyDisplay(scenario.epiBenefitPerCohort, 0)}</p>
+      <p><strong>Benefit cost ratio per cohort:</strong> ${scenario.bcrPerCohort !== null ? formatNumber(scenario.bcrPerCohort, 2) : "-"}</p>
+      <p><strong>Total economic cost all cohorts:</strong> ${formatCurrencyDisplay(scenario.natTotalCost, 0)}</p>
+      <p><strong>Indicative outbreak cost saving all cohorts:</strong> ${formatCurrencyDisplay(scenario.epiBenefitAllCohorts, 0)}</p>
+      <p><strong>Net outbreak cost saving all cohorts:</strong> ${formatCurrencyDisplay(scenario.netBenefitAllCohorts, 0)}</p>
+    `;
+  }
+  snapshotModal.classList.remove("hidden");
+}
+
+/* ===========================
+   Event wiring and refresh
+   =========================== */
+
+function refreshAllOutputs(scenario) {
+  updateCostSliderLabel();
+  updateConfigSummary(scenario);
+  updateResultsTab(scenario);
+  updateCostingTab(scenario);
+  updateNationalSimulationTab(scenario);
+  updateUptakeChart(scenario);
+  updateBcrChart(scenario);
+  updateEpiChart(scenario);
+  refreshSensitivityTables();
+  refreshSavedScenariosTable();
+  updateMETab(scenario);
+  syncOutbreakValueDropdownsFromState();
+}
+
+function initEventHandlers() {
+  const costSlider = document.getElementById("cost-slider");
+  if (costSlider) {
+    costSlider.addEventListener("input", () => updateCostSliderLabel());
+  }
+
+  const currencyButtons = Array.from(document.querySelectorAll(".pill-toggle"));
+  currencyButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const currency = btn.getAttribute("data-currency");
+      if (currency && currency !== appState.currency) {
+        appState.currency = currency;
+        updateCurrencyToggle();
+      }
+    });
+  });
+
+  const oppToggle = document.getElementById("opp-toggle");
+  if (oppToggle) {
+    oppToggle.addEventListener("click", () => {
+      const on = oppToggle.classList.toggle("on");
+      const label = oppToggle.querySelector(".switch-label");
+      if (label) {
+        label.textContent = on ? "Opportunity cost included" : "Opportunity cost excluded";
+      }
+      if (appState.currentScenario) {
+        const newScenario = computeScenario(appState.currentScenario.config);
+        appState.currentScenario = newScenario;
+        refreshAllOutputs(newScenario);
+      }
+    });
+  }
+
+  const updateBtn = document.getElementById("update-results");
+  if (updateBtn) {
+    updateBtn.addEventListener("click", () => {
+      const config = getConfigFromForm();
+      const scenario = computeScenario(config);
+      appState.currentScenario = scenario;
+      refreshAllOutputs(scenario);
+      showToast("Configuration applied and results updated.", "success");
+    });
+  }
+
+  const snapshotBtn = document.getElementById("open-snapshot");
+  if (snapshotBtn) {
+    snapshotBtn.addEventListener("click", () => {
+      if (!appState.currentScenario) {
+        showToast("Apply a configuration before opening the summary.", "warning");
+        return;
+      }
+      openSnapshotModal(appState.currentScenario);
+    });
+  }
+
+  const saveScenarioBtn = document.getElementById("save-scenario");
+  if (saveScenarioBtn) {
+    saveScenarioBtn.addEventListener("click", () => {
+      if (!appState.currentScenario) {
+        showToast("Apply a configuration before saving a scenario.", "warning");
+        return;
+      }
+      appState.savedScenarios.push(appState.currentScenario);
+      refreshSavedScenariosTable();
+      refreshSensitivityTables();
+      showToast("Scenario saved for comparison and export.", "success");
+    });
+  }
+
+  const exportExcelBtn = document.getElementById("export-excel");
+  if (exportExcelBtn) exportExcelBtn.addEventListener("click", () => exportScenariosToExcel());
+
+  const exportPdfBtn = document.getElementById("export-pdf");
+  if (exportPdfBtn) exportPdfBtn.addEventListener("click", () => exportScenariosToPdf());
+
+  const sensUpdateBtn = document.getElementById("refresh-sensitivity-benefits");
+  if (sensUpdateBtn) {
+    sensUpdateBtn.addEventListener("click", () => {
+      if (!appState.currentScenario) {
+        showToast("Apply a configuration before updating the sensitivity summary.", "warning");
+        return;
+      }
+      refreshSensitivityTables();
+      showToast("Sensitivity summary updated.", "success");
+    });
+  }
+
+  const sensExcelBtn = document.getElementById("export-sensitivity-benefits-excel");
+  if (sensExcelBtn) sensExcelBtn.addEventListener("click", () => exportSensitivityToExcel());
+
+  const epiToggle = getElByIdCandidates(["sensitivity-epi-toggle", "sensitivityEpiToggle"]);
+  if (epiToggle) {
+    epiToggle.addEventListener("click", () => {
+      const on = epiToggle.classList.toggle("on");
+      const label = epiToggle.querySelector(".switch-label");
+      if (label) label.textContent = on ? "Outbreak benefits included" : "Outbreak benefits excluded";
+      if (appState.currentScenario) refreshSensitivityTables();
+    });
+  }
+
+  const outbreakPresetSelect = getElByIdCandidates(["outbreak-value-preset", "outbreakValuePreset", "outbreak-value"]);
+  if (outbreakPresetSelect) {
+    ensureSelectHasOutbreakPresets(outbreakPresetSelect);
+    outbreakPresetSelect.addEventListener("change", () => {
+      const valueInINR = parseSensitivityValueToINR(outbreakPresetSelect.value);
+      if (valueInINR) {
+        applyOutbreakPreset(valueInINR);
+      }
+    });
+  }
+
+  const outbreakApplyBtn = getElByIdCandidates(["apply-outbreak-value", "applyOutbreakValue", "applyOutbreakPreset"]);
+  if (outbreakApplyBtn && outbreakPresetSelect) {
+    outbreakApplyBtn.addEventListener("click", () => {
+      const valueInINR = parseSensitivityValueToINR(outbreakPresetSelect.value);
+      if (valueInINR) {
+        applyOutbreakPreset(valueInINR);
+      } else {
+        showToast("Select a value per outbreak before applying.", "warning");
+      }
+    });
+  }
+
+  const benefitDefSelect = getElByIdCandidates(["benefit-definition-select", "benefitDefinitionSelect"]);
+  if (benefitDefSelect) {
+    benefitDefSelect.addEventListener("change", () => {
+      if (!appState.currentScenario) return;
+      refreshSensitivityTables();
+    });
+  }
+
+  const endorsementOverrideInput = getElByIdCandidates(["endorsement-override", "endorsementOverride"]);
+  if (endorsementOverrideInput) {
+    endorsementOverrideInput.addEventListener("change", () => {
+      if (!appState.currentScenario) return;
+      refreshSensitivityTables();
+    });
+  }
+
+  const meExcelBtn = document.getElementById("me-export-excel");
+  if (meExcelBtn) {
+    meExcelBtn.addEventListener("click", () => {
+      if (!appState.currentScenario) {
+        showToast("Apply a configuration before exporting the M&E logframe.", "warning");
+        return;
+      }
+      exportMELogframeToExcel();
+    });
+  }
+
+  const mePdfBtn = document.getElementById("me-export-pdf");
+  if (mePdfBtn) {
+    mePdfBtn.addEventListener("click", () => {
+      if (!appState.currentScenario) {
+        showToast("Apply a configuration before exporting the M&E summary.", "warning");
+        return;
+      }
+      exportMELogframeToPdf();
+    });
+  }
+
+  initApplySettingsButton();
+  initSensitivityContractControls();
+}
+
+/* ===========================
+   Initialise
+   =========================== */
+
+document.addEventListener("DOMContentLoaded", () => {
+  COST_CONFIG = COST_TEMPLATES;
+
+  initTabs();
+  initDefinitionTooltips();
+  initTooltips();
+  initGuidedTour();
+  initAdvancedSettings();
+  initCopilot();
+
+  enforceResponseTimeFixedTo7Days();
+  initOutbreakSensitivityDropdowns();
+
+  initEventHandlers();
+  updateCostSliderLabel();
+  updateCurrencyToggle();
+});
