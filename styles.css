@@ -1,4 +1,3 @@
-
 /* ===========================
    Base layout and typographyy
    =========================== */
@@ -45,6 +44,22 @@
 
     --transition-fast: 0.15s ease-out;
     --transition-med: 0.22s ease-out;
+}
+
+/* Optional slightly stronger light theme */
+
+body[data-theme="worldbank-light"] {
+    --color-bg: #E4ECF8;
+    --color-card: #FFFFFF;
+    --color-text: #0F172A;
+    --color-text-muted: #4B5563;
+    --color-border: #D1D5DB;
+    --color-border-strong: #9CA3AF;
+    --color-table-stripe: #F5F7FB;
+    --color-table-hover: #E0EBFF;
+    --color-table-header: #E5E7EB;
+    background: radial-gradient(circle at top left, #D8E6FF 0, #EDF1F7 42%, #E5E7EB 100%);
+    color: var(--color-text);
 }
 
 /* Optional dark theme support */
@@ -2292,7 +2307,7 @@ textarea:focus-visible {
     color: #E5E7EB;
 }
 
-/* Compact “Open Copilot” helper area */
+/* Compact Open Copilot helper area */
 
 .copilot-actions {
     margin-top: 10px;
